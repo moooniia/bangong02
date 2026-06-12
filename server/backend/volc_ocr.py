@@ -23,6 +23,11 @@ _TASK_CHECKLIST_HINTS = ("任务清单", "考评项目", "扣分标准", "你需
 _DENSE_TABLE_HINTS = (
     "规格书", "概况", "标高", "基坑", "监测", "参数", "结构概况", "技术规格", "单体",
 )
+_SCORING_FORM_HINTS = ("考评打分表", "服务管理考评", "考评得分", "扣分标准", "考评内容")
+_SCORING_TABLE_HEADERS = frozenset({"序号", "考评内容", "分值", "扣分标准", "备注"})
+_SCORING_TABLE_COL_RATIOS = {
+    5: [0.06, 0.36, 0.08, 0.36, 0.14],
+}
 _BLANK_PAGE_MIN_CHARS = 15
 _BLANK_PAGE_SNAPSHOT_DPI = 150
 ENV_PATH = os.environ.get("TOOLBOX_ENV", "/home/toolbox/toolbox.env")
@@ -650,6 +655,20 @@ def _is_task_checklist_table(parsed):
     return len(header_text & _TASK_TABLE_HEADERS) >= 2
 
 
+def _is_scoring_form_table(parsed):
+    if not parsed or len(parsed[0]) < 3:
+        return False
+    header_text = {_normalize_text(c.get("text") or "") for c in parsed[0]}
+    return len(header_text & _SCORING_TABLE_HEADERS) >= 3
+
+
+def _page_is_scoring_form(page, page_md=""):
+    blob = _page_table_blob(page, page_md)
+    if sum(1 for h in _SCORING_FORM_HINTS if h in blob) < 2:
+        return False
+    return "<table" in blob.lower() or _page_mainly_table(page)
+
+
 def _task_table_font_pt(ncols, nrows):
     if ncols >= 7 or nrows >= 22:
         return 6
@@ -701,6 +720,41 @@ def _apply_task_checklist_table_style(table, parsed, placements, nrows, ncols, f
             align=align,
             fill_hex=fill,
         )
+
+
+def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape):
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Inches
+
+    usable = Inches(7.2 if not use_landscape else 9.0)
+    ratios = _SCORING_TABLE_COL_RATIOS.get(ncols)
+    if ratios:
+        widths = [int(usable * r) for r in ratios]
+        diff = int(usable) - sum(widths)
+        if diff and widths:
+            widths[-1] += diff
+        for ci, column in enumerate(table.columns):
+            if ci < len(widths):
+                column.width = widths[ci]
+
+    header_row = {_normalize_text(c.get("text") or "") for c in parsed[0]}
+    for ri, ci, cell in placements:
+        tcell = table.rows[ri].cells[ci]
+        text = cell.get("text") or ""
+        if ri == 0 and _normalize_text(text) in header_row:
+            _set_cell_text_style(
+                tcell,
+                font_pt,
+                bold=True,
+                color_hex=_CHECKLIST_TABLE_HEAD_FG,
+                align=WD_ALIGN_PARAGRAPH.CENTER,
+                fill_hex=_CHECKLIST_TABLE_HEAD_BG,
+            )
+            continue
+        align = None
+        if ci == 0 or _normalize_text(text).isdigit():
+            align = WD_ALIGN_PARAGRAPH.CENTER
+        _set_cell_text_style(tcell, font_pt, align=align)
 
 
 def _add_checklist_styled_para(doc, line):
@@ -1236,8 +1290,20 @@ def _orientation_alignment_score(img_bgr):
     return 100.0 - abs(skew) * 8.0
 
 
+def _has_sidebar_vertical_layout(img_bgr):
+    """左侧竖排标题的表单（考评打分表）：不能用上下墨迹猜 180°。"""
+    binary = _page_ink_binary(img_bgr)
+    h, w = binary.shape
+    left = float(binary[:, : max(1, w // 6)].sum())
+    top = float(binary[: max(1, h // 6), :].sum())
+    bottom = float(binary[min(h - 1, 5 * h // 6):, :].sum())
+    return left > top * 0.65 and left > bottom * 0.65
+
+
 def _upright_header_score(img_bgr):
     """标题/表头多在上方：正立时上半区墨迹更重。"""
+    if _has_sidebar_vertical_layout(img_bgr):
+        return 0.0
     binary = _page_ink_binary(img_bgr)
     h = binary.shape[0]
     top = float(binary[: max(1, h // 3), :].sum())
@@ -1268,6 +1334,8 @@ def _detect_best_coarse_rotation(img_bgr, allow_full_probe=False):
     cover = _ink_cover_metrics(img_bgr)
     if cover["cover_w"] > 0.76 and cover["cover_h"] > 0.76:
         return 0
+    if _has_sidebar_vertical_layout(img_bgr):
+        return _detect_visual_sideways_rotation(img_bgr)
 
     if not allow_full_probe:
         return _detect_visual_sideways_rotation(img_bgr)
@@ -1620,6 +1688,8 @@ def _page_is_blank_risk(stats, is_sig_page=False):
 
 
 def _page_is_dense_table(page, page_md=""):
+    if _page_is_scoring_form(page, page_md):
+        return True
     blob = _page_table_blob(page, page_md)
     if any(m in blob for m in _TASK_CHECKLIST_HINTS):
         return False
@@ -2873,12 +2943,16 @@ def _add_html_table(
         _begin_landscape_section(doc)
 
     task_style = _is_task_checklist_table(parsed)
-    font_pt = _task_table_font_pt(ncols, nrows) if task_style else (
-        6 if ncols >= 7 or nrows >= 22 else
-        6.5 if ncols >= 6 or nrows >= 15 else
-        7.5 if ncols >= 5 or nrows >= 10 else 9
-    )
-    if compact and not task_style:
+    scoring_style = _is_scoring_form_table(parsed) if not task_style else False
+    if task_style or scoring_style:
+        font_pt = _task_table_font_pt(ncols, nrows)
+    else:
+        font_pt = (
+            6 if ncols >= 7 or nrows >= 22 else
+            6.5 if ncols >= 6 or nrows >= 15 else
+            7.5 if ncols >= 5 or nrows >= 10 else 9
+        )
+    if compact and not task_style and not scoring_style:
         font_pt = min(
             font_pt,
             5.0 if nrows >= 45 else 5.5 if nrows >= 35 else 6.0,
@@ -2886,7 +2960,7 @@ def _add_html_table(
 
     table = doc.add_table(rows=nrows, cols=ncols)
     table.style = "Table Grid"
-    if not task_style:
+    if not task_style and not scoring_style:
         sec = doc.sections[-1]
         usable_w = sec.page_width - sec.left_margin - sec.right_margin
         col_w = int(usable_w / max(ncols, 1))
@@ -2896,7 +2970,7 @@ def _add_html_table(
     for ri, ci, cell in placements:
         tcell = table.rows[ri].cells[ci]
         tcell.text = cell["text"]
-        if not task_style:
+        if not task_style and not scoring_style:
             _set_cell_font(tcell, font_pt)
         rs, cs = cell["rowspan"], cell["colspan"]
         end_r = min(ri + rs - 1, nrows - 1)
@@ -2908,6 +2982,10 @@ def _add_html_table(
         _apply_task_checklist_table_style(
             table, parsed, placements, nrows, ncols, font_pt, use_landscape,
         )
+    elif scoring_style:
+        _apply_scoring_form_table_style(
+            table, parsed, placements, nrows, ncols, font_pt, use_landscape,
+        )
     elif compact:
         _apply_compact_dense_table_style(table, nrows, font_pt)
 
@@ -2916,8 +2994,15 @@ def _add_html_table(
     return True
 
 
-def _single_page_table_opts(total_pages, dense_table):
-    """单页设备清单：保持 PDF 方向与尺寸，压紧表格一页打完。"""
+def _single_page_table_opts(total_pages, dense_table, scoring_form=False):
+    """单页表格：设备清单压紧；考评打分表保持竖版 A4 版式。"""
+    if total_pages == 1 and scoring_form:
+        return {
+            "landscape": False,
+            "restore_portrait": False,
+            "compact": False,
+            "skip_section_switch": True,
+        }
     if total_pages == 1 and dense_table:
         return {
             "landscape": False,
@@ -3124,17 +3209,21 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
             text_before = _doc_body_text_len(doc)
             tables_before = len(doc.tables)
             used_snapshot = False
+            scoring_form = _page_is_scoring_form(page, page_md)
             dense_table = _page_is_dense_table(page, page_md)
             single_dense = total_pages == 1 and dense_table
-            table_opts = _single_page_table_opts(total_pages, dense_table)
+            single_form = total_pages == 1 and scoring_form
+            table_opts = _single_page_table_opts(
+                total_pages, dense_table, scoring_form=scoring_form,
+            )
             page_layout = None
             if pdf_path:
                 from seal_utils import SEAL_EXTRACT_DPI as _seal_dpi
                 page_layout = _analyze_page_layout(
                     pdf_path, pi, _seal_dpi if single_dense else 180,
-                    probe_coarse=single_dense,
+                    probe_coarse=single_dense and not scoring_form,
                 )
-            if single_dense and pi == 0 and pdf_path:
+            if (single_dense or single_form) and pi == 0 and pdf_path:
                 if page_layout and page_layout.get("correction_deg"):
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:

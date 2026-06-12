@@ -350,6 +350,8 @@ def page_text_blob(page):
 def is_signature_page(page, page_index, total_pages):
     text = page_text_blob(page)
     if not text:
+        if total_pages <= 1:
+            return False
         return page_index >= total_pages - 1
 
     if any(k in text for k in ("签章页", "(签章页)", "签字页", "(签字页)")):
