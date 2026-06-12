@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.20] - 2026-06-13
+
+构建号: `2026.06.13.5`
+
+v0.10.20: scoring form row height atLeast + WPS margins
+
+### Changed
+- v0.10.20: scoring form row height atLeast + WPS margins
+
+备份: `backups/v0.10.20/`
+
+
 ## [0.10.19] - 2026-06-13
 
 构建号: `2026.06.13.4`

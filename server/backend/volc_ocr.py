@@ -864,6 +864,9 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
     _EMU_PER_TWIP = 635
     sec = table.part.document.sections[-1]
     avail_h_twips = int(sec.page_height - sec.top_margin - sec.bottom_margin) // _EMU_PER_TWIP
+    # Scale down to ~40% of available height to match WPS compact row distribution
+    # (WPS rows are ~0.56in each on A4, not filling entire page height)
+    scaled_avail = int(avail_h_twips * 0.40)
     rh = list(row_heights) if row_heights else []
     # Trim extra trailing rows first (img2table often detects a stray footer line)
     while len(rh) > nrows and len(rh) > 2:
@@ -871,9 +874,10 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
     if rh and len(rh) == nrows:
         total = sum(rh)
         rh = [h / total for h in rh]
+        # Use atLeast mode so text can expand row height if needed (matches WPS behavior)
         for ri, row in enumerate(table.rows):
-            twips = max(200, int(avail_h_twips * rh[ri]))
-            _set_row_height(row, twips, exact=True)
+            twips = max(200, int(scaled_avail * rh[ri]))
+            _set_row_height(row, twips, exact=False)
 
 
 def _add_checklist_styled_para(doc, line):
@@ -3181,7 +3185,7 @@ def _add_html_table(
             rh = [h / total for h in rh]
             for ri, row in enumerate(table.rows):
                 twips = max(200, int(avail_h_twips * rh[ri]))
-                _set_row_height(row, twips, exact=True)
+                _set_row_height(row, twips, exact=False)
 
     if use_landscape and restore_portrait:
         _begin_portrait_section(doc)
@@ -3422,6 +3426,14 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
+                # Override margins for scoring form to match WPS reference
+                if single_form:
+                    from docx.shared import Inches
+                    sec = doc.sections[-1]
+                    sec.left_margin = Inches(1.75)
+                    sec.right_margin = Inches(1.75)
+                    sec.top_margin = Inches(0.70)
+                    sec.bottom_margin = Inches(0.00)
                 # Detect proportional row heights from corrected image (img2table primary)
                 try:
                     corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
