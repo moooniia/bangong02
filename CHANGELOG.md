@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.15] - 2026-06-12
+
+构建号: `2026.06.12.24`
+
+Fix OCR quality via fitz rotation matrix + proportional row heights from OpenCV line detection
+
+### Changed
+- Fix OCR quality via fitz rotation matrix + proportional row heights from OpenCV line detection
+
+备份: `backups/v0.10.15/`
+
+
 ## [0.10.14] - 2026-06-12
 
 构建号: `2026.06.12.23`

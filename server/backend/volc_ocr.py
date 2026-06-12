@@ -722,7 +722,57 @@ def _apply_task_checklist_table_style(table, parsed, placements, nrows, ncols, f
         )
 
 
-def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape):
+def _detect_row_line_positions(img_bgr):
+    """Return normalized y-positions [0.0–1.0] of horizontal table lines detected via OpenCV."""
+    import cv2
+    import numpy as np
+
+    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    h, w = binary.shape
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(30, w // 6), 1))
+    h_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+    proj = h_lines.sum(axis=1).astype(float)
+    if proj.max() == 0:
+        return []
+    thresh = proj.max() * 0.2
+    positions = []
+    i = 0
+    while i < h:
+        if proj[i] > thresh:
+            j = i
+            while j < h and proj[j] > thresh:
+                j += 1
+            positions.append((i + j) / 2.0 / h)
+            i = j
+        else:
+            i += 1
+    return positions
+
+
+def _row_heights_from_line_positions(positions, nrows):
+    """Convert detected line y-positions to proportional row heights (sum=1.0), or None."""
+    if len(positions) < nrows + 1:
+        return None
+    if len(positions) == nrows + 1:
+        sep = positions
+    else:
+        first, last = positions[0], positions[-1]
+        inner = positions[1:-1]
+        if len(inner) >= nrows - 1:
+            step = len(inner) / max(nrows - 1, 1)
+            sel = [inner[min(int(i * step), len(inner) - 1)] for i in range(nrows - 1)]
+        else:
+            return None
+        sep = [first] + sel + [last]
+    heights = [sep[i + 1] - sep[i] for i in range(len(sep) - 1)]
+    if not heights or min(heights) <= 0:
+        return None
+    total = sum(heights)
+    return [h / total for h in heights]
+
+
+def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape, row_heights=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
 
@@ -755,6 +805,18 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
         if ci == 0 or _normalize_text(text).isdigit():
             align = WD_ALIGN_PARAGRAPH.CENTER
         _set_cell_text_style(tcell, font_pt, align=align)
+
+    # Apply row heights: proportional from image detection, or uniform fallback
+    sec = table.part.document.sections[-1]
+    avail_h = int(sec.page_height - sec.top_margin - sec.bottom_margin)
+    if row_heights and len(row_heights) == nrows:
+        for ri, row in enumerate(table.rows):
+            twips = max(200, int(avail_h * row_heights[ri]))
+            _set_row_height(row, twips, exact=True)
+    else:
+        uniform = max(200, avail_h // max(nrows, 1))
+        for row in table.rows:
+            _set_row_height(row, uniform, exact=False)
 
 
 def _add_checklist_styled_para(doc, line):
@@ -1218,6 +1280,25 @@ def _render_page_bgr(pdf_path, page_index, dpi):
         doc.close()
 
 
+def _render_page_bgr_rotated(pdf_path, page_index, dpi, correction_deg):
+    """Render PDF page with coarse rotation applied via fitz matrix — no warpAffine interpolation."""
+    import cv2
+    import fitz
+    import numpy as np
+
+    doc = fitz.open(pdf_path)
+    try:
+        page = doc[page_index]
+        scale = dpi / 72.0
+        # fitz.prerotate uses standard math CCW convention; negate for CW degrees
+        mat = fitz.Matrix(scale, scale).prerotate(-correction_deg)
+        pix = _fitz_pixmap(page, matrix=mat, alpha=False)
+        arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+        return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR) if pix.n >= 3 else arr
+    finally:
+        doc.close()
+
+
 def _rotate_bgr(img_bgr, deg_cw):
     import cv2
 
@@ -1460,8 +1541,16 @@ def _analyze_page_layout(pdf_path, page_index, dpi=120, probe_coarse=True):
 
 def _get_corrected_page_bgr(pdf_path, page_index, dpi, probe_coarse=True):
     layout = _analyze_page_layout(pdf_path, page_index, dpi, probe_coarse=probe_coarse)
-    bgr = _render_page_bgr(pdf_path, page_index, dpi)
-    bgr = _apply_page_orientation(bgr, layout)
+    correction_deg = layout.get("correction_deg", 0)
+    skew_deg = layout.get("skew_deg", 0)
+    if correction_deg and correction_deg % 90 == 0:
+        # Render with fitz rotation matrix — avoids warpAffine interpolation blur
+        bgr = _render_page_bgr_rotated(pdf_path, page_index, dpi, correction_deg)
+        if abs(skew_deg) >= 0.35:
+            bgr = _deskew_bgr(bgr, skew_deg)
+    else:
+        bgr = _render_page_bgr(pdf_path, page_index, dpi)
+        bgr = _apply_page_orientation(bgr, layout)
     return bgr, layout
 
 
@@ -2931,7 +3020,7 @@ def _set_cell_font(cell, pt, bold=False, color_hex=None):
 
 def _add_html_table(
     doc, html, landscape=False, restore_portrait=True,
-    compact=False, skip_section_switch=False,
+    compact=False, skip_section_switch=False, row_heights=None, row_line_positions=None,
 ):
     from docx.shared import Inches
 
@@ -2963,6 +3052,10 @@ def _add_html_table(
     nrows = max(r for r, _ in occupied) + 1
     ncols = max(c for _, c in occupied) + 1
     ncols = max(ncols, max_col)
+
+    # Convert line positions to row heights now that nrows is known
+    if row_heights is None and row_line_positions:
+        row_heights = _row_heights_from_line_positions(row_line_positions, nrows)
 
     auto_landscape = ncols >= 6 and nrows >= 8 and not compact
     use_landscape = landscape or auto_landscape
@@ -3012,6 +3105,7 @@ def _add_html_table(
     elif scoring_style:
         _apply_scoring_form_table_style(
             table, parsed, placements, nrows, ncols, font_pt, use_landscape,
+            row_heights=row_heights,
         )
     elif compact:
         _apply_compact_dense_table_style(table, nrows, font_pt)
@@ -3248,13 +3342,21 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                 from seal_utils import SEAL_EXTRACT_DPI as _seal_dpi
                 page_layout = _analyze_page_layout(
                     pdf_path, pi, _seal_dpi if single_dense else 180,
-                    probe_coarse=single_dense and not scoring_form,
+                    probe_coarse=single_dense or single_form,
                 )
             if (single_dense or single_form) and pi == 0 and pdf_path:
                 if page_layout and page_layout.get("correction_deg"):
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
+                # Detect row line positions from corrected image for proportional row heights
+                try:
+                    corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
+                    line_pos = _detect_row_line_positions(corr_bgr)
+                    if line_pos:
+                        table_opts["row_line_positions"] = line_pos
+                except Exception:
+                    pass
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
