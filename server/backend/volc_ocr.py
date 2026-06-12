@@ -865,10 +865,9 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
     sec = table.part.document.sections[-1]
     avail_h_twips = int(sec.page_height - sec.top_margin - sec.bottom_margin) // _EMU_PER_TWIP
     rh = list(row_heights) if row_heights else []
-    # Trim extra rows (noise from borders) by removing the smallest entries until len matches
+    # Trim extra trailing rows first (img2table often detects a stray footer line)
     while len(rh) > nrows and len(rh) > 2:
-        idx = min(range(len(rh)), key=lambda i: rh[i])
-        rh.pop(idx)
+        rh.pop()
     if rh and len(rh) == nrows:
         total = sum(rh)
         rh = [h / total for h in rh]
@@ -3174,9 +3173,9 @@ def _add_html_table(
         sec = table.part.document.sections[-1]
         avail_h_twips = int(sec.page_height - sec.top_margin - sec.bottom_margin) // _EMU_PER_TWIP
         rh = list(row_heights)
+        # Trim extra trailing rows (img2table may detect a stray footer line)
         while len(rh) > nrows and len(rh) > 2:
-            idx = min(range(len(rh)), key=lambda i: rh[i])
-            rh.pop(idx)
+            rh.pop()
         if rh and len(rh) == nrows:
             total = sum(rh)
             rh = [h / total for h in rh]
