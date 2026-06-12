@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.13] - 2026-06-12
+
+构建号: `2026.06.12.22`
+
+OSD rotation detection: Tesseract OSD as primary coarse rotation detector, visual heuristics as fallback
+
+### Changed
+- OSD rotation detection: Tesseract OSD as primary coarse rotation detector, visual heuristics as fallback
+
+备份: `backups/v0.10.13/`
+
+
 ## [0.10.12] - 2026-06-12
 
 构建号: `2026.06.12.21`

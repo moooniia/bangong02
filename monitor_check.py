@@ -13,6 +13,8 @@ CONFIG_PATH = os.environ.get("TOOLBOX_MONITOR_CONFIG", "/home/toolbox/monitor.en
 OPENCLAW_CONFIG = os.environ.get("OPENCLAW_CONFIG", "/root/.openclaw/openclaw.json")
 FIXTURES = os.environ.get("TOOLBOX_FIXTURES", "/home/toolbox/fixtures")
 DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
+RETRY_DELAY_SEC = float(os.environ.get("TOOLBOX_MONITOR_RETRY_DELAY", "5"))
+MAX_RETRIES = max(0, int(os.environ.get("TOOLBOX_MONITOR_RETRIES", "1")))
 
 
 def _sample(*names):
@@ -126,21 +128,47 @@ def post_json(api, payload, timeout=60):
         return r.status, json.loads(r.read().decode()), round(time.time() - t0, 1)
 
 
+def _is_retryable(exc):
+    if isinstance(exc, (urllib.error.URLError, TimeoutError, ConnectionResetError, BrokenPipeError)):
+        return True
+    return type(exc).__name__ in ("RemoteDisconnected",)
+
+
 def check(name, api, path=None, extra=None, json_body=None, timeout=300):
-    try:
-        if json_body is not None:
-            status, data, secs = post_json(api, json_body, timeout=timeout)
-        else:
-            if not path or not os.path.exists(path):
-                return name, None, f"样本缺失: {path}"
-            status, data, secs = post(api, path, extra, timeout=timeout)
-        ok = status == 200 and data.get("success")
-        detail = data.get("filename", "") if ok else str(data)[:200]
-        return name, ok, f"{secs}s {detail}"
-    except urllib.error.HTTPError as e:
-        return name, False, f"HTTP {e.code} {e.read().decode()[:120]}"
-    except Exception as e:
-        return name, False, f"{type(e).__name__} {e}"
+    if json_body is None and (not path or not os.path.exists(path)):
+        return name, None, f"样本缺失: {path}"
+
+    last_exc = None
+    for attempt in range(MAX_RETRIES + 1):
+        if attempt > 0:
+            print(
+                f"RETRY {name} ({attempt + 1}/{MAX_RETRIES + 1}) "
+                f"after {RETRY_DELAY_SEC}s"
+            )
+            time.sleep(RETRY_DELAY_SEC)
+        try:
+            if json_body is not None:
+                status, data, secs = post_json(api, json_body, timeout=timeout)
+            else:
+                status, data, secs = post(api, path, extra, timeout=timeout)
+            ok = status == 200 and data.get("success")
+            detail = data.get("filename", "") if ok else str(data)[:200]
+            out = f"{secs}s {detail}"
+            if attempt > 0 and ok:
+                out += " (retry ok)"
+            return name, ok, out
+        except urllib.error.HTTPError as e:
+            body = e.read().decode()[:120]
+            if attempt < MAX_RETRIES and e.code in (502, 503, 504):
+                last_exc = e
+                continue
+            return name, False, f"HTTP {e.code} {body}"
+        except Exception as e:
+            last_exc = e
+            if attempt < MAX_RETRIES and _is_retryable(e):
+                continue
+            return name, False, f"{type(e).__name__} {e}"
+    return name, False, f"{type(last_exc).__name__} {last_exc}"
 
 
 def _failure_text(failures):
@@ -272,13 +300,27 @@ def run_checks():
     results = []
     failures = []
 
-    try:
-        req = urllib.request.Request(BASE + "/api/health", method="GET")
-        with urllib.request.urlopen(req, timeout=10) as r:
-            ok = r.status == 200
-            detail = r.read().decode()[:80]
-    except Exception as e:
-        ok, detail = False, str(e)
+    ok, detail = False, ""
+    for attempt in range(MAX_RETRIES + 1):
+        if attempt > 0:
+            print(
+                f"RETRY health ({attempt + 1}/{MAX_RETRIES + 1}) "
+                f"after {RETRY_DELAY_SEC}s"
+            )
+            time.sleep(RETRY_DELAY_SEC)
+        try:
+            req = urllib.request.Request(BASE + "/api/health", method="GET")
+            with urllib.request.urlopen(req, timeout=10) as r:
+                ok = r.status == 200
+                detail = r.read().decode()[:80]
+                if attempt > 0 and ok:
+                    detail += " (retry ok)"
+                break
+        except Exception as e:
+            detail = str(e)
+            if attempt < MAX_RETRIES and _is_retryable(e):
+                continue
+            ok = False
     results.append(("health", ok, detail))
     if ok:
         print(f"OK   health {detail}")

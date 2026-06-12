@@ -1329,8 +1329,33 @@ def _detect_visual_sideways_rotation(img_bgr):
     return 0
 
 
+def _detect_coarse_rotation_osd(img_bgr, min_conf=2.0):
+    """Tesseract OSD でページ向きを検出。信頼度が低い場合は None を返す。"""
+    try:
+        import cv2 as _cv2
+        import pytesseract
+        from PIL import Image
+
+        rgb = _cv2.cvtColor(img_bgr, _cv2.COLOR_BGR2RGB)
+        osd = pytesseract.image_to_osd(
+            Image.fromarray(rgb), output_type=pytesseract.Output.DICT
+        )
+        conf = float(osd.get("orientation_conf") or 0)
+        rotate = int(osd.get("rotate") or 0) % 360
+        if conf >= min_conf:
+            log.debug("OSD rotate=%d conf=%.2f", rotate, conf)
+            return rotate
+    except Exception as exc:
+        log.debug("OSD failed: %s", exc)
+    return None
+
+
 def _detect_best_coarse_rotation(img_bgr, allow_full_probe=False):
-    """粗调：90° / 180° / 270°。满页表不猜 180°；四向打分仅单页密集表开启。"""
+    """粗调：0/90/180/270°。OSD 优先，置信度不足时回退视觉启发式。"""
+    osd_deg = _detect_coarse_rotation_osd(img_bgr)
+    if osd_deg is not None:
+        return osd_deg
+
     cover = _ink_cover_metrics(img_bgr)
     if cover["cover_w"] > 0.76 and cover["cover_h"] > 0.76:
         return 0

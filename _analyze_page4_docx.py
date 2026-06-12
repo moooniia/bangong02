@@ -3,7 +3,7 @@ import zipfile
 from docx import Document
 from docx.enum.section import WD_ORIENT
 
-path = r"C:\Users\paz\Desktop\P T W 测试\page_4_out.docx"
+path = r"C:\Users\paz\Desktop\P T W 测试\page_4_v0.10.12.docx"
 d = Document(path)
 s = d.sections[0]
 print("sections", len(d.sections), "portrait" if s.orientation == WD_ORIENT.PORTRAIT else "landscape")
