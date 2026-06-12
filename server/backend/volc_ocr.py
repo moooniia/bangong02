@@ -1895,7 +1895,16 @@ def _expand_cover_blocks(block):
     if label == "header":
         return [block]
     if "服务合同" in text and text.strip() != "服务合同":
-        return _expand_layout_blocks(block)
+        expanded = _expand_layout_blocks(block)
+        cleaned = []
+        for sub in expanded:
+            sub = dict(sub)
+            if (sub.get("label") or "").lower() != "title":
+                title = _extract_cover_title_text(sub.get("text") or "")
+                if title:
+                    sub["text"] = title
+            cleaned.append(sub)
+        return cleaned
     if re.fullmatch(r"服务合同", _strip_watermark_substrings(text).strip()):
         sub = dict(block)
         sub["text"] = "服务合同"
