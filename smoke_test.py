@@ -152,7 +152,7 @@ def regression_check() -> tuple[bool, str]:
     try:
         import requests
     except ImportError:
-        return True, "跳过四样例回归（未安装 requests）"
+        return True, "跳过五样例回归（未安装 requests）"
 
     lines = []
     missing = []
@@ -219,7 +219,7 @@ def regression_check() -> tuple[bool, str]:
         lines.append("跳过缺失样例: " + ", ".join(missing))
     if not lines:
         return True, "五样例回归: 无可用样例文件"
-        return True, "五样例回归:\n" + "\n".join(lines)
+    return True, "五样例回归:\n" + "\n".join(lines)
 
 
 def run_smoke(regression: bool = False) -> tuple[bool, str]:

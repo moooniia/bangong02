@@ -1666,7 +1666,9 @@ def _embed_signatures(doc, page_image_path, page, cache_dir, pg_w_emu, pg_h_emu)
             })
 
         sig_dir = os.path.join(cache_dir, "sigs_" + os.path.basename(page_image_path))
-        sigs = extract_signature_areas(img, ocr_blocks=scaled_blocks, out_dir=sig_dir)
+        sigs = extract_signature_areas(
+            img, ocr_blocks=scaled_blocks, out_dir=sig_dir, sig_page=True,
+        )
         for sig in sigs:
             norm_x = sig["x"] / img_w
             norm_y = sig["y"] / img_h

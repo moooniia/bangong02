@@ -77,6 +77,73 @@ def extract_red_seal(image_path, output_path):
     return output_path
 
 
+def _red_seal_cluster_boxes(mask, min_red_pixels=1800, min_short_side=88):
+    """膨胀连通红区，把圆环章+五角星合成一个框（避免只抠到星）。"""
+    h, w = mask.shape[:2]
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23))
+    merged_mask = cv2.dilate(mask, kernel, iterations=2)
+    merged_mask = cv2.morphologyEx(
+        merged_mask, cv2.MORPH_CLOSE,
+        cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (17, 17)), iterations=2,
+    )
+    contours, _ = cv2.findContours(merged_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    boxes = []
+    for cnt in contours:
+        x, y, bw, bh = cv2.boundingRect(cnt)
+        short_side = min(bw, bh)
+        if short_side < min_short_side:
+            continue
+        if bw > w * 0.55 or bh > h * 0.55:
+            continue
+        ratio = bw / float(max(bh, 1))
+        if ratio < 0.55 or ratio > 1.85:
+            continue
+        crop = mask[y:y + bh, x:x + bw]
+        red_px = cv2.countNonZero(crop)
+        if red_px < min_red_pixels:
+            continue
+        boxes.append((x, y, bw, bh, red_px))
+    boxes.sort(key=lambda b: b[4], reverse=True)
+    return boxes
+
+
+def _dedupe_boxes(boxes, overlap=0.42):
+    merged = []
+    for x, y, bw, bh, weight in boxes:
+        cx, cy = x + bw / 2.0, y + bh / 2.0
+        dup = False
+        for mx, my, mbw, mbh, _ in merged:
+            mcx, mcy = mx + mbw / 2.0, my + mbh / 2.0
+            if abs(cx - mcx) < min(bw, mbw) * overlap and abs(cy - mcy) < min(bh, mbh) * overlap:
+                dup = True
+                break
+        if not dup:
+            merged.append((x, y, bw, bh, weight))
+    return merged
+
+
+def _prune_seal_star_fragments(seals, min_short=200, near_px=220):
+    """去掉大章旁边误检的五角星/红字小碎片。"""
+    if len(seals) <= 1:
+        return seals
+    big = [s for s in seals if min(s["w"], s["h"]) >= min_short]
+    if not big:
+        return seals
+    kept = []
+    for s in seals:
+        if min(s["w"], s["h"]) >= min_short:
+            kept.append(s)
+            continue
+        near_big = False
+        for b in big:
+            if abs(s["cx"] - b["cx"]) < near_px and abs(s["cy"] - b["cy"]) < near_px:
+                near_big = True
+                break
+        if not near_big:
+            kept.append(s)
+    return kept if kept else seals
+
+
 def extract_red_seals_from_image(image_path, output_dir, min_area=2500, pad=8):
     """从页面图中检测多个红章区域，返回带坐标的透明 PNG 信息列表。"""
     img = cv2.imread(image_path)
@@ -85,48 +152,37 @@ def extract_red_seals_from_image(image_path, output_dir, min_area=2500, pad=8):
 
     h, w = img.shape[:2]
     mask = red_mask(img)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    boxes = []
-    for cnt in contours:
-        x, y, bw, bh = cv2.boundingRect(cnt)
-        area = bw * bh
-        if area < min_area:
-            continue
-        short_side = min(bw, bh)
-        if short_side < 70:
-            continue
-        if bw > w * 0.55 or bh > h * 0.55:
-            continue
-        ratio = bw / float(bh)
-        if ratio < 0.6 or ratio > 1.7:
-            continue
-        score = _contour_score(cnt, bw, bh)
-        min_score = 0.12 if area >= 12000 else 0.2
-        if score < min_score:
-            continue
-        boxes.append((x, y, bw, bh, area, score, cnt))
+    cluster_boxes = _red_seal_cluster_boxes(mask)
+    contour_boxes = []
+    if not cluster_boxes:
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in contours:
+            x, y, bw, bh = cv2.boundingRect(cnt)
+            area = bw * bh
+            if area < min_area:
+                continue
+            short_side = min(bw, bh)
+            if short_side < 70:
+                continue
+            if bw > w * 0.55 or bh > h * 0.55:
+                continue
+            ratio = bw / float(bh)
+            if ratio < 0.6 or ratio > 1.7:
+                continue
+            score = _contour_score(cnt, bw, bh)
+            min_score = 0.08 if area >= 12000 else 0.12
+            if score < min_score:
+                continue
+            contour_boxes.append((x, y, bw, bh, int(area * max(score, 0.1))))
 
+    boxes = _dedupe_boxes(cluster_boxes + contour_boxes)
     if not boxes:
         return []
 
-    boxes.sort(key=lambda b: b[4], reverse=True)
-    merged = []
-    for box in boxes:
-        x, y, bw, bh, area, score, cnt = box
-        cx, cy = x + bw / 2, y + bh / 2
-        dup = False
-        for mx, my, mbw, mbh, _, _, _ in merged:
-            mcx, mcy = mx + mbw / 2, my + mbh / 2
-            if abs(cx - mcx) < min(bw, mbw) * 0.45 and abs(cy - mcy) < min(bh, mbh) * 0.45:
-                dup = True
-                break
-        if not dup:
-            merged.append(box)
-
     os.makedirs(output_dir, exist_ok=True)
     seals = []
-    for i, (x, y, bw, bh, _, score, _) in enumerate(merged[:6]):
+    for i, (x, y, bw, bh, _) in enumerate(boxes[:6]):
         x0 = max(0, x - pad)
         y0 = max(0, y - pad)
         x1 = min(w, x + bw + pad)
@@ -150,14 +206,17 @@ def extract_red_seals_from_image(image_path, output_dir, min_area=2500, pad=8):
             "h": y1 - y0,
             "cx": x0 + (x1 - x0) / 2.0,
             "cy": y0 + (y1 - y0) / 2.0,
-            "score": score,
+            "score": 1.0,
         })
 
+    seals = _prune_seal_star_fragments(seals)
     seals.sort(key=lambda s: (s["cy"], s["cx"]))
     return seals
 
 
-def extract_signature_areas(img_bgr, ocr_blocks=None, min_area=1200, dpi=180, out_dir=None, pad=6):
+def extract_signature_areas(
+    img_bgr, ocr_blocks=None, min_area=900, dpi=180, out_dir=None, pad=6, sig_page=False,
+):
     """
     Detect handwritten signature blobs on a signature page.
 
@@ -176,7 +235,7 @@ def extract_signature_areas(img_bgr, ocr_blocks=None, min_area=1200, dpi=180, ou
     _, binary = cv2.threshold(gray, 110, 255, cv2.THRESH_BINARY_INV)
     binary[red_mask(img_bgr) > 0] = 0
 
-    # Build OCR text mask to suppress printed-text regions
+    # 印刷体遮罩：签章页只遮上半页条款区，避免甲乙方大块 OCR 框抹掉手写签名
     text_mask = np.zeros((h, w), dtype=np.uint8)
     for blk in (ocr_blocks or []):
         box = blk.get("box") or {}
@@ -184,11 +243,13 @@ def extract_signature_areas(img_bgr, ocr_blocks=None, min_area=1200, dpi=180, ou
         y0_ = int(box.get("y0") or 0)
         x1_ = int(box.get("x1") or 0)
         y1_ = int(box.get("y1") or 0)
-        if x1_ > x0_ and y1_ > y0_:
-            text_mask[y0_:y1_, x0_:x1_] = 255
-    # Expand text mask slightly to absorb nearby stray pixels
-    kernel = np.ones((7, 7), np.uint8)
-    text_mask = cv2.dilate(text_mask, kernel, iterations=2)
+        if x1_ <= x0_ or y1_ <= y0_:
+            continue
+        if sig_page and ((y0_ + y1_) / 2.0) > h * 0.44:
+            continue
+        text_mask[y0_:y1_, x0_:x1_] = 255
+    kernel = np.ones((5, 5), np.uint8)
+    text_mask = cv2.dilate(text_mask, kernel, iterations=1 if sig_page else 2)
     binary[text_mask > 0] = 0
 
     # Merge nearby strokes into blobs
@@ -218,7 +279,9 @@ def extract_signature_areas(img_bgr, ocr_blocks=None, min_area=1200, dpi=180, ou
             continue
         # Must be in the lower half (signatures are at bottom of sig pages)
         cy_norm = (y + bh / 2.0) / h
-        if cy_norm < 0.3:
+        if cy_norm < (0.28 if sig_page else 0.3):
+            continue
+        if sig_page and aspect > 5.5:
             continue
         results.append((x, y, bw, bh, area))
 
@@ -246,7 +309,8 @@ def extract_signature_areas(img_bgr, ocr_blocks=None, min_area=1200, dpi=180, ou
     os.makedirs(out_dir, exist_ok=True)
 
     sigs = []
-    for i, (x, y, bw, bh, _) in enumerate(kept[:4]):
+    max_sigs = 3 if sig_page else 4
+    for i, (x, y, bw, bh, _) in enumerate(kept[:max_sigs]):
         x0 = max(0, x - pad)
         y0 = max(0, y - pad)
         x1 = min(w, x + bw + pad)
