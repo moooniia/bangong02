@@ -1834,7 +1834,8 @@ def _split_cover_party_lines(text, box, block):
     markers = [m.start() for m in re.finditer(r"甲\s*方|乙\s*方", text)]
     if not markers:
         return None
-    y0, y1 = box.get("y0", 0), box.get("y1", y0)
+    y0 = box.get("y0", 0)
+    y1 = box.get("y1", y0)
     h = max(y1 - y0, 1)
     slices = []
     for i, pos in enumerate(markers):
@@ -2007,7 +2008,8 @@ def _expand_layout_blocks(block):
     head = text[:idx].strip()
     if not head:
         return [block]
-    y0, y1 = box.get("y0") or 0, box.get("y1") or y0
+    y0 = box.get("y0") or 0
+    y1 = box.get("y1") or y0
     mid = y0 + int((y1 - y0) * 0.62)
     head_block = dict(block)
     head_block["text"] = head
