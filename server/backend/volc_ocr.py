@@ -386,16 +386,19 @@ def _detail_needs_image_mode(markdown, details):
     return weak_pages >= max(2, int(total * 0.55))
 
 
-def _page_rgb_and_b64(pdf_path, page_index, dpi=NORMAL_OCR_DPI):
+def _page_rgb_and_b64(pdf_path, page_index, dpi=NORMAL_OCR_DPI, correct_sideways=False):
     import cv2
     import numpy as np
 
-    bgr, layout = _get_corrected_page_bgr(pdf_path, page_index, dpi)
-    if _layout_needs_sideways_handling(layout):
-        log.info(
-            "页面侧躺表格转正 OCR: %s p%d kind=%s rot=%s",
-            pdf_path, page_index, layout.get("kind"), layout.get("correction_deg"),
-        )
+    if correct_sideways:
+        bgr, layout = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+        if _layout_needs_sideways_handling(layout):
+            log.info(
+                "页面侧躺表格转正 OCR: %s p%d kind=%s rot=%s",
+                pdf_path, page_index, layout.get("kind"), layout.get("correction_deg"),
+            )
+    else:
+        bgr = _render_page_bgr(pdf_path, page_index, dpi)
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
     fd, path = tempfile.mkstemp(suffix=".png")
     os.close(fd)
@@ -559,7 +562,13 @@ def _pdf_image_mode_pages(pdf_path, dpi=None, with_detail=False):
     details = []
     try:
         for pi in range(total):
-            img_b64, _ = _page_rgb_and_b64(ocr_path, pi, dpi=dpi)
+            correct_sideways = False
+            if total == 1:
+                layout = _analyze_page_layout(ocr_path, pi, dpi)
+                correct_sideways = _layout_needs_sideways_handling(layout)
+            img_b64, _ = _page_rgb_and_b64(
+                ocr_path, pi, dpi=dpi, correct_sideways=correct_sideways,
+            )
             data = _ocr_pdf_image_page_data(visual, img_b64)
             pages_md.append((data.get("markdown") or "").strip())
             if with_detail:
@@ -1186,8 +1195,8 @@ def _detect_visual_sideways_rotation(img_bgr):
         # 左转 90° 侧躺：内容宽扁，横向铺满但纵向不满
         if aspect > 1.22 and cover_w > 0.55 and cover_h < 0.72:
             return 90
-        # 右转 90° 侧躺：内容窄长，纵向铺满但横向不满
-        if aspect < 0.82 and cover_h > 0.55 and cover_w < 0.72:
+        # 右转 90° 侧躺：内容窄长，纵向铺满但横向明显不满
+        if aspect < 0.78 and cover_h > 0.58 and cover_w < 0.65:
             return 270
     return 0
 
@@ -1651,19 +1660,25 @@ def _should_render_inline_image(box, page_hw, skip_images):
     return bw * bh < pw * ph * 0.42
 
 
-def _get_pdf_page_image(pdf_path, page_index, cache_dir, dpi=120):
+def _get_pdf_page_image(pdf_path, page_index, cache_dir, dpi=120, correct_sideways=False):
     try:
         import cv2
     except ImportError:
         return None
 
-    layout = _analyze_page_layout(pdf_path, page_index, dpi)
-    rot_tag = f"_r{layout['correction_deg']}" if layout.get("correction_deg") else ""
+    rot_tag = ""
+    if correct_sideways:
+        layout = _analyze_page_layout(pdf_path, page_index, dpi)
+        if layout.get("correction_deg"):
+            rot_tag = f"_r{layout['correction_deg']}"
     path = os.path.join(cache_dir, f"page_{page_index:03d}_{dpi}{rot_tag}.png")
     if os.path.isfile(path) and os.path.getsize(path) > 0:
         return path
     os.makedirs(cache_dir, exist_ok=True)
-    bgr, _ = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+    if correct_sideways:
+        bgr, _ = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+    else:
+        bgr = _render_page_bgr(pdf_path, page_index, dpi)
     cv2.imwrite(path, bgr)
     return path if os.path.isfile(path) else None
 
