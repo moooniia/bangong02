@@ -989,6 +989,65 @@ def _begin_portrait_section(doc):
     return new_sec
 
 
+def _init_doc_landscape(doc, tight=True):
+    """单页宽表：整份文档横版+窄边距，标题与表格同页。"""
+    from docx.enum.section import WD_ORIENT
+    from docx.shared import Inches
+
+    sec = doc.sections[0]
+    sec.orientation = WD_ORIENT.LANDSCAPE
+    sec.page_width, sec.page_height = sec.page_height, sec.page_width
+    margin = Inches(0.35 if tight else 0.45)
+    sec.top_margin = margin
+    sec.bottom_margin = margin
+    sec.left_margin = margin
+    sec.right_margin = margin
+    return sec
+
+
+def _set_row_height(row, twips, exact=True):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    tr = row._tr
+    trPr = tr.get_or_add_trPr()
+    for old in trPr.findall(qn("w:trHeight")):
+        trPr.remove(old)
+    tr_height = OxmlElement("w:trHeight")
+    tr_height.set(qn("w:val"), str(int(twips)))
+    tr_height.set(qn("w:hRule"), "exact" if exact else "atLeast")
+    trPr.append(tr_height)
+
+
+def _set_cell_compact(cell, font_pt):
+    from docx.shared import Pt
+
+    _set_cell_font(cell, font_pt)
+    for para in cell.paragraphs:
+        pf = para.paragraph_format
+        pf.space_before = Pt(0)
+        pf.space_after = Pt(0)
+        pf.line_spacing = 1.0
+
+
+def _apply_compact_dense_table_style(table, nrows, font_pt, reserved_in=0.3):
+    from docx.shared import Inches
+
+    sec = table.part.document.sections[-1]
+    usable = sec.page_height - sec.top_margin - sec.bottom_margin - Inches(reserved_in)
+    row_twips = max(96, min(205, int(usable) // max(nrows, 1)))
+    if nrows >= 45:
+        font_pt = min(font_pt, 5.0)
+    elif nrows >= 35:
+        font_pt = min(font_pt, 5.5)
+    else:
+        font_pt = min(font_pt, 6.0)
+    for row in table.rows:
+        _set_row_height(row, row_twips, exact=True)
+        for cell in row.cells:
+            _set_cell_compact(cell, font_pt)
+
+
 def _sort_blocks(blocks):
     def key_fn(b):
         box = b.get("box") or {}
@@ -1339,10 +1398,12 @@ def _page_non_table_meaningful_len(page, watermarks, is_sig_page=False):
     return total
 
 
-def _render_remaining_md_tables(doc, md_tables, start_index, landscape=False):
+def _render_remaining_md_tables(doc, md_tables, start_index, landscape=False, table_opts=None):
+    opts = dict(table_opts or {})
+    landscape = opts.pop("landscape", landscape)
     for html in md_tables[start_index:]:
         if (html or "").strip():
-            _add_html_table(doc, html, landscape=landscape)
+            _add_html_table(doc, html, landscape=landscape, **opts)
 
 
 def _doc_body_text_len(doc):
@@ -1367,16 +1428,18 @@ def _build_page_warnings(snapshot_pages, abnormal_table_pages):
     return "; ".join(parts)
 
 
-def _render_dense_table_page(doc, page_md, watermarks, cache_dir):
+def _render_dense_table_page(doc, page_md, watermarks, cache_dir, table_opts=None):
     """密集工程表页：优先 markdown 表格 HTML + 横版，不走坐标段落排版。"""
     if not (page_md or "").strip():
         return
+    opts = dict(table_opts or {})
+    landscape = opts.pop("landscape", True)
     for block in re.split(r"\n\s*\n", page_md):
         block = block.strip()
         if not block:
             continue
         if block.lower().startswith("<table"):
-            _add_html_table(doc, block, landscape=True)
+            _add_html_table(doc, block, landscape=landscape, **opts)
             continue
         if block.startswith("#"):
             level = len(block) - len(block.lstrip("#"))
@@ -2439,7 +2502,10 @@ def _set_cell_font(cell, pt, bold=False, color_hex=None):
                 _set_run_font_style(run, "宋体", pt, east_asia="SimSun", bold=bold, color_hex=color_hex)
 
 
-def _add_html_table(doc, html, landscape=False):
+def _add_html_table(
+    doc, html, landscape=False, restore_portrait=True,
+    compact=False, skip_section_switch=False,
+):
     from docx.shared import Inches
 
     parsed = _parse_html_table_rows(html)
@@ -2472,8 +2538,10 @@ def _add_html_table(doc, html, landscape=False):
     ncols = max(ncols, max_col)
 
     use_landscape = landscape or (ncols >= 6 and nrows >= 8)
-    if use_landscape:
+    if use_landscape and not skip_section_switch:
         _begin_landscape_section(doc)
+    elif skip_section_switch:
+        use_landscape = True
 
     task_style = _is_task_checklist_table(parsed)
     font_pt = _task_table_font_pt(ncols, nrows) if task_style else (
@@ -2481,6 +2549,11 @@ def _add_html_table(doc, html, landscape=False):
         6.5 if ncols >= 6 or nrows >= 15 else
         7.5 if ncols >= 5 or nrows >= 10 else 9
     )
+    if compact and not task_style:
+        font_pt = min(
+            font_pt,
+            5.0 if nrows >= 45 else 5.5 if nrows >= 35 else 6.0,
+        )
 
     table = doc.add_table(rows=nrows, cols=ncols)
     table.style = "Table Grid"
@@ -2505,15 +2578,35 @@ def _add_html_table(doc, html, landscape=False):
         _apply_task_checklist_table_style(
             table, parsed, placements, nrows, ncols, font_pt, use_landscape,
         )
+    elif compact:
+        _apply_compact_dense_table_style(table, nrows, font_pt)
 
-    if use_landscape:
+    if use_landscape and restore_portrait:
         _begin_portrait_section(doc)
     return True
+
+
+def _single_page_table_opts(total_pages, dense_table):
+    """单页设备清单：横版一页打完，不切竖版、不拆节。"""
+    if total_pages == 1 and dense_table:
+        return {
+            "landscape": False,
+            "restore_portrait": False,
+            "compact": True,
+            "skip_section_switch": True,
+        }
+    return {
+        "landscape": True,
+        "restore_portrait": True,
+        "compact": False,
+        "skip_section_switch": False,
+    }
 
 
 def _render_page_blocks(
     doc, page, watermarks, cache_dir, mode,
     is_sig_page=False, page_index=None, pdf_path=None, table_landscape=False,
+    table_opts=None,
 ):
     blocks = _sort_blocks(page.get("textblocks") or [])
     page_hw = page.get("page_image_hw") or {}
@@ -2590,7 +2683,9 @@ def _render_page_blocks(
             if not html and block.get("url") and not skip_images:
                 _add_image(doc, block["url"], cache_dir, page_hw=page_hw, box=box)
             elif html:
-                _add_html_table(doc, html, landscape=table_landscape)
+                opts = dict(table_opts or {})
+                opts.setdefault("landscape", table_landscape)
+                _add_html_table(doc, html, **opts)
             continue
 
         if use_layout and box:
@@ -2699,6 +2794,10 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
             tables_before = len(doc.tables)
             used_snapshot = False
             dense_table = _page_is_dense_table(page, page_md)
+            single_dense = total_pages == 1 and dense_table
+            table_opts = _single_page_table_opts(total_pages, dense_table)
+            if single_dense and pi == 0:
+                _init_doc_landscape(doc)
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
@@ -2713,13 +2812,18 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     _render_page_blocks(
                         doc, quality_page, watermarks, cache_dir, mode,
                         is_sig_page=is_sig_page, page_index=pi, pdf_path=pdf_path,
-                        table_landscape=True,
+                        table_landscape=table_opts.get("landscape", True),
+                        table_opts=table_opts,
                     )
                     _render_remaining_md_tables(
-                        doc, md_tables, consumed, landscape=True,
+                        doc, md_tables, consumed,
+                        landscape=table_opts.get("landscape", True),
+                        table_opts=table_opts,
                     )
                 else:
-                    _render_dense_table_page(doc, page_md, watermarks, cache_dir)
+                    _render_dense_table_page(
+                        doc, page_md, watermarks, cache_dir, table_opts=table_opts,
+                    )
                 if _page_table_quality_abnormal(quality_page, page_md):
                     abnormal_table_pages.append(pi + 1)
             elif _should_render_snapshot(page, watermarks, is_sig_page, mode, pdf_path, pi):

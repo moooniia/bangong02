@@ -77,6 +77,7 @@ REGRESSION_CASES = [
             "min_chars": 500,
             "min_tables": 1,
             "max_page_breaks": 0,
+            "max_sections": 1,
             "must_contain": ("IT硬件产品", "软件产品", "60"),
         },
     },
@@ -122,12 +123,19 @@ def inspect_docx(path: str) -> dict:
 
     doc = Document(path)
     text_paragraphs = [p for p in doc.paragraphs if p.text.strip()]
-    body_text = "".join(p.text for p in doc.paragraphs)
+    table_text = []
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                if cell.text.strip():
+                    table_text.append(cell.text)
+    body_text = "".join(p.text for p in doc.paragraphs) + "".join(table_text)
     with zipfile.ZipFile(path) as z:
         xml = z.read("word/document.xml").decode("utf-8", errors="replace")
     return {
         "text_paragraphs": len(text_paragraphs),
         "page_breaks": xml.count('w:type="page"'),
+        "sections": len(doc.sections),
         "anchors": xml.count("wp:anchor"),
         "tables": len(doc.tables),
         "chars": len(body_text.strip()),
@@ -151,6 +159,10 @@ def _check_metrics(case: dict, metrics: dict) -> list[str]:
     if metrics["page_breaks"] > checks.get("max_page_breaks", 9999):
         errors.append(
             f"分页过多: {metrics['page_breaks']} > {checks['max_page_breaks']}"
+        )
+    if metrics.get("sections", 0) > checks.get("max_sections", 9999):
+        errors.append(
+            f"节过多: {metrics['sections']} > {checks['max_sections']}"
         )
     if metrics["anchors"] < checks.get("min_anchors", 0):
         errors.append(f"浮动图过少: {metrics['anchors']} < {checks['min_anchors']}")
