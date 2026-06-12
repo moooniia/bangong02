@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文本翻译 — 办公工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root { --pink:#e94c88; --pink-bg:#fdf0f6; --near-white:#fbfbfb; --light-gray:#f4f4f4; --dark:#252525; --ink3:#888; --ink4:#ccc; --border:#ebebeb; --radius:12px; }
+body { font-family:'Noto Sans SC',sans-serif; background:var(--near-white); color:var(--dark); font-size:14px; }
+nav { position:sticky; top:0; z-index:99; height:68px; padding:0 56px; display:flex; align-items:center; justify-content:space-between; background:rgba(251,251,251,.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+.logo { font-family:'Playfair Display',serif; font-size:20px; font-weight:900; color:var(--dark); text-decoration:none; }
+.logo span { color:var(--pink); }
+.nav-links { display:flex; gap:2px; list-style:none; }
+.nav-links a { text-decoration:none; color:var(--ink3); font-size:13px; padding:6px 14px; border-radius:20px; }
+main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
+.breadcrumb { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink4); margin-bottom:32px; }
+.breadcrumb a { text-decoration:none; color:var(--ink4); }
+.tool-header h1 { font-family:'Playfair Display',serif; font-size:32px; font-weight:900; }
+.tool-title-row { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+.tool-icon-big { width:52px; height:52px; background:var(--pink-bg); border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.tool-icon-big i { font-size:28px; color:var(--pink); }
+.tool-desc { font-size:14px; color:var(--ink3); line-height:1.75; margin-left:68px; margin-bottom:32px; }
+.lang-bar { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.lang-bar select { font-size:13px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:white; font-family:inherit; }
+.swap-btn { background:var(--light-gray); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.translate-box { display:flex; gap:16px; }
+.translate-panel { flex:1; background:white; border:1px solid var(--border); border-radius:12px; padding:16px; min-height:240px; display:flex; flex-direction:column; }
+.translate-panel label { font-size:11px; font-weight:700; color:var(--ink4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+.translate-panel textarea { flex:1; border:none; resize:none; font-family:inherit; font-size:14px; line-height:1.8; outline:none; min-height:180px; }
+.convert-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--pink); color:white; font-size:15px; font-weight:700; padding:16px; border-radius:12px; border:none; cursor:pointer; font-family:inherit; margin-top:16px; }
+.char-count { font-size:11px; color:var(--ink4); text-align:right; margin-top:6px; }
+.error-area { display:none; margin-top:16px; padding:16px; background:#fff5f5; border:1px solid #fca5a5; border-radius:12px; color:#dc2626; font-size:13px; text-align:center; }
+</style>
+  <script src="/assets/analytics.js" defer></script>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/">办公<span>工具箱</span></a>
+  <ul class="nav-links"><li><a href="/#translate">翻译</a></li></ul>
+</nav>
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><a href="/#translate">翻译</a><i class="ti ti-chevron-right"></i><span>文本翻译</span></div>
+  <div class="tool-header">
+    <div class="tool-title-row">
+      <div class="tool-icon-big"><i class="ti ti-language"></i></div>
+      <h1>文本翻译</h1>
+    </div>
+    <p class="tool-desc">输入文本即可翻译，支持中英日韩法德西等多种语言互译，免费使用。</p>
+  </div>
+  <div class="lang-bar">
+    <select id="fromLang">
+      <option value="auto">自动检测</option>
+      <option value="zh-CN">中文</option>
+      <option value="en">英语</option>
+      <option value="ja">日语</option>
+      <option value="ko">韩语</option>
+      <option value="fr">法语</option>
+      <option value="de">德语</option>
+      <option value="es">西班牙语</option>
+    </select>
+    <button class="swap-btn" onclick="swapLang()" title="互换语言"><i class="ti ti-arrows-exchange"></i></button>
+    <select id="toLang">
+      <option value="en">英语</option>
+      <option value="zh-CN">中文</option>
+      <option value="ja">日语</option>
+      <option value="ko">韩语</option>
+      <option value="fr">法语</option>
+      <option value="de">德语</option>
+      <option value="es">西班牙语</option>
+    </select>
+  </div>
+  <div class="translate-box">
+    <div class="translate-panel">
+      <label>原文</label>
+      <textarea id="sourceText" placeholder="在此输入或粘贴要翻译的文本..." oninput="updateCount()"></textarea>
+      <div class="char-count" id="charCount">0 / 5000</div>
+    </div>
+    <div class="translate-panel">
+      <label>译文</label>
+      <textarea id="targetText" placeholder="翻译结果将显示在这里..." readonly></textarea>
+    </div>
+  </div>
+  <button class="convert-btn" onclick="startTranslate()"><i class="ti ti-language"></i>开始翻译</button>
+  <div class="error-area" id="errorArea"></div>
+</main>
+<script>
+function updateCount() {
+  const len = document.getElementById('sourceText').value.length;
+  document.getElementById('charCount').textContent = len + ' / 5000';
+}
+function swapLang() {
+  const from = document.getElementById('fromLang');
+  const to = document.getElementById('toLang');
+  if (from.value === 'auto') return;
+  const tmp = from.value; from.value = to.value; to.value = tmp;
+  const src = document.getElementById('sourceText').value;
+  const tgt = document.getElementById('targetText').value;
+  if (tgt) { document.getElementById('sourceText').value = tgt; document.getElementById('targetText').value = src; updateCount(); }
+}
+async function startTranslate() {
+  const text = document.getElementById('sourceText').value.trim();
+  if (!text) { alert('请输入要翻译的文本'); return; }
+  document.getElementById('errorArea').style.display = 'none';
+  document.getElementById('targetText').value = '翻译中...';
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        from: document.getElementById('fromLang').value,
+        to: document.getElementById('toLang').value
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('targetText').value = data.text;
+    } else throw new Error(data.error);
+  } catch (e) {
+    document.getElementById('targetText').value = '';
+    document.getElementById('errorArea').textContent = e.message || '翻译失败';
+    document.getElementById('errorArea').style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

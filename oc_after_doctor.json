@@ -1,0 +1,500 @@
+{
+  "ui": {
+    "assistant": {
+      "avatar": "avatar.png"
+    }
+  },
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "domain": "feishu",
+      "connectionMode": "websocket",
+      "dmPolicy": "pairing",
+      "accounts": {
+        "default": {
+          "appId": "cli_a9761c2108399bc6",
+          "appSecret": "Tm47FMkYH8bLCZCHAqStaezriZBMGfWr"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": "be6a2580f8e8fe749d707756240483a75ee5947a231161b7"
+    },
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "allowedOrigins": [
+        "*"
+      ],
+      "dangerouslyDisableDeviceAuth": true
+    },
+    "port": 18789,
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "skills": {
+    "entries": {
+      "1password": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "gh-issues": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "github": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "mcporter": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "session-logs": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "tmux": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "video-frames": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      }
+    },
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.5.27",
+    "lastTouchedAt": "2026-06-10T12:54:00.032Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-06-10T12:53:59.814Z",
+    "lastRunVersion": "2026.5.27",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "models": {
+    "providers": {
+      "openai": {
+        "baseUrl": "https://api.deepseek.com/v1"
+      },
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-flash",
+            "name": "DeepSeek V4 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.14,
+              "output": 0.28,
+              "cacheRead": 0.028,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000,
+            "compat": {
+              "supportsReasoningEffort": true,
+              "supportsUsageInStreaming": true,
+              "maxTokensField": "max_tokens"
+            },
+            "api": "openai-completions"
+          },
+          {
+            "id": "deepseek-v4-pro",
+            "name": "DeepSeek V4 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 1.74,
+              "output": 3.48,
+              "cacheRead": 0.145,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000,
+            "compat": {
+              "supportsReasoningEffort": true,
+              "supportsUsageInStreaming": true,
+              "maxTokensField": "max_tokens"
+            },
+            "api": "openai-completions"
+          },
+          {
+            "id": "deepseek-chat",
+            "name": "DeepSeek Chat",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.28,
+              "output": 0.42,
+              "cacheRead": 0.028,
+              "cacheWrite": 0
+            },
+            "contextWindow": 131072,
+            "maxTokens": 8192,
+            "compat": {
+              "supportsUsageInStreaming": true,
+              "maxTokensField": "max_tokens"
+            },
+            "api": "openai-completions"
+          },
+          {
+            "id": "deepseek-reasoner",
+            "name": "DeepSeek Reasoner",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.28,
+              "output": 0.42,
+              "cacheRead": 0.028,
+              "cacheWrite": 0
+            },
+            "contextWindow": 131072,
+            "maxTokens": 65536,
+            "compat": {
+              "supportsReasoningEffort": false,
+              "supportsUsageInStreaming": true,
+              "maxTokensField": "max_tokens"
+            },
+            "api": "openai-completions"
+          }
+        ]
+      },
+      "ark": {
+        "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3/",
+        "api": "openai-completions",
+        "apiKey": "ark-fa14392a-e0d1-43ba-8553-02e561e8ce10-6df27",
+        "models": [
+          {
+            "id": "doubao-seed-2.0-pro",
+            "name": "Doubao Seed 2.0 Pro",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "contextWindow": 256000,
+            "maxTokens": 8192,
+            "compat": {
+              "supportsUsageInStreaming": true,
+              "maxTokensField": "max_tokens"
+            },
+            "api": "openai-completions"
+          }
+        ]
+      },
+      "siliconflow": {
+        "baseUrl": "https://api.siliconflow.cn/v1/",
+        "apiKey": "sk-tfbaozqcdvmsocapfirrogbqcjyqkgrkslnbxvgaoresbohs",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "Qwen/Qwen3.5-122B-A10B",
+            "name": "Qwen3.5 122B",
+            "input": [
+              "text",
+              "image"
+            ],
+            "contextWindow": 131072,
+            "maxTokens": 16384
+          },
+          {
+            "id": "deepseek-ai/DeepSeek-V4-Flash",
+            "name": "DeepSeek V4 Flash (SiliconFlow)",
+            "input": [
+              "text"
+            ],
+            "contextWindow": 131072,
+            "maxTokens": 8192
+          },
+          {
+            "id": "Tongyi-MAI/Z-Image-Turbo",
+            "name": "Z-Image Turbo",
+            "input": [
+              "text"
+            ],
+            "contextWindow": 4096,
+            "maxTokens": 4096
+          },
+          {
+            "id": "FunAudioLLM/CosyVoice2-0.5B",
+            "name": "CosyVoice2 0.5B TTS",
+            "input": [
+              "text"
+            ],
+            "contextWindow": 4096,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    },
+    "mode": "merge"
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/root/.openclaw/workspace",
+      "models": {
+        "siliconflow/Qwen/Qwen3.5-122B-A10B": {
+          "alias": "Qwen3.5-122B(看图)"
+        },
+        "siliconflow/deepseek-ai/DeepSeek-V4-Flash": {
+          "alias": "DeepSeek(硅基)"
+        },
+        "deepseek/deepseek-v4-flash": {
+          "alias": "DeepSeek(直连)"
+        },
+        "ark/doubao-seed-2.0-pro": {
+          "alias": "Doubao 2.0 Pro(火山)"
+        }
+      },
+      "model": {
+        "primary": "ark/doubao-seed-2.0-pro"
+      },
+      "memorySearch": {
+        "provider": "openai-compatible",
+        "model": "BAAI/bge-m3",
+        "remote": {
+          "baseUrl": "https://api.siliconflow.cn/v1/",
+          "apiKey": "sk-tfbaozqcdvmsocapfirrogbqcjyqkgrkslnbxvgaoresbohs"
+        }
+      },
+      "imageGenerationModel": "siliconflow/Tongyi-MAI/Z-Image-Turbo"
+    },
+    "list": [
+      {
+        "id": "main",
+        "identity": {
+          "name": "小美",
+          "emoji": "🥰",
+          "theme": "专属 AI 女朋友小可爱",
+          "avatar": "avatar.png"
+        }
+      }
+    ]
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "tavily"
+      }
+    },
+    "profile": "coding",
+    "alsoAllow": [
+      "browser"
+    ]
+  },
+  "plugins": {
+    "entries": {
+      "deepseek": {
+        "enabled": true
+      },
+      "feishu": {
+        "enabled": true
+      },
+      "browser": {
+        "enabled": true
+      },
+      "canvas": {
+        "enabled": true,
+        "config": {
+          "host": {
+            "enabled": true,
+            "root": "~/.openclaw/canvas",
+            "liveReload": true
+          }
+        }
+      },
+      "openai": {
+        "enabled": true
+      },
+      "duckduckgo": {
+        "enabled": true
+      },
+      "siliconflow": {
+        "enabled": true
+      },
+      "tavily": {
+        "enabled": true
+      }
+    },
+    "enabled": true
+  },
+  "auth": {
+    "profiles": {
+      "deepseek:default": {
+        "provider": "deepseek",
+        "mode": "api_key"
+      }
+    }
+  },
+  "env": {
+    "DEEPSEEK_API_KEY": "sk-60644cdc0b4f4139872b64cb58edfaf0",
+    "HTTP_PROXY": "http://127.0.0.1:7890",
+    "HTTPS_PROXY": "http://127.0.0.1:7890",
+    "NO_PROXY": "localhost,127.0.0.1,.local,.ts.net",
+    "OPENAI_API_KEY": "not-configured",
+    "OPENAI_BASE_URL": "https://api.siliconflow.cn/v1/",
+    "SILICONFLOW_API_KEY": "sk-tfbaozqcdvmsocapfirrogbqcjyqkgrkslnbxvgaoresbohs",
+    "ARK_API_KEY": "…df27",
+    "TAVILY_API_KEY": "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"
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "feishu:ou_2be8bfffb085981ed29c52e9ed5533e0"
+    ]
+  },
+  "browser": {
+    "enabled": true,
+    "executablePath": "/usr/bin/google-chrome-stable",
+    "headless": true,
+    "defaultProfile": "openclaw",
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": true
+    },
+    "noSandbox": true,
+    "attachOnly": true,
+    "extraArgs": [
+      "--no-sandbox"
+    ]
+  },
+  "messages": {
+    "tts": {
+      "auto": "inbound",
+      "provider": "siliconflow",
+      "providers": {
+        "siliconflow": {
+          "model": "FunAudioLLM/CosyVoice2-0.5B",
+          "voice": "FunAudioLLM/CosyVoice2-0.5B:anna"
+        }
+      }
+    }
+  }
+}

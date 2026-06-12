@@ -1,0 +1,35 @@
+/* 移动端响应式 */
+@media (max-width: 900px) {
+  nav { padding: 0 20px !important; height: 56px !important; }
+  .nav-links { gap: 0 !important; }
+  .nav-links a { padding: 6px 10px !important; font-size: 12px !important; }
+  main { padding-left: 20px !important; padding-right: 20px !important; }
+  .hero {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+    padding: 48px 0 40px !important;
+    margin-bottom: 48px !important;
+  }
+  .hero h1 { font-size: 36px !important; }
+  .hero-sub { font-size: 14px !important; }
+  .hero-pills { flex-direction: row !important; flex-wrap: wrap !important; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .tools-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; }
+  .footer-main { grid-template-columns: 1fr 1fr !important; gap: 32px !important; padding: 40px 20px 32px !important; }
+  .footer-bottom { flex-direction: column; gap: 12px; text-align: center; padding: 16px 20px !important; }
+  .footer-badges { flex-wrap: wrap; justify-content: center; }
+  .tool-desc { margin-left: 0 !important; margin-top: 12px; }
+  .tool-header h1 { font-size: 26px !important; }
+  .info-grid { grid-template-columns: 1fr !important; }
+  .upload-area { padding: 36px 20px !important; }
+  .translate-box { flex-direction: column !important; }
+  .translate-panel { min-height: 180px !important; }
+}
+
+@media (max-width: 600px) {
+  .nav-links { display: none !important; }
+  .hero h1 { font-size: 30px !important; }
+  .tool-title-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .footer-main { grid-template-columns: 1fr !important; }
+  .option-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+}

@@ -1,0 +1,184 @@
+"""OCR 优化 — 针对手机截图、扫描件，尽量让行政人员看得懂。"""
+import os
+import re
+import subprocess
+import tempfile
+
+import cv2
+import numpy as np
+import pytesseract
+from PIL import Image
+
+# 单块最大高度，超长截图切块识别
+CHUNK_HEIGHT = 2000
+OVERLAP = 120
+MIN_SCALE_TARGET = 2000
+
+
+def clean_ocr_text(text):
+    """去掉中文之间的多余空格，合并空行。"""
+    if not text:
+        return ''
+    text = re.sub(r'(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])', '', text)
+    text = re.sub(r'[ \t]+\n', '\n', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+def _load_bgr(path):
+    img = cv2.imread(path)
+    if img is not None:
+        return img
+    pil = Image.open(path).convert('RGB')
+    return cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
+
+
+def _preprocess(bgr):
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+
+    # 小图放大，提升小字识别率
+    if max(h, w) < MIN_SCALE_TARGET:
+        scale = MIN_SCALE_TARGET / max(h, w)
+        gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
+    # 轻度去噪 + 二值化（适合白底黑字截图）
+    gray = cv2.fastNlMeansDenoising(gray, None, 6, 7, 21)
+    binary = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY, 31, 12,
+    )
+    return binary
+
+
+def _score_text(text):
+    """越高越好 — 用中文占比衡量可读性。"""
+    if not text:
+        return 0
+    compact = re.sub(r'\s+', '', text)
+    if not compact:
+        return 0
+    cjk = sum(1 for c in compact if '\u4e00' <= c <= '\u9fff')
+    return cjk / len(compact)
+
+
+def _ocr_pil(pil_img, lang='chi_sim'):
+    best_text = ''
+    best_score = -1.0
+    for psm in (6, 4, 3, 11):
+        config = f'--psm {psm} --oem 1'
+        try:
+            raw = pytesseract.image_to_string(pil_img, lang=lang, config=config)
+            cleaned = clean_ocr_text(raw)
+            score = _score_text(cleaned)
+            if score > best_score:
+                best_score = score
+                best_text = cleaned
+        except Exception:
+            continue
+    return best_text
+
+
+def _ocr_array(binary):
+    return _ocr_pil(Image.fromarray(binary))
+
+
+def ocr_image(image_path, lang='chi_sim'):
+    binary = _preprocess(_load_bgr(image_path))
+    h, w = binary.shape
+
+    # 超长截图切块，避免 Tesseract 整图识别崩溃
+    if h > CHUNK_HEIGHT:
+        parts = []
+        y = 0
+        while y < h:
+            y2 = min(y + CHUNK_HEIGHT, h)
+            chunk = binary[y:y2, 0:w]
+            part = _ocr_array(chunk)
+            if part:
+                parts.append(part)
+            if y2 >= h:
+                break
+            y = y2 - OVERLAP
+        return clean_ocr_text('\n\n'.join(parts))
+
+    return _ocr_array(binary)
+
+
+def _ocr_document_page(image_path, lang='chi_sim'):
+    """合同/扫描页快速识别 — 不做多模式重试，适合批量 PDF。"""
+    bgr = _load_bgr(image_path)
+    if bgr is None:
+        return ''
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+    if max(h, w) > 2200:
+        scale = 2200 / max(h, w)
+        gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    config = '--psm 6 --oem 1'
+    raw = pytesseract.image_to_string(gray, lang=lang, config=config)
+    return clean_ocr_text(raw)
+
+
+def _pdf_to_page_images(pdf_path, tmp, dpi=150, timeout=180):
+    base = os.path.join(tmp, 'page')
+    subprocess.run(
+        ['pdftoppm', '-png', '-r', str(dpi), pdf_path, base],
+        capture_output=True, text=True, timeout=timeout, check=True,
+    )
+    pages = sorted(
+        f for f in os.listdir(tmp)
+        if f.startswith('page') and f.endswith('.png')
+    )
+    if not pages:
+        raise ValueError('PDF 转图片失败，请确认文件未损坏')
+    return pages
+
+
+def _cleanup_tmp(tmp):
+    for f in os.listdir(tmp):
+        try:
+            os.remove(os.path.join(tmp, f))
+        except OSError:
+            pass
+    try:
+        os.rmdir(tmp)
+    except OSError:
+        pass
+
+
+def ocr_pdf_for_word(pdf_path, max_pages=80, lang='chi_sim'):
+    """扫描 PDF 转可编辑 Word — 按页 OCR，返回每页文字列表。"""
+    tmp = tempfile.mkdtemp(prefix='ocr_word_')
+    try:
+        pages = _pdf_to_page_images(pdf_path, tmp, dpi=150, timeout=180)[:max_pages]
+        texts = []
+        for name in pages:
+            text = _ocr_document_page(os.path.join(tmp, name), lang)
+            texts.append(text or '')
+
+        joined = '\n'.join(t for t in texts if t.strip())
+        if len(joined.strip()) < 30:
+            raise ValueError('未能识别出清晰文字，请确认扫描件清晰或页数是否过多')
+        if _score_text(joined) < 0.15:
+            raise ValueError('识别结果可读性较差，建议换更清晰的扫描件或先用「扫描件转文字」预览')
+        return texts
+    finally:
+        _cleanup_tmp(tmp)
+
+
+def ocr_pdf(pdf_path, lang='chi_sim'):
+    tmp = tempfile.mkdtemp(prefix='ocr_pdf_')
+    try:
+        pages = _pdf_to_page_images(pdf_path, tmp, dpi=200, timeout=120)
+        texts = []
+        for name in pages[:50]:
+            text = ocr_image(os.path.join(tmp, name), lang)
+            if text:
+                texts.append(text)
+
+        if not texts:
+            return ''
+        return '\n\n--- 下一页 ---\n\n'.join(texts)
+    finally:
+        _cleanup_tmp(tmp)

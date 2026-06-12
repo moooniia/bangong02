@@ -1,0 +1,280 @@
+{
+  "schema": "contract-eval-v1",
+  "overall": 47.57,
+  "text_avg": 50.97,
+  "table_avg": 42.46,
+  "text_blocks": 11,
+  "table_blocks": 4,
+  "by_contract_block": {
+    "cover_header": 60.91,
+    "contract_parties": 50.75,
+    "contract_clause": 52.81,
+    "sign_page": 21.97,
+    "tech_spec_title": 50.77,
+    "tech_spec_body": 46.8,
+    "table": 42.46,
+    "seal_page": 38.98,
+    "policy_body": 86.59,
+    "closing_clause": 65.28
+  },
+  "worst_blocks": [
+    {
+      "contract_block": "table",
+      "page": 5,
+      "score": 0.0,
+      "type": "table"
+    },
+    {
+      "contract_block": "table",
+      "page": 8,
+      "score": 0.0,
+      "type": "table"
+    },
+    {
+      "contract_block": "seal_page",
+      "page": 6,
+      "score": 21.95,
+      "type": "text"
+    },
+    {
+      "contract_block": "sign_page",
+      "page": 3,
+      "score": 21.97,
+      "type": "text"
+    },
+    {
+      "contract_block": "tech_spec_body",
+      "page": 4,
+      "score": 30.33,
+      "type": "text"
+    },
+    {
+      "contract_block": "contract_parties",
+      "page": 2,
+      "score": 50.75,
+      "type": "text"
+    },
+    {
+      "contract_block": "tech_spec_title",
+      "page": 4,
+      "score": 50.77,
+      "type": "text"
+    },
+    {
+      "contract_block": "contract_clause",
+      "page": 2,
+      "score": 52.81,
+      "type": "text"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "cover_header",
+          "metric": "edit",
+          "score": 60.91,
+          "gt_len": 69,
+          "pred_len": 110
+        }
+      ],
+      "page_text_avg": 60.91,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "contract_parties",
+          "metric": "edit",
+          "score": 50.75,
+          "gt_len": 378,
+          "pred_len": 534
+        },
+        {
+          "type": "text",
+          "contract_block": "contract_clause",
+          "metric": "edit",
+          "score": 52.81,
+          "gt_len": 231,
+          "pred_len": 534
+        }
+      ],
+      "page_text_avg": 51.78,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "sign_page",
+          "metric": "edit",
+          "score": 21.97,
+          "gt_len": 132,
+          "pred_len": 104
+        }
+      ],
+      "page_text_avg": 21.97,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 4,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "tech_spec_title",
+          "metric": "edit",
+          "score": 50.77,
+          "gt_len": 115,
+          "pred_len": 473
+        },
+        {
+          "type": "text",
+          "contract_block": "tech_spec_body",
+          "metric": "edit",
+          "score": 30.33,
+          "gt_len": 131,
+          "pred_len": 473
+        }
+      ],
+      "page_text_avg": 40.55,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 5,
+      "blocks": [
+        {
+          "type": "table",
+          "contract_block": "table",
+          "metric": "teds",
+          "score": 0.0,
+          "note": null,
+          "gt_len": 109,
+          "pred_len": 0
+        },
+        {
+          "type": "text",
+          "contract_block": "tech_spec_body",
+          "metric": "edit",
+          "score": 63.28,
+          "gt_len": 1073,
+          "pred_len": 722
+        }
+      ],
+      "page_text_avg": 63.28,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 6,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "seal_page",
+          "metric": "edit",
+          "score": 21.95,
+          "gt_len": 66,
+          "pred_len": 82
+        }
+      ],
+      "page_text_avg": 21.95,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 7,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "seal_page",
+          "metric": "edit",
+          "score": 56.0,
+          "gt_len": 56,
+          "pred_len": 93
+        }
+      ],
+      "page_text_avg": 56.0,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 8,
+      "blocks": [
+        {
+          "type": "table",
+          "contract_block": "table",
+          "metric": "teds",
+          "score": 0.0,
+          "note": "snapshot_page",
+          "gt_len": 428,
+          "pred_len": 0
+        }
+      ],
+      "page_text_avg": 0.0,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 9,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "policy_body",
+          "metric": "edit",
+          "score": 86.59,
+          "gt_len": 538,
+          "pred_len": 552
+        }
+      ],
+      "page_text_avg": 86.59,
+      "page_table_avg": 0.0
+    },
+    {
+      "page": 10,
+      "blocks": [
+        {
+          "type": "table",
+          "contract_block": "table",
+          "metric": "teds",
+          "score": 79.43,
+          "note": null,
+          "gt_len": 2183,
+          "pred_len": 2102
+        }
+      ],
+      "page_text_avg": 0.0,
+      "page_table_avg": 79.43
+    },
+    {
+      "page": 11,
+      "blocks": [
+        {
+          "type": "table",
+          "contract_block": "table",
+          "metric": "teds",
+          "score": 90.42,
+          "note": null,
+          "gt_len": 2527,
+          "pred_len": 2494
+        }
+      ],
+      "page_text_avg": 0.0,
+      "page_table_avg": 90.42
+    },
+    {
+      "page": 12,
+      "blocks": [
+        {
+          "type": "text",
+          "contract_block": "closing_clause",
+          "metric": "edit",
+          "score": 65.28,
+          "gt_len": 132,
+          "pred_len": 193
+        }
+      ],
+      "page_text_avg": 65.28,
+      "page_table_avg": 0.0
+    }
+  ]
+}

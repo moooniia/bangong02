@@ -1,0 +1,16 @@
+[Unit]
+Description=Toolbox Flask Backend
+After=network.target nginx.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/toolbox/backend
+Environment=FLASK_DEBUG=0
+EnvironmentFile=-/home/toolbox/toolbox.env
+ExecStart=/usr/bin/python3.8 /home/toolbox/backend/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

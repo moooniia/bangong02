@@ -1,0 +1,32 @@
+# 备份与构建产物（用 backups/ + Git tag 管理发布）
+backups/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 密钥与环境（切勿提交）
+toolbox.env
+*.env
+monitor.env
+
+# 本地测试输出
+*.docx
+!server/**/*.docx
+
+# OCR 缓存（体积大，可本地保留）
+*_detail*.json
+1212_detail*.json
+
+# 系统与 IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 临时脚本输出
+/tmp/

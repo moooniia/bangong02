@@ -1,0 +1,46 @@
+{
+  "schema": "contract-gt-v1",
+  "description": "扫描合同 PDF 真值模板，可复用到同类工程/服务合同",
+  "compatible_with": "OmniDocBench layout_dets 子集",
+  "page_block_types": {
+    "cover_header": "封面页眉编号",
+    "cover_title": "封面标题",
+    "cover_parties": "封面甲乙方",
+    "contract_parties": "合同首部甲乙方信息",
+    "contract_clause": "合同条款正文",
+    "sign_page": "签字页",
+    "seal_page": "签章页",
+    "tech_spec_title": "技术规格书标题",
+    "tech_spec_body": "技术规格书正文",
+    "survey_table": "基坑/监测概况表",
+    "score_table": "服务管理考评打分表",
+    "policy_body": "供应商负面行为等制度正文",
+    "product_table": "产品/设备清单表",
+    "closing_clause": "协议尾部条款"
+  },
+  "typical_page_map": {
+    "1": ["cover_header", "cover_title", "cover_parties"],
+    "2": ["contract_parties", "contract_clause"],
+    "3": ["sign_page"],
+    "4": ["tech_spec_title", "tech_spec_body"],
+    "5": ["tech_spec_body", "survey_table"],
+    "6": ["seal_page"],
+    "7": ["seal_page"],
+    "8": ["score_table"],
+    "9": ["policy_body"],
+    "10": ["product_table"],
+    "11": ["product_table"],
+    "12": ["closing_clause"]
+  },
+  "metrics": {
+    "text": "Normalized Edit Distance → (1-edit)*100",
+    "table": "TEDS (Tree Edit Distance based Similarity)",
+    "overall": "text_blocks 均值 * 0.6 + table_blocks 均值 * 0.4"
+  },
+  "new_contract_checklist": [
+    "从原 PDF 导出 200dpi 页图到 gt/<id>/images/",
+    "按 typical_page_map 标 text_block / table（ignore 页眉页脚水印）",
+    "运行 export_preds.py 导出预测 markdown",
+    "运行 eval.py 得到分数；肉眼仍做最终验收"
+  ]
+}
