@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.14] - 2026-06-12
+
+构建号: `2026.06.12.23`
+
+Fix: probe 90/270 even for sidebar pages, skip only 180 to prevent misflip
+
+### Changed
+- Fix: probe 90/270 even for sidebar pages, skip only 180 to prevent misflip
+
+备份: `backups/v0.10.14/`
+
+
 ## [0.10.13] - 2026-06-12
 
 构建号: `2026.06.12.22`

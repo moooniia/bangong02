@@ -1359,16 +1359,18 @@ def _detect_best_coarse_rotation(img_bgr, allow_full_probe=False):
     cover = _ink_cover_metrics(img_bgr)
     if cover["cover_w"] > 0.76 and cover["cover_h"] > 0.76:
         return 0
-    if _has_sidebar_vertical_layout(img_bgr):
-        return _detect_visual_sideways_rotation(img_bgr)
+
+    has_sidebar = _has_sidebar_vertical_layout(img_bgr)
 
     if not allow_full_probe:
         return _detect_visual_sideways_rotation(img_bgr)
 
+    # 侧边竖排页跳过 180°（防误翻转），仍允许 90°/270° 打分
+    candidates = (90, 270) if has_sidebar else (90, 180, 270)
     base_score = _orientation_combined_score(img_bgr)
     best_deg = 0
     best_score = base_score
-    for deg in (90, 180, 270):
+    for deg in candidates:
         score = _orientation_combined_score(_rotate_bgr(img_bgr, deg))
         if score > best_score:
             best_score = score
