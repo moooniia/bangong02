@@ -330,7 +330,7 @@ def _detail_looks_fragmented(page):
         if (b.get("label") or "para").lower() not in ("image", "figure", "fig", "foot")
     ]
     if not blocks:
-        return True
+        return False
     texts = [_normalize_text(b.get("text") or "") for b in blocks]
     texts = [t for t in texts if t]
     if not texts:
