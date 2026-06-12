@@ -1,5 +1,6 @@
 """火山引擎 OCR — 智能文档解析 (ocr_pdf) + 通用文字识别 (ocr_normal)。"""
 import base64
+import copy
 import json
 import logging
 import os
@@ -1232,6 +1233,77 @@ def _page_table_quality_abnormal(page, page_md=""):
     return False
 
 
+def _extract_md_tables(page_md):
+    return _TABLE_HTML_RE.findall(page_md or "")
+
+
+def _table_html_quality(html):
+    if not (html or "").strip():
+        return 0.0
+    return _table_ocr_quality(_parse_html_table_rows(html))
+
+
+def _pick_best_table_html(detail_html, md_html, dense=False):
+    """P1 双通道：按 OCR 质量在 detail 与 markdown 表格间择优。"""
+    dq = _table_html_quality(detail_html)
+    mq = _table_html_quality(md_html)
+    if not (md_html or "").strip():
+        return detail_html or ""
+    if not detail_html or "<table" not in (detail_html or "").lower():
+        return md_html
+    if dense and mq >= max(dq, 0.35) * 0.85:
+        return md_html
+    if dq < 0.35 and mq > dq:
+        return md_html
+    if mq < 0.35 and dq > mq:
+        return detail_html
+    return md_html if mq > dq else detail_html
+
+
+def _prepare_dual_channel_page(page, page_md, dense=False):
+    """将 markdown 表格择优合并进 detail 块，返回 (page_copy, consumed_md_count, md_tables)。"""
+    page_copy = copy.deepcopy(page)
+    md_tables = _extract_md_tables(page_md)
+    md_i = 0
+    for block in page_copy.get("textblocks") or []:
+        label = (block.get("label") or "para").lower()
+        text = block.get("text") or ""
+        is_table = label == "table" or "<table" in text.lower()
+        if not is_table:
+            continue
+        detail_parts = _TABLE_HTML_RE.findall(text)
+        detail_html = detail_parts[0] if detail_parts else text
+        md_html = md_tables[md_i] if md_i < len(md_tables) else ""
+        chosen = _pick_best_table_html(detail_html, md_html, dense=dense)
+        if chosen:
+            block["text"] = chosen
+            block["label"] = "table"
+        if md_i < len(md_tables):
+            md_i += 1
+    return page_copy, md_i, md_tables
+
+
+def _page_non_table_meaningful_len(page, watermarks, is_sig_page=False):
+    total = 0
+    for block in page.get("textblocks") or []:
+        label = (block.get("label") or "para").lower()
+        if label in ("foot", "image", "table"):
+            continue
+        text = block.get("text") or ""
+        if "<table" in text.lower():
+            continue
+        norm = _normalize_text(text)
+        if norm and not _is_noise_text(norm, watermarks, sig_page=is_sig_page):
+            total += len(norm)
+    return total
+
+
+def _render_remaining_md_tables(doc, md_tables, start_index, landscape=False):
+    for html in md_tables[start_index:]:
+        if (html or "").strip():
+            _add_html_table(doc, html, landscape=landscape)
+
+
 def _doc_body_text_len(doc):
     total = 0
     for para in doc.paragraphs:
@@ -2040,7 +2112,10 @@ def _add_html_table(doc, html, landscape=False):
     return True
 
 
-def _render_page_blocks(doc, page, watermarks, cache_dir, mode, is_sig_page=False, page_index=None, pdf_path=None):
+def _render_page_blocks(
+    doc, page, watermarks, cache_dir, mode,
+    is_sig_page=False, page_index=None, pdf_path=None, table_landscape=False,
+):
     blocks = _sort_blocks(page.get("textblocks") or [])
     page_hw = page.get("page_image_hw") or {}
 
@@ -2097,7 +2172,7 @@ def _render_page_blocks(doc, page, watermarks, cache_dir, mode, is_sig_page=Fals
             if not html and block.get("url") and not skip_images:
                 _add_image(doc, block["url"], cache_dir, page_hw=page_hw, box=box)
             elif html:
-                _add_html_table(doc, html)
+                _add_html_table(doc, html, landscape=table_landscape)
             continue
 
         if use_layout and box:
@@ -2197,8 +2272,26 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
             dense_table = _page_is_dense_table(page, page_md)
 
             if dense_table:
-                _render_dense_table_page(doc, page_md, watermarks, cache_dir)
-                if _page_table_quality_abnormal(page, page_md):
+                # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
+                non_table_len = _page_non_table_meaningful_len(
+                    page, watermarks, is_sig_page=is_sig_page,
+                )
+                quality_page = page
+                if non_table_len >= 15:
+                    quality_page, consumed, md_tables = _prepare_dual_channel_page(
+                        page, page_md, dense=True,
+                    )
+                    _render_page_blocks(
+                        doc, quality_page, watermarks, cache_dir, mode,
+                        is_sig_page=is_sig_page, page_index=pi, pdf_path=pdf_path,
+                        table_landscape=True,
+                    )
+                    _render_remaining_md_tables(
+                        doc, md_tables, consumed, landscape=True,
+                    )
+                else:
+                    _render_dense_table_page(doc, page_md, watermarks, cache_dir)
+                if _page_table_quality_abnormal(quality_page, page_md):
                     abnormal_table_pages.append(pi + 1)
             elif _should_render_snapshot(page, watermarks, is_sig_page, mode, pdf_path, pi):
                 if _render_pdf_page_snapshot(
@@ -2207,9 +2300,12 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     used_snapshot = True
                     snapshot_pages.append(pi + 1)
             else:
+                prepared, consumed, md_tables = _prepare_dual_channel_page(
+                    page, page_md, dense=False,
+                )
                 _render_page_blocks(
                     doc,
-                    page,
+                    prepared,
                     watermarks,
                     cache_dir,
                     mode,
@@ -2217,6 +2313,7 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     page_index=pi,
                     pdf_path=pdf_path,
                 )
+                _render_remaining_md_tables(doc, md_tables, consumed, landscape=False)
 
             if pdf_path and _page_has_image_blocks(page) and not dense_table:
                 pg_w_emu, pg_h_emu = _get_page_emu_size(pdf_path, pi)
