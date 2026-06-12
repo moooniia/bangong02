@@ -3626,8 +3626,29 @@ def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None):
     return {"route": "volc-image-table", "pages": len(pages_md)}
 
 
+def _pdf_has_page_rotation(pdf_path):
+    """检测 PDF 是否含非零 /Rotate 元数据（fitz 渲染会补偿，但 Volc raw API 不会）。"""
+    try:
+        doc = fitz.open(pdf_path)
+        result = any(page.rotation != 0 for page in doc)
+        doc.close()
+        return result
+    except Exception:
+        return False
+
+
 def volc_pdf_to_docx(pdf_path, output_path):
     """返回 {"route": str, "warning": str}。"""
+    # PDF 含 /Rotate 元数据时，直传给 Volc API 会按原始（未旋转）坐标 OCR，
+    # 导致文字错乱。改走逐页 PNG 模式：fitz 渲染时已应用旋转，Volc 看到方向正确的图像。
+    if _pdf_has_page_rotation(pdf_path):
+        try:
+            log.info("PDF 含页面旋转元数据，走逐页 PNG 模式: %s", pdf_path)
+            meta = _try_image_mode_docx(pdf_path, output_path, markdown="", details=[])
+            return {"route": meta["route"], "warning": meta.get("warning") or ""}
+        except Exception as exc:
+            log.warning("旋转PDF图片模式失败(%.80s)，降级直传: %s", exc, pdf_path)
+
     markdown, details = pdf_to_markdown(pdf_path)
     needs_image_mode = _detail_needs_image_mode(markdown, details)
     if needs_image_mode:
