@@ -89,6 +89,11 @@ _OCR_FIXES = [
     (re.compile(r"勒茶"), "勘察"),
     (re.compile(r"限眼同的求"), "按照"),
     (re.compile(r"甲防"), "甲方"),
+    (re.compile(r"平方"), "甲方"),
+    (re.compile(r"上渣"), "上海"),
+    (re.compile(r"勤装"), "勘察"),
+    (re.compile(r"黑章"), "盖章"),
+    (re.compile(r"舍:\s*公"), "："),
     (re.compile(r"授校"), "授权"),
     (re.compile(r"仅器"), "仪器"),
     (re.compile(r"寄注"), "备注"),
@@ -318,12 +323,42 @@ def _doc_parse_image_only(markdown, details):
     return False
 
 
+def _detail_looks_fragmented(page):
+    """直传 detail 碎成大量短块（签章页常见），PNG 重解析质量更高。"""
+    blocks = [
+        b for b in (page.get("textblocks") or [])
+        if (b.get("label") or "para").lower() not in ("image", "figure", "fig", "foot")
+    ]
+    if not blocks:
+        return True
+    texts = [_normalize_text(b.get("text") or "") for b in blocks]
+    texts = [t for t in texts if t]
+    if not texts:
+        return True
+    short = sum(1 for t in texts if len(t) <= 4)
+    if short >= max(3, int(len(texts) * 0.32)):
+        return True
+    scores = [_text_quality_score(t) for t in texts]
+    if sum(scores) / len(scores) < 0.38:
+        return True
+    blob = " ".join(texts)
+    if re.search(r"签字|盖章|合同专用章", blob) and not re.search(r"第[一二三四五六七八九十\d]+条", blob):
+        if short >= 2:
+            return True
+    return False
+
+
 def _detail_needs_image_mode(markdown, details):
     """PDF 直传多为整页图或签字页碎片（合同 A 类），应逐页 PNG 重解析。"""
     if _doc_parse_image_only(markdown, details):
         return True
     if not details:
         return False
+    if len(details) == 1 and _detail_looks_fragmented(details[0]):
+        return True
+    if any(_detail_looks_fragmented(p) for p in details):
+        if len(details) <= 3:
+            return True
     total = len(details)
     weak_pages = 0
     strong_pages = 0
@@ -1988,8 +2023,85 @@ def _cover_paragraph_align(text, label, box, page_hw):
 # sufficient to read party names without hardcoded fallbacks.
 
 
-def _split_sig_lines(text):
+def _polish_sig_ocr_text(text):
     text = _polish_sig_text(text)
+    text = re.sub(r"^平方", "甲方", text)
+    text = re.sub(r"(?<![\u4e00-\u9fff])上公司(?![\u4e00-\u9fff])", "上海公司", text)
+    return text.strip()
+
+
+def _is_sig_garbage_line(text):
+    text = _normalize_text(text)
+    if not text:
+        return True
+    if len(text) <= 2 and not re.search(r"[\d]{4}", text):
+        return True
+    if re.fullmatch(r"[\d\.\s期b]+", text, re.I):
+        return True
+    if text in ("德", "天", "大", "唇:", "合。", "省", "示", "荣周", "天道", "有限公司"):
+        return True
+    if re.fullmatch(r"臻子不?\"?", text):
+        return True
+    if _text_quality_score(text) < 0.22 and not _is_sig_relevant_text(text):
+        return True
+    return False
+
+
+def _expand_sig_blocks(block):
+    """签章页：去碎片、拆甲乙方与签字/盖章行。"""
+    label = (block.get("label") or "para").lower()
+    if label in ("image", "table", "foot"):
+        return []
+    if label == "header":
+        return [block]
+    text = _polish_sig_ocr_text(block.get("text") or "")
+    if not text or _is_sig_garbage_line(text):
+        return []
+    if re.match(r"^第[一二三四五六七八九十\d]+条", text):
+        return [dict(block, text=text)]
+    if re.search(r"投诉电话|邮箱:", text) or "@" in text:
+        return [dict(block, text=text)]
+    if re.search(r"日期\s*[：:]", text):
+        line = re.sub(r"日期\s*[：:]\s*", "日期：", text)
+        line = re.sub(r"日期：\s*0年.*$", "日期：", line).strip()
+        return [dict(block, text=line)] if line else []
+    if re.search(r"甲\s*方|乙\s*方|签字/盖章|签字|盖章", text):
+        lines = _split_sig_lines(text)
+        if len(lines) <= 1 and len(text) > 36:
+            markers = [m.start() for m in re.finditer(r"签字/盖章|签字|盖章|日期", text)]
+            if markers:
+                boundaries = sorted(set([0] + markers))
+                lines = [
+                    text[boundaries[i]:boundaries[i + 1]].strip()
+                    for i in range(len(boundaries) - 1)
+                ]
+                lines.append(text[boundaries[-1]:])
+                lines = [p for p in lines if p]
+        out = []
+        box = dict(block.get("box") or {})
+        y0 = box.get("y0") or 0
+        y1 = box.get("y1") or y0
+        h = max(y1 - y0, 1)
+        lines = [ln for ln in lines if not _is_sig_garbage_line(ln)]
+        n = max(len(lines), 1)
+        for i, line in enumerate(lines):
+            line = _polish_sig_ocr_text(line)
+            if _is_sig_garbage_line(line):
+                continue
+            sub = dict(block)
+            sub["text"] = line
+            sub["box"] = {
+                **box,
+                "y0": y0 + int(h * (i / n)),
+                "y1": y0 + int(h * ((i + 1) / n)),
+            }
+            out.append(sub)
+        return out
+    return [dict(block, text=text)]
+
+
+def _split_sig_lines(text):
+    text = _polish_sig_ocr_text(text)
     if not re.search(r"甲\s*方|乙\s*方", text):
         return [text] if text else []
     # Split before each marker without consuming it (py3.6-safe)
@@ -2466,8 +2578,10 @@ def _render_page_blocks(
             continue
 
         if use_layout and box:
-            if page_index == 0 and label in ("para", "title", "cap"):
+            if page_index == 0 and not is_sig_page and label in ("para", "title", "cap"):
                 expanded = _expand_cover_blocks(block)
+            elif is_sig_page and label in ("para", "title", "cap"):
+                expanded = _expand_sig_blocks(block)
             elif label == "para":
                 expanded = _expand_layout_blocks(block)
             else:

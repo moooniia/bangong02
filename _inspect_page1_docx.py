@@ -2,7 +2,7 @@
 from docx import Document
 import zipfile
 
-path = r"C:\Users\paz\Desktop\P T W 测试\page_1_p2_v095.docx"
+path = r"C:\Users\paz\Desktop\P T W 测试\page_1_p2_v096.docx"
 doc = Document(path)
 print("sections", len(doc.sections))
 total_sb = 0.0

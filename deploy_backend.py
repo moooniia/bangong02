@@ -56,6 +56,11 @@ def main():
         help="SemVer 递增级别（默认 patch）",
     )
     parser.add_argument("--skip-smoke", action="store_true", help="跳过部署前冒烟测试")
+    parser.add_argument(
+        "--skip-regression",
+        action="store_true",
+        help="跳过五样例回归（仅编译检查；默认部署会跑回归）",
+    )
     parser.add_argument("--no-tag", action="store_true", help="不创建 Git tag")
     args = parser.parse_args()
 
@@ -66,10 +71,16 @@ def main():
 
     if not args.skip_smoke:
         print("=== 冒烟测试 ===")
-        ok, msg = run_smoke(online=False)
+        run_regression = not args.skip_regression
+        if run_regression:
+            print("（含五样例回归 page_1 / page_7 / A / B / C，可用 --skip-regression 跳过）")
+        ok, msg = run_smoke(regression=run_regression)
         print(msg)
         if not ok:
-            print("冒烟未通过，已中止部署。可用 --skip-smoke 强制（不推荐）")
+            print(
+                "冒烟未通过，已中止部署。"
+                "可用 --skip-smoke 或 --skip-regression 强制（不推荐）"
+            )
             sys.exit(1)
 
     old_semver = read_semver()
