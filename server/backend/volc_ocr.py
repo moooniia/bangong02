@@ -336,14 +336,18 @@ def _detail_looks_fragmented(page):
     if not texts:
         return True
     short = sum(1 for t in texts if len(t) <= 4)
-    if short >= max(3, int(len(texts) * 0.32)):
-        return True
     scores = [_text_quality_score(t) for t in texts]
-    if sum(scores) / len(scores) < 0.38:
-        return True
+    avg_score = sum(scores) / len(scores)
     blob = " ".join(texts)
-    if re.search(r"签字|盖章|合同专用章", blob) and not re.search(r"第[一二三四五六七八九十\d]+条", blob):
-        if short >= 2:
+    sig_like = bool(re.search(r"签字|盖章|合同专用章|甲方|乙方", blob))
+    if not sig_like and avg_score >= 0.42:
+        return False
+    if short >= max(3, int(len(texts) * 0.32)) and avg_score < 0.42:
+        return True
+    if avg_score < 0.38:
+        return True
+    if sig_like and not re.search(r"第[一二三四五六七八九十\d]+条", blob):
+        if short >= 2 and avg_score < 0.45:
             return True
     return False
 
@@ -2040,6 +2044,10 @@ def _is_sig_garbage_line(text):
         return True
     if text in ("德", "天", "大", "唇:", "合。", "省", "示", "荣周", "天道", "有限公司"):
         return True
+    if re.search(r"^盖章云|^天道|^合。\s*同专用章", text):
+        return True
+    if "同专用章" in text and not re.search(r"甲\s*方|乙\s*方|签字", text):
+        return True
     if re.fullmatch(r"臻子不?\"?", text):
         return True
     if _text_quality_score(text) < 0.22 and not _is_sig_relevant_text(text):
@@ -2119,6 +2127,8 @@ def _polish_sig_text(text):
     text = _normalize_text(text)
     text = re.sub(r"\(签章页\)\s*国\s*同", "(签章页)", text)
     text = re.sub(r"签字/盖章:\s*个同专用章", "签字/盖章：", text)
+    text = re.sub(r"签字/盖章:\s*[：:]+", "签字/盖章：", text)
+    text = re.sub(r"：合同专用章", "合同专用章", text)
     return text.strip()
 
 
@@ -2141,6 +2151,8 @@ def _format_party_text(text, sig_page=False):
     name = re.sub(r",?\(上海\)", "", name).strip()
     name = re.sub(r"(正)?[德厚生于哪臻善至不\"、\s]+$", "", name).strip()
     name = re.sub(r"(签字|盖章|日期|合同专用章).*$", "", name).strip()
+    name = re.sub(r"\s+江西省\s*荣周.*$", "", name).strip()
+    name = re.sub(r"\s+省\s+示.*$", "", name).strip()
     return f"{party}：【{name}】"
 
 
