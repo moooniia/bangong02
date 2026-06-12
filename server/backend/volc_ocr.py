@@ -1904,7 +1904,7 @@ def _split_cover_party_lines(text, box, block):
 
 
 def _split_cover_title_contract(block):
-    """按「服务合同」在句中位置切分，比固定 62% 更符合原版式。"""
+    """拆标题与「服务合同」：按标题行数估纵坐标，避免按字数比例压到框底。"""
     text = _normalize_text(block.get("text") or "")
     idx = text.find("服务合同")
     if idx <= 0:
@@ -1913,11 +1913,12 @@ def _split_cover_title_contract(block):
     y0 = box.get("y0") or 0
     y1 = box.get("y1") or y0
     h = max(y1 - y0, 1)
-    ratio = idx / max(len(text), 1)
-    mid = y0 + int(h * ratio)
     head = _extract_cover_title_text(text[:idx].strip())
     if not head:
         return [block]
+    head_lines = max(1, (len(head) + 21) // 22)
+    frac = min(0.62, 0.28 + head_lines * 0.11)
+    mid = y0 + int(h * frac)
     head_block = dict(block)
     head_block["text"] = head
     head_block["box"] = {**box, "y1": mid}
