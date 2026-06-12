@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""部署前冒烟：语法检查 + 五样例回归（page_1 / page_7 / A / B / C）。"""
+"""部署前冒烟：语法检查 + 六样例回归（page_1 / page_6 / page_7 / A / B / C）。"""
 import os
 import subprocess
 import sys
@@ -61,11 +61,23 @@ REGRESSION_CASES = [
     {
         "name": "C.pdf",
         "filename": "C.pdf",
-        "expect_route": "volc-normal",
+        "expect_route": "volc-hybrid",
         "timeout": 180,
         "checks": {
             "min_chars": 50,
             "min_text_paragraphs": 3,
+        },
+    },
+    {
+        "name": "page_6.pdf",
+        "filename": "page_6.pdf",
+        "expect_route": "volc-hybrid",
+        "timeout": 180,
+        "checks": {
+            "min_chars": 500,
+            "min_tables": 1,
+            "max_page_breaks": 0,
+            "must_contain": ("IT硬件产品", "软件产品", "60"),
         },
     },
     {
@@ -247,7 +259,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--regression",
         action="store_true",
-        help="跑 page_1 / A / B / C 四样例线上回归",
+        help="跑 page_1 / page_6 / page_7 / A / B / C 六样例线上回归",
     )
     p.add_argument(
         "--online",

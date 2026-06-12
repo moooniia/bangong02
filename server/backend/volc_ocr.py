@@ -2915,10 +2915,15 @@ def volc_pdf_to_docx(pdf_path, output_path):
             return {"route": "volc", "warning": ""}
 
     image_only = _doc_parse_image_only(markdown, details)
-    if image_only:
+    if not has_usable:
         try:
-            log.info("PDF 直传仅图链，逐页 PNG 智能文档解析: %s", pdf_path)
-            meta = _try_image_mode_docx(pdf_path, output_path, markdown=markdown, details=details)
+            log.info(
+                "直传无有效内容(image_only=%s)，尝试逐页 PNG 智能文档解析: %s",
+                image_only, pdf_path,
+            )
+            meta = _try_image_mode_docx(
+                pdf_path, output_path, markdown=markdown, details=details,
+            )
             return {"route": meta["route"], "warning": meta.get("warning") or ""}
         except Exception as e:
             log.warning("逐页 PNG 智能文档解析失败(%.80s)，继续 fallback", e)
