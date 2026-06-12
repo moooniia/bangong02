@@ -391,11 +391,14 @@ def _page_rgb_and_b64(pdf_path, page_index, dpi=NORMAL_OCR_DPI, correct_sideways
     import numpy as np
 
     if correct_sideways:
-        bgr, layout = _get_corrected_page_bgr(pdf_path, page_index, dpi)
-        if _layout_needs_sideways_handling(layout):
+        bgr, layout = _get_corrected_page_bgr(
+            pdf_path, page_index, dpi, probe_coarse=True,
+        )
+        if _layout_needs_orientation_handling(layout):
             log.info(
-                "页面侧躺表格转正 OCR: %s p%d kind=%s rot=%s",
-                pdf_path, page_index, layout.get("kind"), layout.get("correction_deg"),
+                "页面扫描校正 OCR: %s p%d kind=%s coarse=%s skew=%.1f",
+                pdf_path, page_index, layout.get("kind"),
+                layout.get("correction_deg"), layout.get("skew_deg") or 0,
             )
     else:
         bgr = _render_page_bgr(pdf_path, page_index, dpi)
@@ -564,8 +567,8 @@ def _pdf_image_mode_pages(pdf_path, dpi=None, with_detail=False):
         for pi in range(total):
             correct_sideways = False
             if total == 1:
-                layout = _analyze_page_layout(ocr_path, pi, dpi)
-                correct_sideways = _layout_needs_sideways_handling(layout)
+                layout = _analyze_page_layout(ocr_path, pi, dpi, probe_coarse=True)
+                correct_sideways = _layout_needs_orientation_handling(layout)
             img_b64, _ = _page_rgb_and_b64(
                 ocr_path, pi, dpi=dpi, correct_sideways=correct_sideways,
             )
@@ -1119,12 +1122,13 @@ def _pdf_page_landscape(pdf_path, page_index):
 
 _PAGE_LAYOUT_CACHE = {}
 
-# 页面版式分类（表格页）
+# 页面版式 / 扫描校正分类（表格页）
 # portrait_upright  — 正坐表（page_6）：竖版 A4，表头在上
-# sideways_ccw      — 侧躺表：竖版纸但内容左转 90°，需顺时针转正
-# sideways_cw       — 侧躺表：竖版纸但内容右转 90°
-# landscape_native  — 真横版页：PDF 本身宽 > 高
-# pdf_rotated_meta  — PDF 元数据带 /Rotate，由渲染器处理
+# sideways_ccw/cw   — 侧躺约 90°（扫描横着放）
+# upside_down       — 颠倒约 180°
+# skewed            — 仅歪斜（如约 8° 没放正）
+# landscape_native  — 真横版页
+# pdf_rotated_meta  — PDF /Rotate 元数据
 
 
 def _clear_page_layout_cache():
@@ -1172,69 +1176,182 @@ def _rotate_bgr(img_bgr, deg_cw):
     return img_bgr
 
 
-def _detect_visual_sideways_rotation(img_bgr):
-    """检测竖版画布上侧躺表格，返回需顺时针旋转的度数。"""
+def _page_ink_binary(img_bgr):
     import cv2
 
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    return binary
+
+
+def _ink_cover_metrics(img_bgr):
+    import cv2
+
+    binary = _page_ink_binary(img_bgr)
     coords = cv2.findNonZero(binary)
     if coords is None:
-        return 0
+        return {"cover_w": 0.0, "cover_h": 0.0, "aspect": 1.0, "portrait": True}
     _x, _y, bw, bh = cv2.boundingRect(coords)
     ih, iw = binary.shape
-    cover_w = bw / float(iw)
-    cover_h = bh / float(ih)
-    aspect = bw / float(max(bh, 1))
+    return {
+        "cover_w": bw / float(iw),
+        "cover_h": bh / float(ih),
+        "aspect": bw / float(max(bh, 1)),
+        "portrait": ih > iw * 1.05,
+    }
 
-    # 正坐满页表（page_6 类）：横纵都铺满，不旋转
-    if cover_w > 0.76 and cover_h > 0.76:
+
+def _detect_fine_skew_deg(img_bgr, max_deg=12.0):
+    """检测扫描小歪斜（如约 8°），返回校正旋转角（度）。"""
+    import cv2
+    import numpy as np
+
+    binary = _page_ink_binary(img_bgr)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(25, binary.shape[1] // 40), 1))
+    lines_img = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+    min_len = max(60, binary.shape[1] // 12)
+    lines = cv2.HoughLinesP(
+        lines_img, 1, np.pi / 180, threshold=70,
+        minLineLength=min_len, maxLineGap=12,
+    )
+    if lines is None:
+        return 0.0
+    angles = []
+    for line in lines[:80]:
+        x1, y1, x2, y2 = line[0]
+        dx = x2 - x1
+        if abs(dx) < 25:
+            continue
+        ang = float(np.degrees(np.arctan2(y2 - y1, dx)))
+        if abs(ang) <= max_deg:
+            angles.append(ang)
+    if len(angles) < 4:
+        return 0.0
+    return -float(np.median(angles))
+
+
+def _orientation_alignment_score(img_bgr):
+    """文本行越水平，得分越高。"""
+    skew = _detect_fine_skew_deg(img_bgr, max_deg=20.0)
+    return 100.0 - abs(skew) * 8.0
+
+
+def _upright_header_score(img_bgr):
+    """标题/表头多在上方：正立时上半区墨迹更重。"""
+    binary = _page_ink_binary(img_bgr)
+    h = binary.shape[0]
+    top = float(binary[: max(1, h // 3), :].sum())
+    bot = float(binary[min(h - 1, 2 * h // 3):, :].sum())
+    return top - bot
+
+
+def _orientation_combined_score(img_bgr):
+    return _orientation_alignment_score(img_bgr) + _upright_header_score(img_bgr) * 0.003
+
+
+def _detect_visual_sideways_rotation(img_bgr):
+    """竖版画布上明显的 90° 侧躺启发式。"""
+    cover = _ink_cover_metrics(img_bgr)
+    if cover["cover_w"] > 0.76 and cover["cover_h"] > 0.76:
         return 0
-
-    if ih > iw * 1.05:
-        # 左转 90° 侧躺：内容宽扁，横向铺满但纵向不满
-        if aspect > 1.22 and cover_w > 0.55 and cover_h < 0.72:
-            return 90
-        # 右转 90° 侧躺：内容窄长，纵向铺满但横向明显不满
-        if aspect < 0.78 and cover_h > 0.58 and cover_w < 0.65:
-            return 270
+    if not cover["portrait"]:
+        return 0
+    if cover["aspect"] > 1.22 and cover["cover_w"] > 0.55 and cover["cover_h"] < 0.72:
+        return 90
+    if cover["aspect"] < 0.78 and cover["cover_h"] > 0.58 and cover["cover_w"] < 0.65:
+        return 270
     return 0
 
 
-def _classify_page_layout(img_bgr, pdf_path=None, page_index=0):
-    meta_rot = _pdf_page_rotation_meta(pdf_path, page_index) if pdf_path else 0
-    visual_rot = _detect_visual_sideways_rotation(img_bgr)
-    ih, iw = img_bgr.shape[:2]
+def _detect_best_coarse_rotation(img_bgr, allow_full_probe=False):
+    """粗调：90° / 180° / 270°。满页表不猜 180°；四向打分仅单页密集表开启。"""
+    cover = _ink_cover_metrics(img_bgr)
+    if cover["cover_w"] > 0.76 and cover["cover_h"] > 0.76:
+        return 0
 
-    if visual_rot == 90:
-        kind = "sideways_ccw"
-    elif visual_rot == 270:
-        kind = "sideways_cw"
-    elif meta_rot in (90, 270):
-        kind = "pdf_rotated_meta"
-    elif ih > iw * 1.05:
-        kind = "portrait_upright"
-    else:
-        kind = "landscape_native"
+    if not allow_full_probe:
+        return _detect_visual_sideways_rotation(img_bgr)
+
+    base_score = _orientation_combined_score(img_bgr)
+    best_deg = 0
+    best_score = base_score
+    for deg in (90, 180, 270):
+        score = _orientation_combined_score(_rotate_bgr(img_bgr, deg))
+        if score > best_score:
+            best_score = score
+            best_deg = deg
+    if best_deg and best_score > base_score + 2.5:
+        return best_deg
+    return _detect_visual_sideways_rotation(img_bgr)
+
+
+def _deskew_bgr(img_bgr, skew_deg):
+    import cv2
+
+    if abs(skew_deg) < 0.35:
+        return img_bgr
+    h, w = img_bgr.shape[:2]
+    matrix = cv2.getRotationMatrix2D((w / 2.0, h / 2.0), skew_deg, 1.0)
+    return cv2.warpAffine(
+        img_bgr, matrix, (w, h),
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(255, 255, 255),
+    )
+
+
+def _layout_kind_from_rotation(coarse_deg, skew_deg, img_bgr, meta_rot=0):
+    if coarse_deg == 180:
+        return "upside_down"
+    if coarse_deg == 90:
+        return "sideways_ccw"
+    if coarse_deg == 270:
+        return "sideways_cw"
+    if abs(skew_deg) >= 0.5:
+        return "skewed"
+    if meta_rot in (90, 270):
+        return "pdf_rotated_meta"
+    ih, iw = img_bgr.shape[:2]
+    if ih > iw * 1.05:
+        return "portrait_upright"
+    return "landscape_native"
+
+
+def _classify_page_layout(img_bgr, pdf_path=None, page_index=0, probe_coarse=True):
+    meta_rot = _pdf_page_rotation_meta(pdf_path, page_index) if pdf_path else 0
+    coarse_deg = _detect_best_coarse_rotation(img_bgr, allow_full_probe=probe_coarse)
+    rotated = _rotate_bgr(img_bgr, coarse_deg) if coarse_deg else img_bgr
+    skew_deg = _detect_fine_skew_deg(rotated)
+    kind = _layout_kind_from_rotation(coarse_deg, skew_deg, rotated, meta_rot)
     return {
         "kind": kind,
-        "correction_deg": visual_rot,
+        "correction_deg": coarse_deg,
+        "skew_deg": skew_deg,
         "meta_rot": meta_rot,
     }
 
 
-def _analyze_page_layout(pdf_path, page_index, dpi=120):
+def _apply_page_orientation(bgr, layout):
+    if layout.get("correction_deg"):
+        bgr = _rotate_bgr(bgr, layout["correction_deg"])
+    skew_deg = layout.get("skew_deg") or 0
+    if abs(skew_deg) >= 0.35:
+        bgr = _deskew_bgr(bgr, skew_deg)
+    return bgr
+
+
+def _analyze_page_layout(pdf_path, page_index, dpi=120, probe_coarse=True):
     try:
         mtime = os.path.getmtime(pdf_path)
     except OSError:
         mtime = 0
-    key = (pdf_path, page_index, dpi, mtime)
+    key = (pdf_path, page_index, dpi, mtime, probe_coarse)
     if key in _PAGE_LAYOUT_CACHE:
         return _PAGE_LAYOUT_CACHE[key]
 
     bgr = _render_page_bgr(pdf_path, page_index, dpi)
-    layout = _classify_page_layout(bgr, pdf_path, page_index)
-    corrected = _rotate_bgr(bgr, layout["correction_deg"]) if layout.get("correction_deg") else bgr
+    layout = _classify_page_layout(bgr, pdf_path, page_index, probe_coarse=probe_coarse)
+    corrected = _apply_page_orientation(bgr, layout)
     layout.update({
         "src_h": bgr.shape[0],
         "src_w": bgr.shape[1],
@@ -1246,11 +1363,10 @@ def _analyze_page_layout(pdf_path, page_index, dpi=120):
     return layout
 
 
-def _get_corrected_page_bgr(pdf_path, page_index, dpi):
-    layout = _analyze_page_layout(pdf_path, page_index, dpi)
+def _get_corrected_page_bgr(pdf_path, page_index, dpi, probe_coarse=True):
+    layout = _analyze_page_layout(pdf_path, page_index, dpi, probe_coarse=probe_coarse)
     bgr = _render_page_bgr(pdf_path, page_index, dpi)
-    if layout.get("correction_deg"):
-        bgr = _rotate_bgr(bgr, layout["correction_deg"])
+    bgr = _apply_page_orientation(bgr, layout)
     return bgr, layout
 
 
@@ -1279,8 +1395,20 @@ def _sync_doc_section_to_layout(doc, layout, tight=True):
     return sec
 
 
+def _layout_needs_orientation_handling(layout):
+    if not layout:
+        return False
+    if layout.get("correction_deg"):
+        return True
+    if abs(layout.get("skew_deg") or 0) >= 0.4:
+        return True
+    return layout.get("kind") in (
+        "sideways_ccw", "sideways_cw", "upside_down", "skewed",
+    )
+
+
 def _layout_needs_sideways_handling(layout):
-    return (layout or {}).get("kind") in ("sideways_ccw", "sideways_cw")
+    return _layout_needs_orientation_handling(layout)
 
 
 def _raw_text_len(page):
@@ -1668,15 +1796,18 @@ def _get_pdf_page_image(pdf_path, page_index, cache_dir, dpi=120, correct_sidewa
 
     rot_tag = ""
     if correct_sideways:
-        layout = _analyze_page_layout(pdf_path, page_index, dpi)
+        layout = _analyze_page_layout(pdf_path, page_index, dpi, probe_coarse=True)
         if layout.get("correction_deg"):
             rot_tag = f"_r{layout['correction_deg']}"
+        skew = layout.get("skew_deg") or 0
+        if abs(skew) >= 0.4:
+            rot_tag += f"_s{int(skew * 10)}"
     path = os.path.join(cache_dir, f"page_{page_index:03d}_{dpi}{rot_tag}.png")
     if os.path.isfile(path) and os.path.getsize(path) > 0:
         return path
     os.makedirs(cache_dir, exist_ok=True)
     if correct_sideways:
-        bgr, _ = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+        bgr, _ = _get_corrected_page_bgr(pdf_path, page_index, dpi, probe_coarse=True)
     else:
         bgr = _render_page_bgr(pdf_path, page_index, dpi)
     cv2.imwrite(path, bgr)
@@ -3001,9 +3132,10 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                 from seal_utils import SEAL_EXTRACT_DPI as _seal_dpi
                 page_layout = _analyze_page_layout(
                     pdf_path, pi, _seal_dpi if single_dense else 180,
+                    probe_coarse=single_dense,
                 )
             if single_dense and pi == 0 and pdf_path:
-                if _layout_needs_sideways_handling(page_layout):
+                if page_layout and page_layout.get("correction_deg"):
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
