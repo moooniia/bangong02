@@ -334,21 +334,23 @@ def _detail_looks_fragmented(page):
     texts = [_normalize_text(b.get("text") or "") for b in blocks]
     texts = [t for t in texts if t]
     if not texts:
-        return True
+        return False
     short = sum(1 for t in texts if len(t) <= 4)
     scores = [_text_quality_score(t) for t in texts]
     avg_score = sum(scores) / len(scores)
     blob = " ".join(texts)
     sig_like = bool(re.search(r"签字|盖章|合同专用章|甲方|乙方", blob))
+    has_clause = bool(re.search(r"第[一二三四五六七八九十\d]+条", blob))
     if not sig_like and avg_score >= 0.42:
         return False
+    if sig_like and short >= 3 and short >= int(len(texts) * 0.25):
+        return True
     if short >= max(3, int(len(texts) * 0.32)) and avg_score < 0.42:
         return True
     if avg_score < 0.38:
         return True
-    if sig_like and not re.search(r"第[一二三四五六七八九十\d]+条", blob):
-        if short >= 2 and avg_score < 0.45:
-            return True
+    if sig_like and not has_clause and short >= 2 and avg_score < 0.55:
+        return True
     return False
 
 
