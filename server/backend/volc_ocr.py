@@ -1693,12 +1693,39 @@ def _infer_alignment(box, page_hw, text):
     return WD_ALIGN_PARAGRAPH.LEFT
 
 
+_COVER_CONTENT_PT = 680.0
+
+
+def _box_target_y_pt(box, page_hw):
+    _, ph, _, y0, _, _ = _box_metrics(box or {}, page_hw)
+    return y0 / max(ph, 1) * _COVER_CONTENT_PT
+
+
+def _estimate_para_height_pt(text, size_pt, box, page_hw):
+    pw, _, x0, _, x1, _ = _box_metrics(box or {}, page_hw)
+    width_ratio = max((x1 - x0) / max(pw, 1), 0.28)
+    chars_per_line = max(10, int(width_ratio * 38))
+    lines = max(1, (len(text or "") + chars_per_line - 1) // chars_per_line)
+    return lines * float(size_pt) * 1.15
+
+
+def _space_before_cover_pt(rendered_bottom, box, page_hw):
+    """封面单页：按 OCR y0 绝对定位，避免拆段后 OCR 框过高把内容挤到第 2 页。"""
+    from docx.shared import Pt
+
+    target = _box_target_y_pt(box, page_hw)
+    gap = target - rendered_bottom
+    if gap < 2:
+        gap = 4
+    return Pt(gap), target
+
+
 def _space_before_pt(prev_box, box, page_hw):
     """按 OCR 纵坐标定位；框重叠时用 y0 估算段前距。"""
     from docx.shared import Pt
 
     _, ph, _, y0, _, _ = _box_metrics(box, page_hw)
-    content_pt = 680.0
+    content_pt = _COVER_CONTENT_PT
     target = y0 / max(ph, 1) * content_pt
     if not prev_box:
         return Pt(max(0, target - 6))
@@ -2087,7 +2114,7 @@ def _add_cover_image(doc, url, cache_dir, box, page_hw, prev_box, pdf_path=None,
 def _add_positioned_paragraph(
     doc, text, box, page_hw, prev_box, watermarks,
     label="para", bold=False, italic=False, style=None, page_index=None,
-    watermark_page=False, sig_page=False, rgb_arr=None,
+    watermark_page=False, sig_page=False, rgb_arr=None, cover_bottom=None,
 ):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches, Pt
@@ -2101,9 +2128,11 @@ def _add_positioned_paragraph(
         text = _format_party_text(text, sig_page=sig_page)
 
     pw, _, x0, _, x1, _ = _box_metrics(box or {}, page_hw)
-    para = doc.add_paragraph(style=style)
     cover = _cover_text_style(text, label, page_index, watermark_page)
     is_cover = page_index == 0
+    use_cover_layout = is_cover and cover_bottom is not None
+    para_style = None if use_cover_layout else style
+    para = doc.add_paragraph(style=para_style)
     if is_cover:
         align = _cover_paragraph_align(text, label, box, page_hw)
     elif cover and cover.get("color"):
@@ -2111,7 +2140,12 @@ def _add_positioned_paragraph(
     else:
         align = _infer_alignment(box or {}, page_hw, text)
     para.alignment = align
-    para.paragraph_format.space_before = _space_before_pt(prev_box, box or {}, page_hw)
+    target_y = None
+    if use_cover_layout:
+        space_before, target_y = _space_before_cover_pt(cover_bottom, box, page_hw)
+        para.paragraph_format.space_before = space_before
+    else:
+        para.paragraph_format.space_before = _space_before_pt(prev_box, box or {}, page_hw)
     para.paragraph_format.space_after = Pt(0)
     para.paragraph_format.line_spacing = 1.15
 
@@ -2141,15 +2175,18 @@ def _add_positioned_paragraph(
             color_hex=color_hex,
         )
     else:
+        size_pt = _font_size_pt(
+            box or {}, label, text, page_hw, page_index, watermark_page,
+        ).pt
         _set_run_font_style(
             run,
             "宋体",
-            _font_size_pt(box or {}, label, text, page_hw, page_index, watermark_page).pt,
+            size_pt,
             east_asia="SimSun",
             bold=bold or label in ("title", "sec"),
         )
 
-    return {
+    result = {
         "x0": x0,
         "y0": box.get("y0") or 0,
         "x1": x1,
@@ -2157,6 +2194,11 @@ def _add_positioned_paragraph(
         "label": label,
         "text": text,
     }
+    if use_cover_layout and target_y is not None:
+        result["rendered_bottom"] = target_y + _estimate_para_height_pt(
+            text, size_pt, box, page_hw,
+        )
+    return result
 
 
 def _render_text_content(doc, text, watermarks, cache_dir, bold=False, italic=False, style=None, sig_page=False):
@@ -2304,11 +2346,25 @@ def _render_page_blocks(
 
     skip_images = mode == "hybrid"
     prev_box = None
+    cover_bottom = 0.0 if page_index == 0 else None
     use_layout = mode in ("hybrid", "text")
     wm_page = page_index == 0 or _page_watermark_heavy(page, watermarks)
     rgb_arr = None
     if page_index == 0 and pdf_path:
         rgb_arr = _get_cached_page_rgb(pdf_path, page_index, cache_dir)
+
+    def _commit_positioned(**kwargs):
+        nonlocal prev_box, cover_bottom
+        prev_box = _add_positioned_paragraph(
+            cover_bottom=cover_bottom, **kwargs,
+        )
+        if (
+            cover_bottom is not None
+            and prev_box
+            and prev_box.get("rendered_bottom") is not None
+        ):
+            cover_bottom = prev_box["rendered_bottom"]
+
     for block in blocks:
         label = (block.get("label") or "para").lower()
         text = block.get("text") or ""
@@ -2326,8 +2382,9 @@ def _render_page_blocks(
                 or _is_stamp_header_text(text, box, page_hw)
                 or norm_hdr.startswith("CMCCTD")
             ):
-                prev_box = _add_positioned_paragraph(
-                    doc, text, box, page_hw, prev_box, watermarks,
+                _commit_positioned(
+                    doc=doc, text=text, box=box, page_hw=page_hw,
+                    prev_box=prev_box, watermarks=watermarks,
                     label="header", page_index=page_index, watermark_page=wm_page,
                     sig_page=is_sig_page, rgb_arr=rgb_arr,
                 )
@@ -2335,7 +2392,8 @@ def _render_page_blocks(
 
         if label == "image":
             if wm_page and mode == "hybrid" and not is_sig_page:
-                if _should_render_cover_image(box, page_hw):
+                # 封面图章走 detail_to_docx 里的浮动嵌入，避免流式插图撑出第 2 页
+                if page_index != 0 and _should_render_cover_image(box, page_hw):
                     url = block.get("url") or ""
                     if url:
                         prev_box = _add_cover_image(
@@ -2377,8 +2435,9 @@ def _render_page_blocks(
                     continue
                 if sub_label in ("title", "sec"):
                     style = "Heading 1" if sub_label == "title" else "Heading 2"
-                    prev_box = _add_positioned_paragraph(
-                        doc, sub_text, sub_box, page_hw, prev_box, watermarks,
+                    _commit_positioned(
+                        doc=doc, text=sub_text, box=sub_box, page_hw=page_hw,
+                        prev_box=prev_box, watermarks=watermarks,
                         label=sub_label, bold=True, style=style,
                         page_index=page_index, watermark_page=wm_page,
                         sig_page=is_sig_page, rgb_arr=rgb_arr,
@@ -2386,8 +2445,9 @@ def _render_page_blocks(
                     continue
                 if sub_label == "cap":
                     if _text_quality_score(_normalize_text(sub_text)) >= 0.35 or is_sig_page:
-                        prev_box = _add_positioned_paragraph(
-                            doc, sub_text, sub_box, page_hw, prev_box, watermarks,
+                        _commit_positioned(
+                            doc=doc, text=sub_text, box=sub_box, page_hw=page_hw,
+                            prev_box=prev_box, watermarks=watermarks,
                             label=sub_label, italic=True,
                             page_index=page_index, watermark_page=wm_page,
                             sig_page=is_sig_page, rgb_arr=rgb_arr,
@@ -2395,15 +2455,17 @@ def _render_page_blocks(
                     continue
                 if is_sig_page and len(sub_text) > 36 and re.search(r"甲\s*方|乙\s*方", sub_text):
                     for line in _split_sig_lines(sub_text):
-                        prev_box = _add_positioned_paragraph(
-                            doc, line, sub_box, page_hw, prev_box, watermarks,
+                        _commit_positioned(
+                            doc=doc, text=line, box=sub_box, page_hw=page_hw,
+                            prev_box=prev_box, watermarks=watermarks,
                             label=sub_label, bold=bold, italic=italic,
                             page_index=page_index, watermark_page=wm_page,
                             sig_page=is_sig_page, rgb_arr=rgb_arr,
                         )
                     continue
-                prev_box = _add_positioned_paragraph(
-                    doc, sub_text, sub_box, page_hw, prev_box, watermarks,
+                _commit_positioned(
+                    doc=doc, text=sub_text, box=sub_box, page_hw=page_hw,
+                    prev_box=prev_box, watermarks=watermarks,
                     label=sub_label, bold=bold, italic=italic,
                     page_index=page_index, watermark_page=wm_page,
                     sig_page=is_sig_page, rgb_arr=rgb_arr,
