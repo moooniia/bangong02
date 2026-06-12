@@ -387,29 +387,28 @@ def _detail_needs_image_mode(markdown, details):
 
 
 def _page_rgb_and_b64(pdf_path, page_index, dpi=NORMAL_OCR_DPI):
-    import fitz
+    import cv2
     import numpy as np
 
-    doc = fitz.open(pdf_path)
+    bgr, layout = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+    if _layout_needs_sideways_handling(layout):
+        log.info(
+            "页面侧躺表格转正 OCR: %s p%d kind=%s rot=%s",
+            pdf_path, page_index, layout.get("kind"), layout.get("correction_deg"),
+        )
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    fd, path = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
     try:
-        page = doc[page_index]
-        pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72.0, dpi / 72.0), alpha=False)
-        fd, path = tempfile.mkstemp(suffix=".png")
-        os.close(fd)
-        try:
-            _fitz_save_pix(pix, path)
-            with open(path, "rb") as f:
-                img_b64 = base64.b64encode(f.read()).decode("ascii")
-        finally:
-            try:
-                os.unlink(path)
-            except OSError:
-                pass
-        arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
-        rgb = arr[:, :, :3] if pix.n >= 3 else arr
-        return img_b64, rgb
+        cv2.imwrite(path, bgr)
+        with open(path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode("ascii")
     finally:
-        doc.close()
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    return img_b64, rgb
 
 
 def _ocr_normal_page(visual, image_b64):
@@ -1109,6 +1108,172 @@ def _pdf_page_landscape(pdf_path, page_index):
         return False
 
 
+_PAGE_LAYOUT_CACHE = {}
+
+# 页面版式分类（表格页）
+# portrait_upright  — 正坐表（page_6）：竖版 A4，表头在上
+# sideways_ccw      — 侧躺表：竖版纸但内容左转 90°，需顺时针转正
+# sideways_cw       — 侧躺表：竖版纸但内容右转 90°
+# landscape_native  — 真横版页：PDF 本身宽 > 高
+# pdf_rotated_meta  — PDF 元数据带 /Rotate，由渲染器处理
+
+
+def _clear_page_layout_cache():
+    _PAGE_LAYOUT_CACHE.clear()
+
+
+def _pdf_page_rotation_meta(pdf_path, page_index):
+    try:
+        import fitz
+        pdf = fitz.open(pdf_path)
+        try:
+            return int(pdf[page_index].rotation) % 360
+        finally:
+            pdf.close()
+    except Exception:
+        return 0
+
+
+def _render_page_bgr(pdf_path, page_index, dpi):
+    import cv2
+    import fitz
+    import numpy as np
+
+    doc = fitz.open(pdf_path)
+    try:
+        page = doc[page_index]
+        pix = _fitz_pixmap(page, matrix=fitz.Matrix(dpi / 72.0, dpi / 72.0), alpha=False)
+        arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+        if pix.n >= 3:
+            return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+        return arr
+    finally:
+        doc.close()
+
+
+def _rotate_bgr(img_bgr, deg_cw):
+    import cv2
+
+    if deg_cw == 90:
+        return cv2.rotate(img_bgr, cv2.ROTATE_90_CLOCKWISE)
+    if deg_cw == 180:
+        return cv2.rotate(img_bgr, cv2.ROTATE_180)
+    if deg_cw == 270:
+        return cv2.rotate(img_bgr, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    return img_bgr
+
+
+def _detect_visual_sideways_rotation(img_bgr):
+    """检测竖版画布上侧躺表格，返回需顺时针旋转的度数。"""
+    import cv2
+
+    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    coords = cv2.findNonZero(binary)
+    if coords is None:
+        return 0
+    _x, _y, bw, bh = cv2.boundingRect(coords)
+    ih, iw = binary.shape
+    cover_w = bw / float(iw)
+    cover_h = bh / float(ih)
+    aspect = bw / float(max(bh, 1))
+
+    # 正坐满页表（page_6 类）：横纵都铺满，不旋转
+    if cover_w > 0.76 and cover_h > 0.76:
+        return 0
+
+    if ih > iw * 1.05:
+        # 左转 90° 侧躺：内容宽扁，横向铺满但纵向不满
+        if aspect > 1.22 and cover_w > 0.55 and cover_h < 0.72:
+            return 90
+        # 右转 90° 侧躺：内容窄长，纵向铺满但横向不满
+        if aspect < 0.82 and cover_h > 0.55 and cover_w < 0.72:
+            return 270
+    return 0
+
+
+def _classify_page_layout(img_bgr, pdf_path=None, page_index=0):
+    meta_rot = _pdf_page_rotation_meta(pdf_path, page_index) if pdf_path else 0
+    visual_rot = _detect_visual_sideways_rotation(img_bgr)
+    ih, iw = img_bgr.shape[:2]
+
+    if visual_rot == 90:
+        kind = "sideways_ccw"
+    elif visual_rot == 270:
+        kind = "sideways_cw"
+    elif meta_rot in (90, 270):
+        kind = "pdf_rotated_meta"
+    elif ih > iw * 1.05:
+        kind = "portrait_upright"
+    else:
+        kind = "landscape_native"
+    return {
+        "kind": kind,
+        "correction_deg": visual_rot,
+        "meta_rot": meta_rot,
+    }
+
+
+def _analyze_page_layout(pdf_path, page_index, dpi=120):
+    try:
+        mtime = os.path.getmtime(pdf_path)
+    except OSError:
+        mtime = 0
+    key = (pdf_path, page_index, dpi, mtime)
+    if key in _PAGE_LAYOUT_CACHE:
+        return _PAGE_LAYOUT_CACHE[key]
+
+    bgr = _render_page_bgr(pdf_path, page_index, dpi)
+    layout = _classify_page_layout(bgr, pdf_path, page_index)
+    corrected = _rotate_bgr(bgr, layout["correction_deg"]) if layout.get("correction_deg") else bgr
+    layout.update({
+        "src_h": bgr.shape[0],
+        "src_w": bgr.shape[1],
+        "corr_h": corrected.shape[0],
+        "corr_w": corrected.shape[1],
+        "dpi": dpi,
+    })
+    _PAGE_LAYOUT_CACHE[key] = layout
+    return layout
+
+
+def _get_corrected_page_bgr(pdf_path, page_index, dpi):
+    layout = _analyze_page_layout(pdf_path, page_index, dpi)
+    bgr = _render_page_bgr(pdf_path, page_index, dpi)
+    if layout.get("correction_deg"):
+        bgr = _rotate_bgr(bgr, layout["correction_deg"])
+    return bgr, layout
+
+
+def _sync_doc_section_to_layout(doc, layout, tight=True):
+    """按转正后的图像尺寸设置 Word 节（仍是 A4，只是方向跟内容走）。"""
+    from docx.enum.section import WD_ORIENT
+    from docx.shared import Inches
+
+    dpi = layout.get("dpi") or 180
+    width_in = layout.get("corr_w", 0) / float(dpi)
+    height_in = layout.get("corr_h", 0) / float(dpi)
+    sec = doc.sections[0]
+    if width_in > height_in:
+        sec.orientation = WD_ORIENT.LANDSCAPE
+        sec.page_width = Inches(width_in)
+        sec.page_height = Inches(height_in)
+    else:
+        sec.orientation = WD_ORIENT.PORTRAIT
+        sec.page_width = Inches(width_in)
+        sec.page_height = Inches(height_in)
+    margin = Inches(0.45 if tight else 0.6)
+    sec.top_margin = margin
+    sec.bottom_margin = margin
+    sec.left_margin = margin
+    sec.right_margin = margin
+    return sec
+
+
+def _layout_needs_sideways_handling(layout):
+    return (layout or {}).get("kind") in ("sideways_ccw", "sideways_cw")
+
+
 def _raw_text_len(page):
     total = 0
     for block in page.get("textblocks") or []:
@@ -1488,20 +1653,18 @@ def _should_render_inline_image(box, page_hw, skip_images):
 
 def _get_pdf_page_image(pdf_path, page_index, cache_dir, dpi=120):
     try:
-        import fitz
+        import cv2
     except ImportError:
         return None
 
-    path = os.path.join(cache_dir, f"page_{page_index:03d}_{dpi}.png")
+    layout = _analyze_page_layout(pdf_path, page_index, dpi)
+    rot_tag = f"_r{layout['correction_deg']}" if layout.get("correction_deg") else ""
+    path = os.path.join(cache_dir, f"page_{page_index:03d}_{dpi}{rot_tag}.png")
     if os.path.isfile(path) and os.path.getsize(path) > 0:
         return path
-    pdf = fitz.open(pdf_path)
-    try:
-        mat = fitz.Matrix(dpi / 72.0, dpi / 72.0)
-        pix = _fitz_pixmap(pdf[page_index], matrix=mat, alpha=False)
-        _fitz_save_pix(pix, path)
-    finally:
-        pdf.close()
+    os.makedirs(cache_dir, exist_ok=True)
+    bgr, _ = _get_corrected_page_bgr(pdf_path, page_index, dpi)
+    cv2.imwrite(path, bgr)
     return path if os.path.isfile(path) else None
 
 
@@ -2798,6 +2961,7 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
     page_markdowns = page_markdowns or []
     snapshot_pages = []
     abnormal_table_pages = []
+    _clear_page_layout_cache()
     try:
         total_pages = len(pages)
         for pi, page in enumerate(pages):
@@ -2817,8 +2981,17 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
             dense_table = _page_is_dense_table(page, page_md)
             single_dense = total_pages == 1 and dense_table
             table_opts = _single_page_table_opts(total_pages, dense_table)
+            page_layout = None
+            if pdf_path:
+                from seal_utils import SEAL_EXTRACT_DPI as _seal_dpi
+                page_layout = _analyze_page_layout(
+                    pdf_path, pi, _seal_dpi if single_dense else 180,
+                )
             if single_dense and pi == 0 and pdf_path:
-                _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
+                if _layout_needs_sideways_handling(page_layout):
+                    _sync_doc_section_to_layout(doc, page_layout, tight=True)
+                else:
+                    _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
