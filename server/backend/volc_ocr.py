@@ -3168,6 +3168,22 @@ def _add_html_table(
     elif compact:
         _apply_compact_dense_table_style(table, nrows, font_pt)
 
+    # Apply explicit row heights if provided and scoring style didn't handle them
+    if row_heights and not scoring_style:
+        _EMU_PER_TWIP = 635
+        sec = table.part.document.sections[-1]
+        avail_h_twips = int(sec.page_height - sec.top_margin - sec.bottom_margin) // _EMU_PER_TWIP
+        rh = list(row_heights)
+        while len(rh) > nrows and len(rh) > 2:
+            idx = min(range(len(rh)), key=lambda i: rh[i])
+            rh.pop(idx)
+        if rh and len(rh) == nrows:
+            total = sum(rh)
+            rh = [h / total for h in rh]
+            for ri, row in enumerate(table.rows):
+                twips = max(200, int(avail_h_twips * rh[ri]))
+                _set_row_height(row, twips, exact=True)
+
     if use_landscape and restore_portrait:
         _begin_portrait_section(doc)
     return True

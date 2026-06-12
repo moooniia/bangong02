@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.17] - 2026-06-13
+
+构建号: `2026.06.13.2`
+
+Fixed: v0.10.16b 在_add_html_table层应用行高（不依赖scoring_style检测）
+
+### Fixed
+- v0.10.16b 在_add_html_table层应用行高（不依赖scoring_style检测）
+
+备份: `backups/v0.10.17/`
+
+
 ## [0.10.16] - 2026-06-13
 
 构建号: `2026.06.13.1`
