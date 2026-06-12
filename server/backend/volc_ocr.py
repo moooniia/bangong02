@@ -1736,13 +1736,177 @@ def _cover_text_style(text, label, page_index, watermark_page=False):
         return {"name": "宋体", "east_asia": "SimSun", "size": 21, "bold": True, "color": "008FEF"}
     if re.match(r"^CMCCTD", text):
         return {"name": "宋体", "east_asia": "SimSun", "size": 10, "bold": False}
-    if "服务合同" in text:
+    if "服务合同" in text or text.strip() == "服务合同":
         return {"name": "黑体", "east_asia": "SimHei", "size": 22, "bold": True}
     if re.match(r"^甲\s*方|^乙\s*方", text):
         return {"name": "宋体", "east_asia": "SimSun", "size": 12, "bold": False}
-    if len(text) >= 18 and ("工程" in text or "监测" in text):
-        return {"name": "宋体", "east_asia": "SimSun", "size": 13, "bold": False}
+    if len(text) >= 16 and re.search(r"20\d{2}年|工程|监测|项目|生态", text):
+        return {"name": "黑体", "east_asia": "SimHei", "size": 15, "bold": True}
     return None
+
+
+def _get_cached_page_rgb(pdf_path, page_index, cache_dir, dpi=None):
+    if not pdf_path or not os.path.isfile(pdf_path):
+        return None
+    dpi = dpi or _image_parse_dpi()
+    path = os.path.join(cache_dir, f"rgb_p{page_index}_{dpi}.npy")
+    try:
+        import numpy as np
+        if os.path.isfile(path):
+            return np.load(path)
+        _, rgb = _page_rgb_and_b64(pdf_path, page_index, dpi=dpi)
+        np.save(path, rgb)
+        return rgb
+    except Exception:
+        return None
+
+
+def _sample_box_color_hex(rgb_arr, box, page_hw, prefer_blue=False):
+    if rgb_arr is None:
+        return None
+    pw, ph, x0, y0, x1, y1 = _box_metrics(box or {}, page_hw)
+    h_img, w_img = rgb_arr.shape[0], rgb_arr.shape[1]
+    xs = max(0, min(w_img - 1, int(x0 / max(pw, 1) * w_img)))
+    xe = max(xs + 1, min(w_img, int(x1 / max(pw, 1) * w_img)))
+    ys = max(0, min(h_img - 1, int(y0 / max(ph, 1) * h_img)))
+    ye = max(ys + 1, min(h_img, int(y1 / max(ph, 1) * h_img)))
+    region = rgb_arr[ys:ye, xs:xe]
+    if region.size == 0:
+        return None
+    blues, darks, others = [], [], []
+    flat = region.reshape(-1, region.shape[-1])
+    step = max(1, len(flat) // 100)
+    for i in range(0, len(flat), step):
+        r, g, b = [int(v) for v in flat[i][:3]]
+        lum = (r + g + b) / 3
+        if lum > 235:
+            continue
+        if b > max(r, g) + 28 and b > 95:
+            blues.append((r, g, b))
+        elif lum < 95:
+            darks.append((r, g, b))
+        else:
+            others.append((r, g, b))
+    picks = blues if (prefer_blue and blues) else (darks if darks else others)
+    if not picks:
+        picks = blues or others
+    if not picks:
+        return None
+    r = sum(t[0] for t in picks) // len(picks)
+    g = sum(t[1] for t in picks) // len(picks)
+    b = sum(t[2] for t in picks) // len(picks)
+    return f"{r:02X}{g:02X}{b:02X}"
+
+
+def _estimate_cover_font_pt(box, page_hw, text, label):
+    _, ph, _, y0, _, y1 = _box_metrics(box or {}, page_hw)
+    bh = max(y1 - y0, 1)
+    text = text or ""
+    line_est = max(1, len(text) // 26 + 1)
+    pt = (bh / line_est) / max(ph, 1) * 560
+    if label == "title" or text.strip() == "服务合同":
+        return max(18, min(24, pt * 1.08))
+    if re.fullmatch(r"\d{6,12}", text.strip()):
+        return max(18, min(22, pt))
+    if re.match(r"^CMCCTD", text):
+        return max(9, min(11, pt))
+    if len(text) >= 20:
+        return max(12, min(16, pt))
+    return max(10, min(13, pt))
+
+
+def _extract_cover_title_text(text):
+    work = _strip_watermark_substrings(text or "")
+    work = re.sub(r"\s+", " ", work).strip()
+    m = re.search(r"(20\d{2}年.+)", work)
+    if m:
+        title = m.group(1).strip()
+        title = re.sub(r"\s*服务合同.*$", "", title).strip()
+        return title
+    work = re.sub(r"^[李于正德哪名厚\s\"\"、]+", "", work)
+    work = re.sub(r"\s*服务合同.*$", "", work).strip()
+    return work
+
+
+def _split_cover_party_lines(text, box, block):
+    if not re.search(r"甲\s*方", text):
+        return None
+    markers = [m.start() for m in re.finditer(r"甲\s*方|乙\s*方", text)]
+    if not markers:
+        return None
+    y0, y1 = box.get("y0", 0), box.get("y1", y0)
+    h = max(y1 - y0, 1)
+    slices = []
+    for i, pos in enumerate(markers):
+        end = markers[i + 1] if i + 1 < len(markers) else len(text)
+        chunk = text[pos:end].strip()
+        if chunk:
+            slices.append(chunk)
+    if len(slices) < 2:
+        return None
+    out = []
+    n = len(slices)
+    for i, chunk in enumerate(slices):
+        sub = dict(block)
+        sub["text"] = chunk
+        sub["box"] = dict(box)
+        sub["box"]["y0"] = y0 + int(h * (i / n))
+        sub["box"]["y1"] = y0 + int(h * ((i + 1) / n))
+        out.append(sub)
+    return out
+
+
+def _expand_cover_blocks(block):
+    """P2 封面：去水印、拆标题/服务合同/甲乙方。"""
+    label = (block.get("label") or "para").lower()
+    if label in ("image", "table", "foot"):
+        return [block]
+    text = (block.get("text") or "").strip()
+    if not text:
+        return []
+    if label == "header":
+        return [block]
+    if "服务合同" in text and text.strip() != "服务合同":
+        return _expand_layout_blocks(block)
+    if re.fullmatch(r"服务合同", _strip_watermark_substrings(text).strip()):
+        sub = dict(block)
+        sub["text"] = "服务合同"
+        sub["label"] = "title"
+        return [sub]
+
+    party_splits = _split_cover_party_lines(text, block.get("box") or {}, block)
+    if party_splits:
+        return party_splits
+
+    if label == "para" and re.search(r"20\d{2}年|工程|监测|项目", text):
+        cleaned = _extract_cover_title_text(text)
+        if cleaned:
+            sub = dict(block)
+            sub["text"] = cleaned
+            return [sub]
+
+    work = _strip_watermark_substrings(text)
+    work = re.sub(r"\s+", " ", work).strip()
+    if not work or _text_quality_score(work) < 0.25:
+        return []
+    sub = dict(block)
+    sub["text"] = work
+    return [sub]
+
+
+def _cover_paragraph_align(text, label, box, page_hw):
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    text = text or ""
+    if label == "header" or re.fullmatch(r"\d{6,12}", text.strip()):
+        return WD_ALIGN_PARAGRAPH.RIGHT
+    if re.match(r"^CMCCTD", text):
+        return WD_ALIGN_PARAGRAPH.CENTER
+    if "服务合同" in text or text.strip() == "服务合同":
+        return WD_ALIGN_PARAGRAPH.CENTER
+    if len(text) >= 16 and re.search(r"20\d{2}年|工程|监测|项目", text):
+        return WD_ALIGN_PARAGRAPH.CENTER
+    return _infer_alignment(box or {}, page_hw, text)
 
 
 # Removed hardcoded company names — they only worked for one specific contract.
@@ -1921,7 +2085,7 @@ def _add_cover_image(doc, url, cache_dir, box, page_hw, prev_box, pdf_path=None,
 def _add_positioned_paragraph(
     doc, text, box, page_hw, prev_box, watermarks,
     label="para", bold=False, italic=False, style=None, page_index=None,
-    watermark_page=False, sig_page=False,
+    watermark_page=False, sig_page=False, rgb_arr=None,
 ):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches, Pt
@@ -1937,7 +2101,10 @@ def _add_positioned_paragraph(
     pw, _, x0, _, x1, _ = _box_metrics(box or {}, page_hw)
     para = doc.add_paragraph(style=style)
     cover = _cover_text_style(text, label, page_index, watermark_page)
-    if cover and cover.get("color"):
+    is_cover = page_index == 0
+    if is_cover:
+        align = _cover_paragraph_align(text, label, box, page_hw)
+    elif cover and cover.get("color"):
         align = WD_ALIGN_PARAGRAPH.RIGHT
     else:
         align = _infer_alignment(box or {}, page_hw, text)
@@ -1952,13 +2119,24 @@ def _add_positioned_paragraph(
     run = para.add_run(text)
     run.italic = bool(italic or label == "cap")
     if cover:
+        size_pt = cover["size"]
+        color_hex = cover.get("color")
+        if is_cover and rgb_arr is not None:
+            prefer_blue = (
+                label == "header"
+                or bool(re.fullmatch(r"\d{6,12}", text.strip()))
+            )
+            sampled = _sample_box_color_hex(rgb_arr, box, page_hw, prefer_blue=prefer_blue)
+            if sampled:
+                color_hex = sampled
+            size_pt = _estimate_cover_font_pt(box, page_hw, text, label)
         _set_run_font_style(
             run,
             cover["name"],
-            cover["size"],
+            size_pt,
             east_asia=cover.get("east_asia"),
             bold=cover.get("bold", False) or bold or label in ("title", "sec"),
-            color_hex=cover.get("color"),
+            color_hex=color_hex,
         )
     else:
         _set_run_font_style(
@@ -2126,6 +2304,9 @@ def _render_page_blocks(
     prev_box = None
     use_layout = mode in ("hybrid", "text")
     wm_page = page_index == 0 or _page_watermark_heavy(page, watermarks)
+    rgb_arr = None
+    if page_index == 0 and pdf_path:
+        rgb_arr = _get_cached_page_rgb(pdf_path, page_index, cache_dir)
     for block in blocks:
         label = (block.get("label") or "para").lower()
         text = block.get("text") or ""
@@ -2146,7 +2327,7 @@ def _render_page_blocks(
                 prev_box = _add_positioned_paragraph(
                     doc, text, box, page_hw, prev_box, watermarks,
                     label="header", page_index=page_index, watermark_page=wm_page,
-                    sig_page=is_sig_page,
+                    sig_page=is_sig_page, rgb_arr=rgb_arr,
                 )
             continue
 
@@ -2176,7 +2357,12 @@ def _render_page_blocks(
             continue
 
         if use_layout and box:
-            expanded = _expand_layout_blocks(block) if label == "para" else [block]
+            if page_index == 0 and label in ("para", "title", "cap"):
+                expanded = _expand_cover_blocks(block)
+            elif label == "para":
+                expanded = _expand_layout_blocks(block)
+            else:
+                expanded = [block]
             for sub in expanded:
                 sub_label = (sub.get("label") or label).lower()
                 sub_text = sub.get("text") or ""
@@ -2193,7 +2379,7 @@ def _render_page_blocks(
                         doc, sub_text, sub_box, page_hw, prev_box, watermarks,
                         label=sub_label, bold=True, style=style,
                         page_index=page_index, watermark_page=wm_page,
-                        sig_page=is_sig_page,
+                        sig_page=is_sig_page, rgb_arr=rgb_arr,
                     )
                     continue
                 if sub_label == "cap":
@@ -2202,7 +2388,7 @@ def _render_page_blocks(
                             doc, sub_text, sub_box, page_hw, prev_box, watermarks,
                             label=sub_label, italic=True,
                             page_index=page_index, watermark_page=wm_page,
-                            sig_page=is_sig_page,
+                            sig_page=is_sig_page, rgb_arr=rgb_arr,
                         )
                     continue
                 if is_sig_page and len(sub_text) > 36 and re.search(r"甲\s*方|乙\s*方", sub_text):
@@ -2211,14 +2397,14 @@ def _render_page_blocks(
                             doc, line, sub_box, page_hw, prev_box, watermarks,
                             label=sub_label, bold=bold, italic=italic,
                             page_index=page_index, watermark_page=wm_page,
-                            sig_page=is_sig_page,
+                            sig_page=is_sig_page, rgb_arr=rgb_arr,
                         )
                     continue
                 prev_box = _add_positioned_paragraph(
                     doc, sub_text, sub_box, page_hw, prev_box, watermarks,
                     label=sub_label, bold=bold, italic=italic,
                     page_index=page_index, watermark_page=wm_page,
-                    sig_page=is_sig_page,
+                    sig_page=is_sig_page, rgb_arr=rgb_arr,
                 )
             continue
 
