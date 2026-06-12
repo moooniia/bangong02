@@ -3,7 +3,7 @@ import zipfile
 import re
 from docx import Document
 
-path = r"C:\Users\paz\Desktop\P T W 测试\page_6_v0.10.6.docx"
+path = r"C:\Users\paz\Desktop\P T W 测试\page_6_out.docx"
 with zipfile.ZipFile(path) as z:
     xml = z.read("word/document.xml").decode("utf-8")
 

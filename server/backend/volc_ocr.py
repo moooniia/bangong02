@@ -989,15 +989,35 @@ def _begin_portrait_section(doc):
     return new_sec
 
 
-def _init_doc_landscape(doc, tight=True):
-    """单页宽表：整份文档横版+窄边距，标题与表格同页。"""
+def _sync_doc_section_to_pdf(doc, pdf_path, page_index=0, tight=True):
+    """Word 节与 PDF 页同尺寸同方向（A4 竖版等），避免擅自改成横版/Letter。"""
     from docx.enum.section import WD_ORIENT
     from docx.shared import Inches
 
+    rect = None
+    try:
+        import fitz
+        pdf = fitz.open(pdf_path)
+        try:
+            rect = pdf[page_index].rect
+        finally:
+            pdf.close()
+    except Exception:
+        rect = None
+
     sec = doc.sections[0]
-    sec.orientation = WD_ORIENT.LANDSCAPE
-    sec.page_width, sec.page_height = sec.page_height, sec.page_width
-    margin = Inches(0.35 if tight else 0.45)
+    if rect is not None:
+        width_in = rect.width / 72.0
+        height_in = rect.height / 72.0
+        if width_in > height_in:
+            sec.orientation = WD_ORIENT.LANDSCAPE
+            sec.page_width = Inches(width_in)
+            sec.page_height = Inches(height_in)
+        else:
+            sec.orientation = WD_ORIENT.PORTRAIT
+            sec.page_width = Inches(width_in)
+            sec.page_height = Inches(height_in)
+    margin = Inches(0.45 if tight else 0.6)
     sec.top_margin = margin
     sec.bottom_margin = margin
     sec.left_margin = margin
@@ -1035,7 +1055,8 @@ def _apply_compact_dense_table_style(table, nrows, font_pt, reserved_in=0.3):
 
     sec = table.part.document.sections[-1]
     usable = sec.page_height - sec.top_margin - sec.bottom_margin - Inches(reserved_in)
-    row_twips = max(96, min(205, int(usable) // max(nrows, 1)))
+    row_twips = max(96, int(usable) // max(nrows, 1))
+    row_twips = min(row_twips, 320)
     if nrows >= 45:
         font_pt = min(font_pt, 5.0)
     elif nrows >= 35:
@@ -2537,11 +2558,10 @@ def _add_html_table(
     ncols = max(c for _, c in occupied) + 1
     ncols = max(ncols, max_col)
 
-    use_landscape = landscape or (ncols >= 6 and nrows >= 8)
+    auto_landscape = ncols >= 6 and nrows >= 8 and not compact
+    use_landscape = landscape or auto_landscape
     if use_landscape and not skip_section_switch:
         _begin_landscape_section(doc)
-    elif skip_section_switch:
-        use_landscape = True
 
     task_style = _is_task_checklist_table(parsed)
     font_pt = _task_table_font_pt(ncols, nrows) if task_style else (
@@ -2558,8 +2578,9 @@ def _add_html_table(
     table = doc.add_table(rows=nrows, cols=ncols)
     table.style = "Table Grid"
     if not task_style:
-        usable = Inches(9.0 if use_landscape else 6.0)
-        col_w = int(usable / max(ncols, 1))
+        sec = doc.sections[-1]
+        usable_w = sec.page_width - sec.left_margin - sec.right_margin
+        col_w = int(usable_w / max(ncols, 1))
         for column in table.columns:
             column.width = col_w
 
@@ -2587,7 +2608,7 @@ def _add_html_table(
 
 
 def _single_page_table_opts(total_pages, dense_table):
-    """单页设备清单：横版一页打完，不切竖版、不拆节。"""
+    """单页设备清单：保持 PDF 方向与尺寸，压紧表格一页打完。"""
     if total_pages == 1 and dense_table:
         return {
             "landscape": False,
@@ -2796,8 +2817,8 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
             dense_table = _page_is_dense_table(page, page_md)
             single_dense = total_pages == 1 and dense_table
             table_opts = _single_page_table_opts(total_pages, dense_table)
-            if single_dense and pi == 0:
-                _init_doc_landscape(doc)
+            if single_dense and pi == 0 and pdf_path:
+                _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
