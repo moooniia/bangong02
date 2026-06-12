@@ -1542,14 +1542,32 @@ def _embed_extracted_seals(doc, page_image_path, cache_dir, page_hw=None, pg_w_e
     return len(seals)
 
 
-def _embed_ocr_image_blocks(doc, page, cache_dir, pg_w_emu, pg_h_emu):
-    """Float-embed image blocks detected by OCR (e.g. stamps on header pages)."""
+def _resolve_block_image_path(block, cache_dir, pdf_path=None, page_index=None, page_hw=None):
+    """OCR 图链优先；火山 URL 过期时从 PDF 裁切（封面二维码等）。"""
+    url = block.get("url")
+    if url:
+        try:
+            path = _download_image(url, cache_dir)
+            if path and os.path.isfile(path) and os.path.getsize(path) > 0:
+                return path
+        except Exception:
+            pass
+    if pdf_path and page_index is not None:
+        return _crop_pdf_image(
+            pdf_path, page_index, block.get("box") or {}, page_hw or {}, cache_dir,
+        )
+    return None
+
+
+def _embed_ocr_image_blocks(
+    doc, page, cache_dir, pg_w_emu, pg_h_emu,
+    pdf_path=None, page_index=None,
+):
+    """Float-embed image blocks detected by OCR (e.g. QR codes on cover pages)."""
+    page_hw = page.get("page_image_hw") or {}
     count = 0
     for block in page.get("textblocks") or []:
         if (block.get("label") or "").lower() != "image":
-            continue
-        url = block.get("url")
-        if not url:
             continue
         nb = block.get("norm_box") or {}
         x0 = nb.get("x0") or 0
@@ -1558,9 +1576,10 @@ def _embed_ocr_image_blocks(doc, page, cache_dir, pg_w_emu, pg_h_emu):
         y1 = nb.get("y1") or y0
         if x1 <= x0 or y1 <= y0:
             continue
-        try:
-            path = _download_image(url, cache_dir)
-        except Exception:
+        path = _resolve_block_image_path(
+            block, cache_dir, pdf_path=pdf_path, page_index=page_index, page_hw=page_hw,
+        )
+        if not path:
             continue
         pos_x = int(x0 * pg_w_emu)
         pos_y = int(y0 * pg_h_emu)
@@ -1768,7 +1787,7 @@ def _cover_text_style(text, label, page_index, watermark_page=False):
     if re.match(r"^甲\s*方|^乙\s*方", text):
         return {"name": "宋体", "east_asia": "SimSun", "size": 12, "bold": False}
     if len(text) >= 16 and re.search(r"20\d{2}年|工程|监测|项目|生态", text):
-        return {"name": "黑体", "east_asia": "SimHei", "size": 15, "bold": True}
+        return {"name": "黑体", "east_asia": "SimHei", "size": 13, "bold": False}
     return None
 
 
@@ -1884,6 +1903,31 @@ def _split_cover_party_lines(text, box, block):
     return out
 
 
+def _split_cover_title_contract(block):
+    """按「服务合同」在句中位置切分，比固定 62% 更符合原版式。"""
+    text = _normalize_text(block.get("text") or "")
+    idx = text.find("服务合同")
+    if idx <= 0:
+        return [block]
+    box = dict(block.get("box") or {})
+    y0 = box.get("y0") or 0
+    y1 = box.get("y1") or y0
+    h = max(y1 - y0, 1)
+    ratio = idx / max(len(text), 1)
+    mid = y0 + int(h * ratio)
+    head = _extract_cover_title_text(text[:idx].strip())
+    if not head:
+        return [block]
+    head_block = dict(block)
+    head_block["text"] = head
+    head_block["box"] = {**box, "y1": mid}
+    tail_block = dict(block)
+    tail_block["text"] = "服务合同"
+    tail_block["box"] = {**box, "y0": mid, "y1": y1}
+    tail_block["label"] = "title"
+    return [head_block, tail_block]
+
+
 def _expand_cover_blocks(block):
     """P2 封面：去水印、拆标题/服务合同/甲乙方。"""
     label = (block.get("label") or "para").lower()
@@ -1895,16 +1939,7 @@ def _expand_cover_blocks(block):
     if label == "header":
         return [block]
     if "服务合同" in text and text.strip() != "服务合同":
-        expanded = _expand_layout_blocks(block)
-        cleaned = []
-        for sub in expanded:
-            sub = dict(sub)
-            if (sub.get("label") or "").lower() != "title":
-                title = _extract_cover_title_text(sub.get("text") or "")
-                if title:
-                    sub["text"] = title
-            cleaned.append(sub)
-        return cleaned
+        return _split_cover_title_contract(block)
     if re.fullmatch(r"服务合同", _strip_watermark_substrings(text).strip()):
         sub = dict(block)
         sub["text"] = "服务合同"
@@ -2165,16 +2200,20 @@ def _add_positioned_paragraph(
     run.italic = bool(italic or label == "cap")
     if cover:
         size_pt = cover["size"]
-        color_hex = cover.get("color")
-        if is_cover and rgb_arr is not None:
-            prefer_blue = (
-                label == "header"
-                or bool(re.fullmatch(r"\d{6,12}", text.strip()))
-            )
-            sampled = _sample_box_color_hex(rgb_arr, box, page_hw, prefer_blue=prefer_blue)
-            if sampled:
-                color_hex = sampled
-            size_pt = _estimate_cover_font_pt(box, page_hw, text, label)
+        is_blue_header = (
+            label == "header"
+            or bool(re.fullmatch(r"\d{6,12}", text.strip()))
+        )
+        if is_blue_header:
+            color_hex = cover.get("color") or "008FEF"
+            if is_cover and rgb_arr is not None:
+                sampled = _sample_box_color_hex(
+                    rgb_arr, box, page_hw, prefer_blue=True,
+                )
+                if sampled:
+                    color_hex = sampled
+        else:
+            color_hex = "000000"
         _set_run_font_style(
             run,
             cover["name"],
@@ -2576,7 +2615,10 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
 
             if pdf_path and _page_has_image_blocks(page) and not dense_table:
                 pg_w_emu, pg_h_emu = _get_page_emu_size(pdf_path, pi)
-                _embed_ocr_image_blocks(doc, page, cache_dir, pg_w_emu, pg_h_emu)
+                _embed_ocr_image_blocks(
+                    doc, page, cache_dir, pg_w_emu, pg_h_emu,
+                    pdf_path=pdf_path, page_index=pi,
+                )
 
             if is_sig_page and pdf_path:
                 from seal_utils import SEAL_EXTRACT_DPI
