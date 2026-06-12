@@ -24,6 +24,6 @@ def inspect(path, label):
     for t in texts[:20]:
         print(f"    P: {t[:90]}")
 
-inspect(r"C:\Users\paz\Desktop\P T W 测试\page_4_v0.10.14.docx", "v0.10.14 (ours)")
+inspect(r"C:\Users\paz\Desktop\P T W 测试\page_4_v0.10.15.docx", "v0.10.15 (ours)")
 print()
 inspect(r"C:\Users\paz\Desktop\P T W 测试\page_4.docx", "WPS standard")

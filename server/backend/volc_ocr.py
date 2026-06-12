@@ -772,6 +772,59 @@ def _row_heights_from_line_positions(positions, nrows):
     return [h / total for h in heights]
 
 
+def _extract_row_heights_img2table(img_bgr):
+    """Use img2table (OpenCV Hough lines) to detect row heights from a scanned table image.
+    Returns normalized height fractions (sum=1.0) per row, or None on failure/unavailable.
+    """
+    try:
+        from img2table.document import Image as I2TImage
+    except ImportError:
+        log.debug("img2table not installed, skipping proportional row height detection")
+        return None
+    import cv2
+    import tempfile
+    import os
+
+    fd, tmp_path = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
+    try:
+        cv2.imwrite(tmp_path, img_bgr)
+        doc_img = I2TImage(tmp_path)
+        tables = doc_img.extract_tables(ocr=None, implicit_rows=True, borderless_tables=False)
+    except Exception as exc:
+        log.debug("img2table extract_tables failed: %s", exc)
+        tables = []
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+    if not tables:
+        return None
+
+    # Pick the table with the most rows
+    best = max(tables, key=lambda t: len(t.content))
+    rows_dict = best.content  # dict: row_idx -> list[Cell]
+    if not rows_dict:
+        return None
+
+    row_heights_px = []
+    for row_idx in sorted(rows_dict.keys()):
+        cells = rows_dict[row_idx]
+        if not cells:
+            continue
+        y1 = min(c.bbox.y1 for c in cells)
+        y2 = max(c.bbox.y2 for c in cells)
+        row_heights_px.append(max(1, y2 - y1))
+
+    if len(row_heights_px) < 2:
+        return None
+
+    total = sum(row_heights_px)
+    return [h / total for h in row_heights_px]
+
+
 def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape, row_heights=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
@@ -806,17 +859,22 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
             align = WD_ALIGN_PARAGRAPH.CENTER
         _set_cell_text_style(tcell, font_pt, align=align)
 
-    # Apply row heights: proportional from image detection, or uniform fallback
+    # Apply row heights: proportional from image detection, or let Word auto-size
+    # sec dimensions are in EMU (914400/inch); w:trHeight val is twips (1440/inch)
+    _EMU_PER_TWIP = 635
     sec = table.part.document.sections[-1]
-    avail_h = int(sec.page_height - sec.top_margin - sec.bottom_margin)
-    if row_heights and len(row_heights) == nrows:
+    avail_h_twips = int(sec.page_height - sec.top_margin - sec.bottom_margin) // _EMU_PER_TWIP
+    rh = list(row_heights) if row_heights else []
+    # Trim extra rows (noise from borders) by removing the smallest entries until len matches
+    while len(rh) > nrows and len(rh) > 2:
+        idx = min(range(len(rh)), key=lambda i: rh[i])
+        rh.pop(idx)
+    if rh and len(rh) == nrows:
+        total = sum(rh)
+        rh = [h / total for h in rh]
         for ri, row in enumerate(table.rows):
-            twips = max(200, int(avail_h * row_heights[ri]))
+            twips = max(200, int(avail_h_twips * rh[ri]))
             _set_row_height(row, twips, exact=True)
-    else:
-        uniform = max(200, avail_h // max(nrows, 1))
-        for row in table.rows:
-            _set_row_height(row, uniform, exact=False)
 
 
 def _add_checklist_styled_para(doc, line):
@@ -3349,12 +3407,16 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
-                # Detect row line positions from corrected image for proportional row heights
+                # Detect proportional row heights from corrected image (img2table primary)
                 try:
                     corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
-                    line_pos = _detect_row_line_positions(corr_bgr)
-                    if line_pos:
-                        table_opts["row_line_positions"] = line_pos
+                    rh = _extract_row_heights_img2table(corr_bgr)
+                    if rh:
+                        table_opts["row_heights"] = rh
+                    else:
+                        line_pos = _detect_row_line_positions(corr_bgr)
+                        if line_pos:
+                            table_opts["row_line_positions"] = line_pos
                 except Exception:
                     pass
 
