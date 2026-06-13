@@ -883,6 +883,31 @@ def _extract_col_widths_img2table(img_bgr, ncols_hint=0):
     return [w / total for w in col_widths_px]
 
 
+def _estimate_col_widths_from_content(parsed, ncols):
+    """Estimate proportional column widths from HTML cell text lengths.
+    Uses sqrt(max_text_len) per column so wide-content columns get more space
+    without extreme ratios. Ignores cells that span multiple columns.
+    Returns normalized fractions (sum=1.0) or None.
+    """
+    import math
+    if not parsed or ncols < 2:
+        return None
+    max_len = [0] * ncols
+    for row in parsed:
+        ci = 0
+        for cell in row:
+            cs = cell.get("colspan", 1)
+            text_len = len(cell.get("text", "").strip())
+            if cs == 1 and ci < ncols:
+                max_len[ci] = max(max_len[ci], text_len)
+            ci += cs
+    weights = [math.sqrt(max(l, 1)) for l in max_len]
+    total = sum(weights)
+    if total == 0:
+        return None
+    return [w / total for w in weights]
+
+
 def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape, row_heights=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
@@ -3204,10 +3229,12 @@ def _add_html_table(
     if not task_style and not scoring_style:
         sec = doc.sections[-1]
         usable_w = sec.page_width - sec.left_margin - sec.right_margin
-        log.warning("CWDBG _add_html_table ncols=%d col_widths_len=%s", ncols, len(col_widths) if col_widths else None)
-        if col_widths and len(col_widths) == ncols:
+        _cw = col_widths if (col_widths and len(col_widths) == ncols) else None
+        if _cw is None:
+            _cw = _estimate_col_widths_from_content(parsed, ncols)
+        if _cw:
             for ci, column in enumerate(table.columns):
-                column.width = max(int(usable_w * col_widths[ci]), 400000)
+                column.width = max(int(usable_w * _cw[ci]), 400000)
         else:
             col_w = int(usable_w / max(ncols, 1))
             for column in table.columns:
@@ -3503,11 +3530,9 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                         if line_pos:
                             table_opts["row_line_positions"] = line_pos
                     cw = _extract_col_widths_img2table(corr_bgr)
-                    log.warning("CWDBG col_widths=%s", cw)
                     if cw:
                         table_opts["col_widths"] = cw
-                except Exception as _cw_exc:
-                    log.warning("CWDBG col_widths exception: %s", _cw_exc)
+                except Exception:
                     pass
                 # Apply WPS-reference margins for rotated scoring/dense table pages
                 _page_was_rotated = rotated_pdf or (
