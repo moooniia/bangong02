@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.10.25] - 2026-06-13
+
+构建号: `2026.06.13.10`
+
+v0.10.25: _pdf_has_page_rotation加原始字节扫描回退，修复fitz page.rotation返回0的bug
+
+### Changed
+- v0.10.25: _pdf_has_page_rotation加原始字节扫描回退，修复fitz page.rotation返回0的bug
+
+备份: `backups/v0.10.25/`
+
+
 ## [0.10.24] - 2026-06-13
 
 构建号: `2026.06.13.9`
