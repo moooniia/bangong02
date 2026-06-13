@@ -24,7 +24,7 @@ _DENSE_TABLE_HINTS = (
     "规格书", "概况", "标高", "基坑", "监测", "参数", "结构概况", "技术规格", "单体",
 )
 _SCORING_FORM_HINTS = ("考评打分表", "服务管理考评", "考评得分", "扣分标准", "考评内容")
-_SCORING_TABLE_HEADERS = frozenset({"序号", "考评内容", "分值", "扣分标准", "备注"})
+_SCORING_TABLE_HEADERS = frozenset({"序号", "考评内容", "分值", "扣分标准", "备注", "考评标准", "扣分", "得分"})
 _SCORING_TABLE_COL_RATIOS = {
     5: [0.06, 0.36, 0.08, 0.36, 0.14],
     6: [0.08, 0.06, 0.36, 0.12, 0.18, 0.20],  # WPS reference: 序号/考评内容/考评标准/分值/扣分/得分
@@ -657,10 +657,15 @@ def _is_task_checklist_table(parsed):
 
 
 def _is_scoring_form_table(parsed):
-    if not parsed or len(parsed[0]) < 3:
+    if not parsed:
         return False
-    header_text = {_normalize_text(c.get("text") or "") for c in parsed[0]}
-    return len(header_text & _SCORING_TABLE_HEADERS) >= 3
+    for row in parsed[:3]:
+        if len(row) < 3:
+            continue
+        header_text = {_normalize_text(c.get("text") or "") for c in row}
+        if len(header_text & _SCORING_TABLE_HEADERS) >= 2:
+            return True
+    return False
 
 
 def _page_is_scoring_form(page, page_md=""):
