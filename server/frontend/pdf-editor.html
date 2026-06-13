@@ -23,11 +23,15 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .tool-desc{font-size:14px;color:var(--ink3);line-height:1.75;margin-left:68px}
 
 /* Upload */
-.upload-area{border:2px dashed var(--border);border-radius:16px;padding:80px 32px;text-align:center;cursor:pointer;background:white;transition:.2s}
+.upload-area{border:2px dashed var(--border);border-radius:16px;padding:64px 32px;text-align:center;cursor:pointer;background:white;transition:.2s}
 .upload-area:hover,.upload-area.drag{border-color:var(--pink);background:var(--pink-bg)}
-.upload-icon{font-size:56px;color:var(--ink4);margin-bottom:16px;display:block}
-.upload-title{font-size:18px;font-weight:700;margin-bottom:8px}
-.upload-sub{font-size:13px;color:var(--ink3);margin-bottom:24px}
+.upload-icon{font-size:52px;color:var(--ink4);margin-bottom:14px;display:block}
+.upload-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.upload-sub{font-size:13px;color:var(--ink3);margin-bottom:16px}
+.pwd-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:16px}
+.pwd-row label{font-size:12px;color:var(--ink3);white-space:nowrap}
+.pwd-row input{border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-family:inherit;width:180px;outline:none}
+.pwd-row input:focus{border-color:var(--pink)}
 .loading-area{text-align:center;padding:64px}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -46,22 +50,22 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .thumb-card:active{cursor:grabbing}
 .thumb-img{width:100%;height:auto;display:block;border-radius:7px 7px 0 0}
 .thumb-label{font-size:11px;color:var(--ink3);text-align:center;padding:6px 4px}
-.thumb-del{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#ff4444;color:white;border:none;cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center;z-index:10;padding:0;line-height:1}
+.thumb-del{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#ff4444;color:white;border:none;cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center;z-index:10;padding:0}
 .thumb-card:hover .thumb-del{display:flex}
 .thumb-ghost{opacity:.35;border:2px dashed var(--pink)!important}
 
-/* Options */
+/* Options panel */
 .options-panel{background:white;border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
-.opt-section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.opt-section{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--border)}
 .opt-section:last-child{padding-bottom:0;margin-bottom:0;border-bottom:none}
-.opt-title{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
-.opt-row{display:flex;align-items:center;gap:12px;padding:7px 0}
-.opt-row>span{font-size:14px;font-weight:500;min-width:116px}
+.opt-title{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.opt-row{display:flex;align-items:center;gap:12px;padding:6px 0}
+.opt-row>span{font-size:14px;font-weight:500;min-width:120px}
 .text-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:.15s}
 .text-input:focus{border-color:var(--pink)}
-.size-radios{display:flex;gap:8px}
+.radios{display:flex;gap:8px;flex-wrap:wrap}
 .srad{display:none}
-.srad-label{padding:6px 16px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;transition:.15s}
+.srad-label{padding:6px 14px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;transition:.15s;white-space:nowrap}
 .srad:checked+.srad-label{border-color:var(--pink);background:var(--pink-bg);color:var(--pink);font-weight:700}
 .toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer}
 .tog-input{display:none}
@@ -109,7 +113,7 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
       <div class="tool-icon-big"><i class="ti ti-layout-grid"></i></div>
       <h1>PDF 编辑器</h1>
     </div>
-    <p class="tool-desc">上传 PDF 后可视化排列每一页，删除、拖拽调序、追加其他 PDF，再选择是否加水印、转黑白、设置密码，最后导出为一份新 PDF。</p>
+    <p class="tool-desc">上传 PDF 后可视化排列每一页，删除、拖拽调序、追加其他 PDF，再选择是否旋转、加水印、转黑白、压缩、加密，一键导出新 PDF。</p>
   </div>
 
   <!-- Upload state -->
@@ -119,6 +123,10 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
       <i class="ti ti-files upload-icon"></i>
       <div class="upload-title">拖拽 PDF 到这里开始编辑</div>
       <div class="upload-sub">支持 PDF 文件，大小限制 100 MB</div>
+      <div class="pwd-row" id="pwdRow" onclick="event.stopPropagation()">
+        <label for="openPwd">有密码？</label>
+        <input type="password" id="openPwd" placeholder="输入打开密码（可选）">
+      </div>
     </div>
     <div class="loading-area" id="loadingArea" style="display:none">
       <div class="spinner"></div>
@@ -143,13 +151,26 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
         <div class="opt-title">页面设置</div>
         <div class="opt-row">
           <span>统一页面大小</span>
-          <div class="size-radios">
+          <div class="radios">
             <input class="srad" type="radio" name="usize" id="usizeKeep" value="" checked>
             <label class="srad-label" for="usizeKeep">保持原样</label>
             <input class="srad" type="radio" name="usize" id="usizeA4" value="a4">
             <label class="srad-label" for="usizeA4">A4</label>
             <input class="srad" type="radio" name="usize" id="usizeA3" value="a3">
             <label class="srad-label" for="usizeA3">A3</label>
+          </div>
+        </div>
+        <div class="opt-row">
+          <span>旋转所有页面</span>
+          <div class="radios">
+            <input class="srad" type="radio" name="rotate" id="rot0" value="0" checked>
+            <label class="srad-label" for="rot0">不旋转</label>
+            <input class="srad" type="radio" name="rotate" id="rot90" value="90">
+            <label class="srad-label" for="rot90">顺时针 90°</label>
+            <input class="srad" type="radio" name="rotate" id="rot180" value="180">
+            <label class="srad-label" for="rot180">180°</label>
+            <input class="srad" type="radio" name="rotate" id="rot270" value="270">
+            <label class="srad-label" for="rot270">逆时针 90°</label>
           </div>
         </div>
       </div>
@@ -164,7 +185,15 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
           <label class="toggle-wrap">
             <input class="tog-input" type="checkbox" id="grayscaleTog">
             <span class="tog-track"></span>
-            <span class="tog-lbl" id="togLbl">关</span>
+            <span class="tog-lbl" id="togGray">关</span>
+          </label>
+        </div>
+        <div class="opt-row">
+          <span>压缩文件</span>
+          <label class="toggle-wrap">
+            <input class="tog-input" type="checkbox" id="compressTog">
+            <span class="tog-track"></span>
+            <span class="tog-lbl" id="togCmp">关</span>
           </label>
         </div>
       </div>
@@ -201,6 +230,7 @@ const uploadState  = document.getElementById('uploadState');
 const uploadArea   = document.getElementById('uploadArea');
 const loadingArea  = document.getElementById('loadingArea');
 const fileInput    = document.getElementById('fileInput');
+const openPwd      = document.getElementById('openPwd');
 const editState    = document.getElementById('editState');
 const thumbGrid    = document.getElementById('thumbGrid');
 const addPdfBtn    = document.getElementById('addPdfBtn');
@@ -214,7 +244,7 @@ const resultArea   = document.getElementById('resultArea');
 const downloadBtn  = document.getElementById('downloadBtn');
 const againBtn     = document.getElementById('againBtn');
 const grayscaleTog = document.getElementById('grayscaleTog');
-const togLbl       = document.getElementById('togLbl');
+const compressTog  = document.getElementById('compressTog');
 
 let sortable    = null;
 let isFirstLoad = true;
@@ -236,10 +266,10 @@ function createCard(sessionFile, pageIdx, thumbSrc) {
   });
 
   const img = document.createElement('img');
-  img.className   = 'thumb-img';
-  img.src         = thumbSrc;
-  img.loading     = 'lazy';
-  img.draggable   = false;
+  img.className = 'thumb-img';
+  img.src       = thumbSrc;
+  img.loading   = 'lazy';
+  img.draggable = false;
 
   const lbl = document.createElement('div');
   lbl.className = 'thumb-label';
@@ -254,8 +284,6 @@ function updatePageNumbers() {
     c.querySelector('.thumb-label').textContent = '第 ' + (i + 1) + ' 页';
   });
   document.getElementById('pageCountBadge').textContent = cards.length + ' 页';
-
-  // Remove the empty placeholder if present
   const emp = thumbGrid.querySelector('.thumb-grid-empty');
   if (emp) emp.remove();
 }
@@ -269,19 +297,20 @@ function initSortable() {
   });
 }
 
-async function uploadPdf(file) {
+async function uploadPdf(file, pwd) {
   const first = isFirstLoad;
   if (first) {
     uploadArea.style.display = 'none';
     loadingArea.style.display = 'block';
   } else {
-    addPdfBtn.disabled = true;
-    addPdfBtn.textContent = '加载中…';
+    addPdfBtn.disabled  = true;
+    addPdfBtn.innerHTML = '加载中…';
   }
 
   try {
     const fd = new FormData();
     fd.append('file', file);
+    if (pwd) fd.append('password', pwd);
     const res  = await fetch('/api/pdf/thumbnails', { method: 'POST', body: fd });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || '加载失败');
@@ -312,17 +341,20 @@ async function uploadPdf(file) {
 }
 
 // Upload area events
-uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('click', (e) => {
+  if (e.target === openPwd || e.target.closest('#pwdRow')) return;
+  fileInput.click();
+});
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag'); });
 uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
 uploadArea.addEventListener('drop', (e) => {
   e.preventDefault();
   uploadArea.classList.remove('drag');
   const f = e.dataTransfer.files[0];
-  if (f) uploadPdf(f);
+  if (f) uploadPdf(f, openPwd.value || '');
 });
 fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) uploadPdf(fileInput.files[0]);
+  if (fileInput.files[0]) uploadPdf(fileInput.files[0], openPwd.value || '');
   fileInput.value = '';
 });
 
@@ -335,19 +367,23 @@ fileInput.addEventListener('change', () => {
   btn.onmouseover = () => { btn.style.background = '#d43d79'; };
   btn.onmouseout  = () => { btn.style.background = '#e94c88'; };
   btn.onclick = (e) => { e.stopPropagation(); fileInput.click(); };
-  uploadArea.appendChild(btn);
+  const pwdRow = document.getElementById('pwdRow');
+  uploadArea.insertBefore(btn, pwdRow);
 })();
 
 // Append more pages
 addPdfBtn.addEventListener('click', () => addFileInput.click());
 addFileInput.addEventListener('change', () => {
-  if (addFileInput.files[0]) uploadPdf(addFileInput.files[0]);
+  if (addFileInput.files[0]) uploadPdf(addFileInput.files[0], '');
   addFileInput.value = '';
 });
 
-// Grayscale toggle label
+// Toggle labels
 grayscaleTog.addEventListener('change', () => {
-  togLbl.textContent = grayscaleTog.checked ? '开' : '关';
+  document.getElementById('togGray').textContent = grayscaleTog.checked ? '开' : '关';
+});
+compressTog.addEventListener('change', () => {
+  document.getElementById('togCmp').textContent = compressTog.checked ? '开' : '关';
 });
 
 // Export
@@ -363,8 +399,10 @@ async function doExport() {
   }));
 
   const uniformSize   = (document.querySelector('input[name="usize"]:checked') || {}).value || '';
+  const rotateDeg     = (document.querySelector('input[name="rotate"]:checked') || {}).value || '0';
   const watermarkText = document.getElementById('watermarkText').value.trim();
   const grayscale     = grayscaleTog.checked;
+  const compress      = compressTog.checked;
   const encryptPwd    = document.getElementById('encryptPwd').value;
 
   exportBtn.disabled        = true;
@@ -374,9 +412,10 @@ async function doExport() {
   progBar.style.width        = '0%';
   progPct.textContent        = '0%';
 
-  let pct   = 0;
+  let pct = 0;
+  const step  = grayscale ? 1 : 2;
   const timer = setInterval(() => {
-    pct = Math.min(pct + (grayscale ? 1 : 2), 88);
+    pct = Math.min(pct + step, 88);
     progBar.style.width = pct + '%';
     progPct.textContent = pct + '%';
   }, 200);
@@ -385,8 +424,10 @@ async function doExport() {
     const fd = new FormData();
     fd.append('pages', JSON.stringify(pagesSpec));
     if (uniformSize)   fd.append('uniform_size',   uniformSize);
+    if (rotateDeg !== '0') fd.append('rotate_deg', rotateDeg);
     if (watermarkText) fd.append('watermark_text', watermarkText);
     fd.append('grayscale', grayscale ? 'true' : 'false');
+    fd.append('compress',  compress  ? 'true' : 'false');
     if (encryptPwd)    fd.append('encrypt_password', encryptPwd);
 
     const res  = await fetch('/api/pdf/editor/export', { method: 'POST', body: fd });
@@ -419,8 +460,11 @@ againBtn.addEventListener('click', () => {
   document.getElementById('watermarkText').value = '';
   document.getElementById('encryptPwd').value    = '';
   document.getElementById('usizeKeep').checked   = true;
+  document.getElementById('rot0').checked        = true;
   grayscaleTog.checked = false;
-  togLbl.textContent   = '关';
+  compressTog.checked  = false;
+  document.getElementById('togGray').textContent = '关';
+  document.getElementById('togCmp').textContent  = '关';
   resultArea.style.display   = 'none';
   errorArea.style.display    = 'none';
   progressArea.style.display = 'none';
@@ -428,6 +472,7 @@ againBtn.addEventListener('click', () => {
   loadingArea.style.display  = 'none';
   uploadArea.style.display   = 'block';
   uploadState.style.display  = 'block';
+  openPwd.value   = '';
   exportBtn.disabled = false;
   isFirstLoad = true;
   if (sortable) { sortable.destroy(); sortable = null; }

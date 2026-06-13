@@ -1080,11 +1080,14 @@ def pdf_thumbnails(input_path, max_dim=160):
 
 def pdf_editor_export(upload_folder, pages_spec, output_path,
                       uniform_size=None, watermark_text=None,
-                      grayscale=False, encrypt_password=None):
+                      grayscale=False, encrypt_password=None,
+                      rotate_deg=0, compress=False):
     """
     Assemble a new PDF from pages_spec then apply optional operations.
     pages_spec: list of {"file": "server_uuid.pdf", "idx": 0_based_int}
     uniform_size: 'a4', 'a3', or None
+    rotate_deg: 0, 90, 180, 270 — applied to every page
+    compress: run pypdf content-stream compression on output
     """
     import fitz
     import shutil
@@ -1093,10 +1096,13 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
         'a4': fitz.paper_rect('a4'),
         'a3': fitz.paper_rect('a3'),
     }
+    rotate_deg = int(rotate_deg) if rotate_deg else 0
+    rotate_deg = rotate_deg % 360
 
     source_docs = {}
     tmp_build = output_path + '._build.pdf'
     tmp_gray  = output_path + '._gray.pdf'
+    tmp_cmp   = output_path + '._cmp.pdf'
 
     try:
         for item in pages_spec:
@@ -1115,12 +1121,18 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
             if idx < 0 or idx >= len(src):
                 continue
             if uniform_size and uniform_size.lower() in PAGE_SIZES:
-                tr = PAGE_SIZES[uniform_size.lower()]
-                new_pg = out_doc.new_page(width=tr.width, height=tr.height)
+                base = PAGE_SIZES[uniform_size.lower()]
+                bw, bh = base.width, base.height
             else:
                 sr = src[idx].rect
-                new_pg = out_doc.new_page(width=sr.width, height=sr.height)
-            new_pg.show_pdf_page(new_pg.rect, src, idx)
+                bw, bh = sr.width, sr.height
+            # Swap dimensions for 90°/270° rotation
+            if rotate_deg in (90, 270):
+                pw, ph = bh, bw
+            else:
+                pw, ph = bw, bh
+            new_pg = out_doc.new_page(width=pw, height=ph)
+            new_pg.show_pdf_page(new_pg.rect, src, idx, rotate=rotate_deg)
 
         if watermark_text and watermark_text.strip():
             img_bytes, (tw, th) = _make_watermark_tile(watermark_text.strip(), _find_cn_font())
@@ -1160,6 +1172,19 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                 os.remove(current)
             current = tmp_gray
 
+        if compress:
+            from pypdf import PdfReader, PdfWriter
+            rdr = PdfReader(current)
+            wtr = PdfWriter()
+            wtr.append(rdr)
+            for page in wtr.pages:
+                page.compress_content_streams()
+            with open(tmp_cmp, 'wb') as fh:
+                wtr.write(fh)
+            if os.path.exists(current):
+                os.remove(current)
+            current = tmp_cmp
+
         if encrypt_password:
             from pypdf import PdfReader, PdfWriter
             reader = PdfReader(current)
@@ -1180,7 +1205,7 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                 doc.close()
             except Exception:
                 pass
-        for p in [tmp_build, tmp_gray]:
+        for p in [tmp_build, tmp_gray, tmp_cmp]:
             if os.path.exists(p):
                 os.remove(p)
 

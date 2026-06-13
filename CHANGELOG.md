@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-06-13
+
+构建号: `2026.06.13.41`
+
+Added: rotate/compress in pdf_editor_export; decrypt encrypted PDF on thumbnail upload
+
+### Added
+- rotate/compress in pdf_editor_export; decrypt encrypted PDF on thumbnail upload
+
+备份: `backups/v0.12.1/`
+
+
 ## [0.12.0] - 2026-06-13
 
 构建号: `2026.06.13.40`

@@ -1112,6 +1112,24 @@ def pdf_thumbnails_route():
             return jsonify({'error': '请上传 PDF 文件'}), 400
         paths = _save_uploads([f], {'pdf'})
         path = paths[0]
+        password = request.form.get('password', '') or None
+
+        # Decrypt encrypted PDFs so the session file is always usable
+        if password:
+            import fitz as _fitz
+            _doc = _fitz.open(path)
+            if _doc.is_encrypted:
+                if not _doc.authenticate(password):
+                    _doc.close()
+                    raise ValueError('密码错误，PDF 无法打开')
+                dec_path = os.path.join(UPLOAD_FOLDER, str(uuid.uuid4()) + '.pdf')
+                _doc.save(dec_path, encryption=_fitz.PDF_ENCRYPT_NONE)
+                _doc.close()
+                os.remove(path)
+                path = dec_path
+            else:
+                _doc.close()
+
         from pdf_utils import pdf_thumbnails
         thumbs = pdf_thumbnails(path)
         session_file = os.path.basename(path)
@@ -1146,6 +1164,8 @@ def pdf_editor_export_route():
         watermark_text   = request.form.get('watermark_text', '') or None
         grayscale        = request.form.get('grayscale', 'false').lower() == 'true'
         encrypt_password = request.form.get('encrypt_password', '') or None
+        rotate_deg       = int(request.form.get('rotate_deg', '0') or '0')
+        compress         = request.form.get('compress', 'false').lower() == 'true'
 
         for item in pages_spec:
             fname = secure_filename(item.get('file', ''))
@@ -1166,6 +1186,8 @@ def pdf_editor_export_route():
             watermark_text=watermark_text,
             grayscale=grayscale,
             encrypt_password=encrypt_password,
+            rotate_deg=rotate_deg,
+            compress=compress,
         )
         return _ok(out_name, '编辑结果.pdf')
     except Exception as e:
