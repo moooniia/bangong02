@@ -3184,7 +3184,7 @@ def _add_html_table(
             total = sum(rh)
             rh = [h / total for h in rh]
             for ri, row in enumerate(table.rows):
-                twips = max(200, int(avail_h_twips * rh[ri]))
+                twips = max(200, min(936, int(avail_h_twips * rh[ri])))
                 _set_row_height(row, twips, exact=False)
 
     if use_landscape and restore_portrait:
@@ -3446,6 +3446,14 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                             table_opts["row_line_positions"] = line_pos
                 except Exception:
                     pass
+                # For rotated single-page tables, apply WPS-style margins (img2table confirmed structure)
+                if not single_form and "row_heights" in table_opts and _pdf_has_page_rotation(pdf_path):
+                    from docx.shared import Inches
+                    sec = doc.sections[-1]
+                    sec.left_margin = Inches(1.75)
+                    sec.right_margin = Inches(1.75)
+                    sec.top_margin = Inches(0.70)
+                    sec.bottom_margin = Inches(0.00)
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
