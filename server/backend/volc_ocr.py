@@ -3642,6 +3642,14 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                 ):
                     snapshot_pages.append(pi + 1)
 
+        if single_form or single_dense:
+            from docx.shared import Pt as _Pt
+            _max_before = _Pt(20)
+            for _para in doc.paragraphs:
+                sb = _para.paragraph_format.space_before
+                if sb is not None and sb > _max_before:
+                    _para.paragraph_format.space_before = _max_before
+
         doc.save(output_path)
     finally:
         shutil.rmtree(cache_dir, ignore_errors=True)
