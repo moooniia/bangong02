@@ -3228,6 +3228,8 @@ def _add_html_table(
         sec = doc.sections[-1]
         usable_w = sec.page_width - sec.left_margin - sec.right_margin
         _cw = col_widths if (col_widths and len(col_widths) == ncols) else None
+        if _cw is None and compact and ncols in _SCORING_TABLE_COL_RATIOS:
+            _cw = _SCORING_TABLE_COL_RATIOS[ncols]
         if _cw is None:
             _cw = _estimate_col_widths_from_content(parsed, ncols)
         if _cw:
