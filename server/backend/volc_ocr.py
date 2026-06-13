@@ -3204,6 +3204,7 @@ def _add_html_table(
     if not task_style and not scoring_style:
         sec = doc.sections[-1]
         usable_w = sec.page_width - sec.left_margin - sec.right_margin
+        log.warning("CWDBG _add_html_table ncols=%d col_widths_len=%s", ncols, len(col_widths) if col_widths else None)
         if col_widths and len(col_widths) == ncols:
             for ci, column in enumerate(table.columns):
                 column.width = max(int(usable_w * col_widths[ci]), 400000)
@@ -3502,9 +3503,11 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                         if line_pos:
                             table_opts["row_line_positions"] = line_pos
                     cw = _extract_col_widths_img2table(corr_bgr)
+                    log.warning("CWDBG col_widths=%s", cw)
                     if cw:
                         table_opts["col_widths"] = cw
-                except Exception:
+                except Exception as _cw_exc:
+                    log.warning("CWDBG col_widths exception: %s", _cw_exc)
                     pass
                 # Apply WPS-reference margins for rotated scoring/dense table pages
                 _page_was_rotated = rotated_pdf or (
