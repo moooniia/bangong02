@@ -3643,12 +3643,25 @@ def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None, rotat
 
 
 def _pdf_has_page_rotation(pdf_path):
-    """检测 PDF 是否含非零 /Rotate 元数据（fitz 渲染会补偿，但 Volc raw API 不会）。"""
+    """检测 PDF 是否含非零 /Rotate 元数据（fitz 渲染会补偿，但 Volc raw API 不会）。
+
+    fitz 的 page.rotation 属性在某些 PDF 版本/环境下会错误返回 0，即使 /Rotate 存在。
+    双重检测：fitz 属性优先，失败则扫描原始字节。
+    """
     try:
         doc = fitz.open(pdf_path)
         result = any(page.rotation != 0 for page in doc)
         doc.close()
-        return result
+        if result:
+            return True
+    except Exception:
+        pass
+    # fitz page.rotation 可能存在版本 bug，回退到原始字节扫描
+    try:
+        import re as _re
+        with open(pdf_path, "rb") as _f:
+            _raw = _f.read()
+        return bool(_re.search(rb"/Rotate\s+(?:90|180|270)\b", _raw))
     except Exception:
         return False
 
