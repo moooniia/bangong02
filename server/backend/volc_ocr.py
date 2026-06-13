@@ -3372,7 +3372,7 @@ def _render_page_blocks(
         _render_text_content(doc, text, watermarks, cache_dir, bold=bold, italic=italic, sig_page=is_sig_page)
 
 
-def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdowns=None):
+def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdowns=None, rotated_pdf=False):
     from docx import Document
     from docx.enum.text import WD_BREAK
     from docx.shared import Pt
@@ -3447,7 +3447,7 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                 except Exception:
                     pass
                 # For rotated single-page tables, apply WPS-style margins (img2table confirmed structure)
-                if not single_form and "row_heights" in table_opts and _pdf_has_page_rotation(pdf_path):
+                if not single_form and "row_heights" in table_opts and rotated_pdf:
                     from docx.shared import Inches
                     sec = doc.sections[-1]
                     sec.left_margin = Inches(1.75)
@@ -3618,7 +3618,7 @@ def _classify_scan_doc(pdf_path, markdown="", details=None):
     return "contract"
 
 
-def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None):
+def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None, rotated_pdf=False):
     """逐页 PNG 重解析：合同走 hybrid detail，任务清单走 markdown 版式。"""
     doc_kind = _classify_scan_doc(pdf_path, markdown, details)
     page_count = pdf_page_count(pdf_path)
@@ -3634,6 +3634,7 @@ def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None):
                 pdf_path=pdf_path,
                 mode=mode,
                 page_markdowns=pages_md,
+                rotated_pdf=rotated_pdf,
             )
             return {"route": f"volc-{mode}", "pages": len(img_details), "warning": warning}
 
@@ -3664,7 +3665,7 @@ def volc_pdf_to_docx(pdf_path, output_path):
     if _pdf_has_page_rotation(pdf_path):
         try:
             log.info("PDF 含页面旋转元数据，走逐页 PNG 模式: %s", pdf_path)
-            meta = _try_image_mode_docx(pdf_path, output_path, markdown="", details=[])
+            meta = _try_image_mode_docx(pdf_path, output_path, markdown="", details=[], rotated_pdf=True)
             return {"route": meta["route"], "warning": meta.get("warning") or ""}
         except Exception as exc:
             log.warning("旋转PDF图片模式失败(%.80s)，降级直传: %s", exc, pdf_path)
