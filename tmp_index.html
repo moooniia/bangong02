@@ -112,50 +112,10 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
   letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;
 }
 
-/* PDF Editor wide banner */
-.editor-banner {
-  display: flex; flex-direction: row; align-items: center; gap: 20px;
-  height: 76px; padding: 0 24px; margin-top: 10px;
-  background: white; border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  text-decoration: none; color: inherit; cursor: pointer;
-  transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background .2s, border-color .2s;
-}
-.editor-banner:hover {
-  transform: translateY(-4px) scale(1.008);
-  box-shadow: var(--shadow-up);
-  background: var(--pink-bg);
-  border-color: var(--pink);
-}
-.eb-icon {
-  width: 44px; height: 44px; background: var(--pink-bg); border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; color: var(--pink); flex-shrink: 0; transition: background .2s;
-}
-.editor-banner:hover .eb-icon { background: white; }
-.eb-body { flex: 1; }
-.eb-name { font-size: 14px; font-weight: 700; letter-spacing: -.2px; transition: color .2s; }
-.eb-sub { font-size: 12px; color: var(--ink3); margin-top: 3px; }
-.editor-banner:hover .eb-name { color: var(--pink); }
-.eb-arrow { font-size: 14px; color: var(--ink4); opacity: 0; transform: translate(-3px,3px); transition: all .2s; }
-.editor-banner:hover .eb-arrow { opacity: 1; transform: translate(0,0); color: var(--pink); }
-
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
   gap: 10px;
-}
-.pdf-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-.pdf-grid .editor-banner {
-  grid-column: 1 / -1;
-  margin-top: 0;
-}
-@media (max-width: 640px) {
-  .pdf-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .tool-card {
@@ -298,25 +258,43 @@ footer {
   <div class="section" id="pdf">
     <div class="section-header">
       <span class="section-name">PDF 处理</span>
-      <span class="section-count">9 个工具</span>
+      <span class="section-count">19 个工具</span>
     </div>
-    <div class="pdf-grid">
-      <a class="tool-card" href="/pdf-to-word.html"><div class="card-top"><i class="ti ti-file-type-doc card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Word</div></a>
-      <a class="tool-card" href="/pdf-to-excel.html"><div class="card-top"><i class="ti ti-file-type-xls card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Excel</div></a>
-      <a class="tool-card" href="/pdf-to-ppt.html"><div class="card-top"><i class="ti ti-file-type-ppt card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 PPT</div></a>
-      <a class="tool-card" href="/pdf-to-image.html"><div class="card-top"><i class="ti ti-photo card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转图片</div></a>
-      <a class="tool-card" href="/word-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Word 转 PDF</div></a>
-      <a class="tool-card" href="/excel-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Excel 转 PDF</div></a>
-      <a class="tool-card" href="/ppt-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PPT 转 PDF</div></a>
-      <a class="tool-card" href="/images-to-pdf.html"><div class="card-top"><i class="ti ti-photo-up card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">图片转 PDF</div></a>
-      <a class="editor-banner" href="/pdf-editor.html">
-        <div class="eb-icon"><i class="ti ti-layout-grid"></i></div>
-        <div class="eb-body">
-          <div class="eb-name">PDF 编辑器</div>
-          <div class="eb-sub">合并 · 拆分 · 排序 · 旋转 · 水印 · 黑白 · 压缩 · 加密 · 解密</div>
+    <div class="pdf-groups">
+      <div class="pdf-group">
+        <div class="pdf-group-tag">格式转换</div>
+        <div class="tools-grid">
+          <a class="tool-card" href="/pdf-to-word.html"><div class="card-top"><i class="ti ti-file-type-doc card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Word</div></a>
+          <a class="tool-card" href="/pdf-to-excel.html"><div class="card-top"><i class="ti ti-file-type-xls card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Excel</div></a>
+          <a class="tool-card" href="/pdf-to-ppt.html"><div class="card-top"><i class="ti ti-file-type-ppt card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 PPT</div></a>
+          <a class="tool-card" href="/pdf-to-image.html"><div class="card-top"><i class="ti ti-photo card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转图片</div></a>
+          <a class="tool-card" href="/word-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Word 转 PDF</div></a>
+          <a class="tool-card" href="/excel-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Excel 转 PDF</div></a>
+          <a class="tool-card" href="/ppt-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PPT 转 PDF</div></a>
+          <a class="tool-card" href="/images-to-pdf.html"><div class="card-top"><i class="ti ti-photo-up card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">图片转 PDF</div></a>
         </div>
-        <i class="ti ti-arrow-up-right eb-arrow"></i>
-      </a>
+      </div>
+      <div class="pdf-group">
+        <div class="pdf-group-tag">编辑处理</div>
+        <div class="tools-grid">
+          <a class="tool-card" href="/pdf-merge.html"><div class="card-top"><i class="ti ti-files card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">合并 PDF</div></a>
+          <a class="tool-card" href="/pdf-split.html"><div class="card-top"><i class="ti ti-scissors card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">拆分 PDF</div></a>
+          <a class="tool-card" href="/pdf-delete-pages.html"><div class="card-top"><i class="ti ti-trash card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">删除页面</div></a>
+          <a class="tool-card" href="/pdf-rotate.html"><div class="card-top"><i class="ti ti-rotate card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 旋转</div></a>
+          <a class="tool-card" href="/pdf-compress.html"><div class="card-top"><i class="ti ti-file-zip card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 压缩</div></a>
+          <a class="tool-card" href="/pdf-watermark.html"><div class="card-top"><i class="ti ti-droplet card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">加水印</div></a>
+          <a class="tool-card coming" href="#" title="嵌入水印无法可靠去除"><div class="card-top"><i class="ti ti-droplet-off card-icon"></i></div><div class="tool-name">去水印</div></a>
+          <a class="tool-card" href="/pdf-grayscale.html"><div class="card-top"><i class="ti ti-contrast card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">转黑白</div></a>
+          <a class="tool-card" href="/pdf-extract-images.html"><div class="card-top"><i class="ti ti-photo-search card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">提取图片</div></a>
+        </div>
+      </div>
+      <div class="pdf-group">
+        <div class="pdf-group-tag">安全</div>
+        <div class="tools-grid">
+          <a class="tool-card" href="/pdf-encrypt.html"><div class="card-top"><i class="ti ti-lock card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 加密</div></a>
+          <a class="tool-card" href="/pdf-decrypt.html"><div class="card-top"><i class="ti ti-lock-open card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 解密</div></a>
+        </div>
+      </div>
     </div>
   </div>
 

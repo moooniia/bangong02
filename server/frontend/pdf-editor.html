@@ -48,8 +48,11 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .thumb-card{position:relative;border:1px solid var(--border);border-radius:8px;overflow:visible;cursor:grab;background:white;transition:box-shadow .15s;user-select:none}
 .thumb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .thumb-card:active{cursor:grabbing}
-.thumb-img{width:100%;height:auto;display:block;border-radius:7px 7px 0 0}
-.thumb-label{font-size:11px;color:var(--ink3);text-align:center;padding:6px 4px}
+.thumb-img{width:100%;height:auto;display:block;border-radius:7px 7px 0 0;transition:transform .2s}
+.thumb-bottom{display:flex;align-items:center;justify-content:space-between;padding:4px 6px}
+.thumb-label{font-size:11px;color:var(--ink3)}
+.thumb-rot{border:none;background:none;cursor:pointer;font-size:14px;color:var(--ink4);padding:2px 4px;border-radius:4px;line-height:1;transition:.15s;font-family:inherit}
+.thumb-rot:hover{color:var(--pink);background:var(--pink-bg)}
 .thumb-del{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#ff4444;color:white;border:none;cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center;z-index:10;padding:0}
 .thumb-card:hover .thumb-del{display:flex}
 .thumb-ghost{opacity:.35;border:2px dashed var(--pink)!important}
@@ -160,19 +163,6 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
             <label class="srad-label" for="usizeA3">A3</label>
           </div>
         </div>
-        <div class="opt-row">
-          <span>旋转所有页面</span>
-          <div class="radios">
-            <input class="srad" type="radio" name="rotate" id="rot0" value="0" checked>
-            <label class="srad-label" for="rot0">不旋转</label>
-            <input class="srad" type="radio" name="rotate" id="rot90" value="90">
-            <label class="srad-label" for="rot90">顺时针 90°</label>
-            <input class="srad" type="radio" name="rotate" id="rot180" value="180">
-            <label class="srad-label" for="rot180">180°</label>
-            <input class="srad" type="radio" name="rotate" id="rot270" value="270">
-            <label class="srad-label" for="rot270">逆时针 90°</label>
-          </div>
-        </div>
       </div>
       <div class="opt-section">
         <div class="opt-title">内容处理</div>
@@ -254,6 +244,7 @@ function createCard(sessionFile, pageIdx, thumbSrc) {
   card.className = 'thumb-card';
   card.dataset.session = sessionFile;
   card.dataset.idx     = String(pageIdx);
+  card.dataset.rotate  = '0';
 
   const del = document.createElement('button');
   del.className = 'thumb-del';
@@ -271,10 +262,26 @@ function createCard(sessionFile, pageIdx, thumbSrc) {
   img.loading   = 'lazy';
   img.draggable = false;
 
+  const bottom = document.createElement('div');
+  bottom.className = 'thumb-bottom';
+
   const lbl = document.createElement('div');
   lbl.className = 'thumb-label';
 
-  card.append(del, img, lbl);
+  const rotBtn = document.createElement('button');
+  rotBtn.className = 'thumb-rot';
+  rotBtn.title     = '顺时针旋转 90°';
+  rotBtn.innerHTML = '<i class="ti ti-rotate-clockwise"></i>';
+  rotBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const cur  = parseInt(card.dataset.rotate || '0', 10);
+    const next = (cur + 90) % 360;
+    card.dataset.rotate = String(next);
+    img.style.transform = next === 0 ? '' : (next === 180 ? 'rotate(180deg)' : `rotate(${next}deg) scale(0.72)`);
+  });
+
+  bottom.append(lbl, rotBtn);
+  card.append(del, img, bottom);
   return card;
 }
 
@@ -394,12 +401,12 @@ async function doExport() {
   if (!cards.length) { alert('没有页面，请先上传 PDF'); return; }
 
   const pagesSpec = cards.map(c => ({
-    file: c.dataset.session,
-    idx:  parseInt(c.dataset.idx, 10),
+    file:   c.dataset.session,
+    idx:    parseInt(c.dataset.idx, 10),
+    rotate: parseInt(c.dataset.rotate || '0', 10),
   }));
 
   const uniformSize   = (document.querySelector('input[name="usize"]:checked') || {}).value || '';
-  const rotateDeg     = (document.querySelector('input[name="rotate"]:checked') || {}).value || '0';
   const watermarkText = document.getElementById('watermarkText').value.trim();
   const grayscale     = grayscaleTog.checked;
   const compress      = compressTog.checked;
@@ -424,7 +431,6 @@ async function doExport() {
     const fd = new FormData();
     fd.append('pages', JSON.stringify(pagesSpec));
     if (uniformSize)   fd.append('uniform_size',   uniformSize);
-    if (rotateDeg !== '0') fd.append('rotate_deg', rotateDeg);
     if (watermarkText) fd.append('watermark_text', watermarkText);
     fd.append('grayscale', grayscale ? 'true' : 'false');
     fd.append('compress',  compress  ? 'true' : 'false');
@@ -460,7 +466,6 @@ againBtn.addEventListener('click', () => {
   document.getElementById('watermarkText').value = '';
   document.getElementById('encryptPwd').value    = '';
   document.getElementById('usizeKeep').checked   = true;
-  document.getElementById('rot0').checked        = true;
   grayscaleTog.checked = false;
   compressTog.checked  = false;
   document.getElementById('togGray').textContent = '关';

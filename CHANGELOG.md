@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-06-13
+
+构建号: `2026.06.13.42`
+
+per-page rotation, pdf-grid layout
+
+### Changed
+- per-page rotation, pdf-grid layout
+
+备份: `backups/v0.12.2/`
+
+
 ## [0.12.1] - 2026-06-13
 
 构建号: `2026.06.13.41`

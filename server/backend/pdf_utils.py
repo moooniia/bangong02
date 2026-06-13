@@ -1120,19 +1120,20 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
             src = source_docs[fname]
             if idx < 0 or idx >= len(src):
                 continue
+            # Per-page rotation overrides the global rotate_deg
+            item_rot = int(item.get('rotate', rotate_deg)) % 360
             if uniform_size and uniform_size.lower() in PAGE_SIZES:
                 base = PAGE_SIZES[uniform_size.lower()]
                 bw, bh = base.width, base.height
             else:
                 sr = src[idx].rect
                 bw, bh = sr.width, sr.height
-            # Swap dimensions for 90°/270° rotation
-            if rotate_deg in (90, 270):
+            if item_rot in (90, 270):
                 pw, ph = bh, bw
             else:
                 pw, ph = bw, bh
             new_pg = out_doc.new_page(width=pw, height=ph)
-            new_pg.show_pdf_page(new_pg.rect, src, idx, rotate=rotate_deg)
+            new_pg.show_pdf_page(new_pg.rect, src, idx, rotate=item_rot)
 
         if watermark_text and watermark_text.strip():
             img_bytes, (tw, th) = _make_watermark_tile(watermark_text.strip(), _find_cn_font())
