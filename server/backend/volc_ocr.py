@@ -3426,14 +3426,6 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
-                # Override margins for scoring form to match WPS reference
-                if single_form:
-                    from docx.shared import Inches
-                    sec = doc.sections[-1]
-                    sec.left_margin = Inches(1.75)
-                    sec.right_margin = Inches(1.75)
-                    sec.top_margin = Inches(0.70)
-                    sec.bottom_margin = Inches(0.00)
                 # Detect proportional row heights from corrected image (img2table primary)
                 try:
                     corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
@@ -3446,8 +3438,11 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                             table_opts["row_line_positions"] = line_pos
                 except Exception:
                     pass
-                # For rotated single-page tables, apply WPS-style margins (img2table confirmed structure)
-                if not single_form and "row_heights" in table_opts and rotated_pdf:
+                # Apply WPS-reference margins for rotated scoring/dense table pages
+                _page_was_rotated = rotated_pdf or (
+                    page_layout and page_layout.get("correction_deg")
+                )
+                if single_form or (single_dense and "row_heights" in table_opts and _page_was_rotated):
                     from docx.shared import Inches
                     sec = doc.sections[-1]
                     sec.left_margin = Inches(1.75)
@@ -3662,7 +3657,8 @@ def volc_pdf_to_docx(pdf_path, output_path):
     """返回 {"route": str, "warning": str}。"""
     # PDF 含 /Rotate 元数据时，直传给 Volc API 会按原始（未旋转）坐标 OCR，
     # 导致文字错乱。改走逐页 PNG 模式：fitz 渲染时已应用旋转，Volc 看到方向正确的图像。
-    if _pdf_has_page_rotation(pdf_path):
+    _has_rot = _pdf_has_page_rotation(pdf_path)
+    if _has_rot:
         try:
             log.info("PDF 含页面旋转元数据，走逐页 PNG 模式: %s", pdf_path)
             meta = _try_image_mode_docx(pdf_path, output_path, markdown="", details=[], rotated_pdf=True)
