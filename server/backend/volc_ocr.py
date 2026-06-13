@@ -825,6 +825,64 @@ def _extract_row_heights_img2table(img_bgr):
     return [h / total for h in row_heights_px]
 
 
+def _extract_col_widths_img2table(img_bgr, ncols_hint=0):
+    """Use img2table to detect proportional column widths from a scanned table image.
+    Returns normalized width fractions (sum=1.0) or None on failure.
+    Uses the densest (least-merged) row to determine column boundaries.
+    """
+    try:
+        from img2table.document import Image as I2TImage
+    except ImportError:
+        return None
+    import cv2, tempfile, os
+
+    fd, tmp_path = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
+    try:
+        cv2.imwrite(tmp_path, img_bgr)
+        doc_img = I2TImage(tmp_path)
+        tables = doc_img.extract_tables(ocr=None, implicit_rows=True, borderless_tables=False)
+    except Exception as exc:
+        log.debug("img2table col detect failed: %s", exc)
+        tables = []
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+    if not tables:
+        return None
+
+    best = max(tables, key=lambda t: len(t.content))
+    rows_dict = best.content
+    if not rows_dict:
+        return None
+
+    # Use the densest row (most cells = fewest merged columns) for column edges
+    densest = max(rows_dict.values(), key=len)
+    x_edges = set()
+    for cell in densest:
+        x_edges.add(cell.bbox.x1)
+        x_edges.add(cell.bbox.x2)
+    x_edges = sorted(x_edges)
+    if len(x_edges) < 3:
+        return None
+
+    col_widths_px = [x_edges[i + 1] - x_edges[i] for i in range(len(x_edges) - 1)]
+    # Drop sub-pixel noise gaps (< 1% of total span)
+    span = x_edges[-1] - x_edges[0]
+    col_widths_px = [w for w in col_widths_px if w > span * 0.01]
+    if len(col_widths_px) < 2:
+        return None
+    # If detected column count doesn't match hint, skip (avoid misaligned merging)
+    if ncols_hint and len(col_widths_px) != ncols_hint:
+        return None
+
+    total = sum(col_widths_px)
+    return [w / total for w in col_widths_px]
+
+
 def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, font_pt, use_landscape, row_heights=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
@@ -3082,7 +3140,7 @@ def _set_cell_font(cell, pt, bold=False, color_hex=None):
 def _add_html_table(
     doc, html, landscape=False, restore_portrait=True,
     compact=False, skip_section_switch=False, row_heights=None, row_line_positions=None,
-    exact_rows=False,
+    exact_rows=False, col_widths=None,
 ):
     from docx.shared import Inches
 
@@ -3146,9 +3204,13 @@ def _add_html_table(
     if not task_style and not scoring_style:
         sec = doc.sections[-1]
         usable_w = sec.page_width - sec.left_margin - sec.right_margin
-        col_w = int(usable_w / max(ncols, 1))
-        for column in table.columns:
-            column.width = col_w
+        if col_widths and len(col_widths) == ncols:
+            for ci, column in enumerate(table.columns):
+                column.width = max(int(usable_w * col_widths[ci]), 400000)
+        else:
+            col_w = int(usable_w / max(ncols, 1))
+            for column in table.columns:
+                column.width = col_w
 
     for ri, ci, cell in placements:
         tcell = table.rows[ri].cells[ci]
@@ -3429,7 +3491,7 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
-                # Detect proportional row heights from corrected image (img2table primary)
+                # Detect proportional row/col sizes from corrected image (img2table primary)
                 try:
                     corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
                     rh = _extract_row_heights_img2table(corr_bgr)
@@ -3439,6 +3501,9 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                         line_pos = _detect_row_line_positions(corr_bgr)
                         if line_pos:
                             table_opts["row_line_positions"] = line_pos
+                    cw = _extract_col_widths_img2table(corr_bgr)
+                    if cw:
+                        table_opts["col_widths"] = cw
                 except Exception:
                     pass
                 # Apply WPS-reference margins for rotated scoring/dense table pages
