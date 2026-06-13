@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 CHUNK_PAGES = 16
 MAX_PAGES = 300
 NORMAL_OCR_DPI = 200
-IMAGE_PARSE_DPI = 300
+IMAGE_PARSE_DPI = 400
 _CONTRACT_HINTS = (
     "服务合同", "甲方", "乙方", "CMCCTD", "签字/盖章", "合同专用章", "监测项目",
 )
@@ -544,7 +544,7 @@ def _ocr_pdf_image_page_data(visual, image_b64):
         "page_num": 1,
         "table_mode": "html",
         "filter_header": "true",
-        "parse_mode": "auto",
+        "parse_mode": "scan",
     }
     resp = visual.ocr_pdf(form)
     if not resp or resp.get("code") != 10000:
@@ -563,6 +563,7 @@ def _ocr_pdf_image_page(visual, image_b64):
 
 def _pdf_image_mode_pages(pdf_path, dpi=None, with_detail=False):
     """逐页渲染（先去水印）后调用 ocr_pdf(file_type=image)。"""
+    import cv2, base64, tempfile
     dpi = dpi or _image_parse_dpi()
     ocr_path, cleaned_tmp = _preprocessed_ocr_path(pdf_path)
     visual = _visual_service()
@@ -572,9 +573,31 @@ def _pdf_image_mode_pages(pdf_path, dpi=None, with_detail=False):
     try:
         for pi in range(total):
             correct_sideways = False
-            if total == 1:
-                layout = _analyze_page_layout(ocr_path, pi, dpi, probe_coarse=True)
+            cancel_page_rot = 0  # counter-rotation degrees for meta_rot pages
+            layout = _analyze_page_layout(ocr_path, pi, dpi, probe_coarse=True)
+            meta_rot = layout.get("meta_rot", 0)
+            if meta_rot in (90, 270):
+                # fitz 渲染时已自动应用 /Rotate 元数据，输出图像方向已正确。
+                # 不需要额外旋转，parse_mode=scan 自行处理剩余方向问题。
+                correct_sideways = False
+            elif total == 1:
+                # 单页文档：完全信任 OSD 结果
                 correct_sideways = _layout_needs_orientation_handling(layout)
+            else:
+                # 多页文档：upside_down(180°) 在有水印的扫描页上假阳性率高，跳过；
+                # 只对明确的侧躺页（90°/270°）和歪斜页做修正。
+                # 护栏：若 fitz 渲染本身就是竖向（height>width），说明 PDF 已包含
+                # 正确朝向信息，layout 的 sideways 判断是误报，不做额外旋转。
+                kind = layout.get("kind", "")
+                skew_deg = abs(layout.get("skew_deg") or 0)
+                is_sideways = kind in ("sideways_ccw", "sideways_cw")
+                if is_sideways:
+                    import fitz as _fitz_tmp
+                    _doc_tmp = _fitz_tmp.open(ocr_path)
+                    _r = _doc_tmp[pi].rect
+                    _doc_tmp.close()
+                    is_sideways = _r.width > _r.height  # 横版页才真的侧躺
+                correct_sideways = is_sideways or kind == "skewed" or skew_deg >= 0.4
             img_b64, _ = _page_rgb_and_b64(
                 ocr_path, pi, dpi=dpi, correct_sideways=correct_sideways,
             )
@@ -3285,15 +3308,15 @@ def _add_html_table(
 
 
 def _single_page_table_opts(total_pages, dense_table, scoring_form=False):
-    """单页表格：设备清单压紧；考评打分表保持竖版 A4 版式。"""
-    if total_pages == 1 and scoring_form:
+    """表格版式选项：考评打分表/dense 设备表始终用竖版紧凑布局，不受页数限制。"""
+    if scoring_form:
         return {
             "landscape": False,
             "restore_portrait": False,
-            "compact": False,
+            "compact": True,
             "skip_section_switch": True,
         }
-    if total_pages == 1 and dense_table:
+    if dense_table:
         return {
             "landscape": False,
             "restore_portrait": False,
@@ -3512,14 +3535,27 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                 from seal_utils import SEAL_EXTRACT_DPI as _seal_dpi
                 page_layout = _analyze_page_layout(
                     pdf_path, pi, _seal_dpi if single_dense else 180,
-                    probe_coarse=single_dense or single_form,
+                    probe_coarse=dense_table or scoring_form,
                 )
             if (single_dense or single_form) and pi == 0 and pdf_path:
+                # 单页：调整文档页面尺寸和页边距
                 if page_layout and page_layout.get("correction_deg"):
                     _sync_doc_section_to_layout(doc, page_layout, tight=True)
                 else:
                     _sync_doc_section_to_pdf(doc, pdf_path, pi, tight=True)
-                # Detect proportional row/col sizes from corrected image (img2table primary)
+                # Apply WPS-reference margins for rotated scoring/dense table pages
+                _page_was_rotated = rotated_pdf or (
+                    page_layout and page_layout.get("correction_deg")
+                )
+                if single_form or (single_dense and _page_was_rotated):
+                    from docx.shared import Inches
+                    sec = doc.sections[-1]
+                    sec.left_margin = Inches(1.75)
+                    sec.right_margin = Inches(1.75)
+                    sec.top_margin = Inches(0.70)
+                    sec.bottom_margin = Inches(0.00)
+            if (dense_table or scoring_form) and pdf_path:
+                # 所有 dense/考评表页（单页+多页）都从图像量取列宽行高
                 try:
                     corr_bgr, _ = _get_corrected_page_bgr(pdf_path, pi, 150, probe_coarse=True)
                     rh = _extract_row_heights_img2table(corr_bgr)
@@ -3534,17 +3570,6 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                         table_opts["col_widths"] = cw
                 except Exception:
                     pass
-                # Apply WPS-reference margins for rotated scoring/dense table pages
-                _page_was_rotated = rotated_pdf or (
-                    page_layout and page_layout.get("correction_deg")
-                )
-                if single_form or (single_dense and "row_heights" in table_opts and _page_was_rotated):
-                    from docx.shared import Inches
-                    sec = doc.sections[-1]
-                    sec.left_margin = Inches(1.75)
-                    sec.right_margin = Inches(1.75)
-                    sec.top_margin = Inches(0.70)
-                    sec.bottom_margin = Inches(0.00)
 
             if dense_table:
                 # P1 同页双通道：正文走 detail 坐标，表格择优用 markdown HTML
@@ -3592,6 +3617,7 @@ def detail_to_docx(pages, output_path, pdf_path=None, mode="text", page_markdown
                     is_sig_page=is_sig_page,
                     page_index=pi,
                     pdf_path=pdf_path,
+                    table_opts=table_opts if scoring_form else None,
                 )
                 _render_remaining_md_tables(doc, md_tables, consumed, landscape=False)
 
@@ -3717,6 +3743,47 @@ def _classify_scan_doc(pdf_path, markdown="", details=None):
     return "contract"
 
 
+def _pdf_pages_to_image_docx(pdf_path, output_path, dpi=150):
+    """每页渲染为 PNG 嵌入 Word，完整保留原始版式（颜色/排版/表格样式）。"""
+    import io as _io, fitz as _fitz
+    from docx import Document
+    from docx.shared import Mm, Pt
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+
+    doc = Document()
+    for sec in doc.sections:
+        sec.left_margin = Mm(12)
+        sec.right_margin = Mm(12)
+        sec.top_margin = Mm(12)
+        sec.bottom_margin = Mm(12)
+
+    pdf_doc = _fitz.open(pdf_path)
+    first = True
+    for page in pdf_doc:
+        if not first:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            run = p.add_run()
+            br = OxmlElement("w:br")
+            br.set(qn("w:type"), "page")
+            run._r.append(br)
+        first = False
+        mat = _fitz.Matrix(dpi / 72, dpi / 72)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        img_bytes = pix.tobytes("png")
+        sec = doc.sections[0]
+        usable_w_mm = (sec.page_width - sec.left_margin - sec.right_margin) / 914400 * 25.4
+        para = doc.add_paragraph()
+        para.paragraph_format.space_before = Pt(0)
+        para.paragraph_format.space_after = Pt(0)
+        para.alignment = 1
+        para.add_run().add_picture(_io.BytesIO(img_bytes), width=Mm(usable_w_mm))
+    pdf_doc.close()
+    doc.save(output_path)
+
+
 def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None, rotated_pdf=False):
     """逐页 PNG 重解析：合同走 hybrid detail，任务清单走 markdown 版式。"""
     doc_kind = _classify_scan_doc(pdf_path, markdown, details)
@@ -3741,9 +3808,9 @@ def _try_image_mode_docx(pdf_path, output_path, markdown="", details=None, rotat
     combined = "\n\n".join(p for p in pages_md if p)
     if not _markdown_has_usable_content(combined):
         raise ValueError("图片模式未返回有效内容")
-    log.info("逐页 PNG markdown 任务清单模式: %s", pdf_path)
-    markdown_pages_to_docx(pages_md, output_path)
-    return {"route": "volc-image-table", "pages": len(pages_md)}
+    log.info("逐页 PNG 嵌入图片保留版式: %s", pdf_path)
+    _pdf_pages_to_image_docx(pdf_path, output_path)
+    return {"route": "volc-image-embed", "pages": len(pages_md)}
 
 
 def _pdf_has_page_rotation(pdf_path):
@@ -3770,18 +3837,44 @@ def _pdf_has_page_rotation(pdf_path):
         return False
 
 
+def _pdf_first_page_is_landscape(pdf_path):
+    """检测 PDF 首页是否为横版（宽 > 高）。横版单页 PDF 直传 Volc API 常产生文字乱序。"""
+    try:
+        doc = fitz.open(pdf_path)
+        if len(doc) == 0:
+            doc.close()
+            return False
+        r = doc[0].rect
+        result = r.width > r.height
+        doc.close()
+        return result
+    except Exception:
+        return False
+
+
 def volc_pdf_to_docx(pdf_path, output_path):
     """返回 {"route": str, "warning": str}。"""
     # PDF 含 /Rotate 元数据时，直传给 Volc API 会按原始（未旋转）坐标 OCR，
     # 导致文字错乱。改走逐页 PNG 模式：fitz 渲染时已应用旋转，Volc 看到方向正确的图像。
+    # 单页横版 PDF（无旋转元数据但宽>高）同理——直传 API 会反序读文字，改走 PNG 模式。
     _has_rot = _pdf_has_page_rotation(pdf_path)
-    if _has_rot:
+    _is_single_landscape = (
+        not _has_rot
+        and pdf_page_count(pdf_path) == 1
+        and _pdf_first_page_is_landscape(pdf_path)
+    )
+    if _has_rot or _is_single_landscape:
         try:
-            log.info("PDF 含页面旋转元数据，走逐页 PNG 模式: %s", pdf_path)
-            meta = _try_image_mode_docx(pdf_path, output_path, markdown="", details=[], rotated_pdf=True)
+            log.info(
+                "PDF 走逐页 PNG 模式(has_rot=%s landscape=%s): %s",
+                _has_rot, _is_single_landscape, pdf_path,
+            )
+            meta = _try_image_mode_docx(
+                pdf_path, output_path, markdown="", details=[], rotated_pdf=_has_rot,
+            )
             return {"route": meta["route"], "warning": meta.get("warning") or ""}
         except Exception as exc:
-            log.warning("旋转PDF图片模式失败(%.80s)，降级直传: %s", exc, pdf_path)
+            log.warning("PNG模式失败(%.80s)，降级直传: %s", exc, pdf_path)
 
     markdown, details = pdf_to_markdown(pdf_path)
     needs_image_mode = _detail_needs_image_mode(markdown, details)

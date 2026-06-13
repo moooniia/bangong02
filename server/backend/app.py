@@ -485,6 +485,23 @@ def convert():
                 ], capture_output=True, text=True, timeout=120)
                 if os.path.exists(fb_docx):
                     os.remove(fb_docx)
+        elif ext == 'pdf' and target_format in ('pptx', 'ppt'):
+            from pdf_utils import pdf_to_pptx
+            pptx_file = os.path.join(OUTPUT_FOLDER, f'{unique_name}.pptx')
+            pdf_to_pptx(input_path, pptx_file)
+            output_file = pptx_file
+            if target_format == 'ppt':
+                subprocess.run([
+                    'libreoffice', '--headless',
+                    '--convert-to', 'ppt:Impress MS PowerPoint 2007 XML',
+                    '--outdir', OUTPUT_FOLDER, pptx_file,
+                ], capture_output=True, text=True, timeout=60)
+                if os.path.exists(os.path.join(OUTPUT_FOLDER, f'{unique_name}.ppt')):
+                    output_file = os.path.join(OUTPUT_FOLDER, f'{unique_name}.ppt')
+                    if os.path.exists(pptx_file):
+                        os.remove(pptx_file)
+                else:
+                    output_file = pptx_file
         else:
             subprocess.run([
                 'libreoffice', '--headless',

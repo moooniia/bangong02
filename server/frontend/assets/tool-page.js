@@ -1,14 +1,14 @@
-/**
- * 通用工具页逻辑 — 行政人员只需：选文件 → 点按钮 → 下载
- */
 function initToolPage(cfg) {
   let files = [];
 
-  const $ = (id) => document.getElementById(id);
-  const uploadArea = $('uploadArea');
-  const fileInput = $('fileInput');
-  const fileList = $('fileList');
-  const convertBtn = $('convertBtn');
+  const $  = (id) => document.getElementById(id);
+  const uploadArea   = $('uploadArea');
+  const fileInput    = $('fileInput');
+  const fileList     = $('fileList');
+  const convertBtn   = $('convertBtn');
+  const progressArea = $('progressArea');
+  const errorArea    = $('errorArea');
+  const resultArea   = $('resultArea');
 
   function fmtSize(b) {
     return b < 1024 * 1024
@@ -35,6 +35,14 @@ function initToolPage(cfg) {
         </div>
         <button type="button" class="file-item-remove" onclick="window._removeFile(${i})"><i class="ti ti-x"></i></button>
       </div>`).join('');
+  }
+
+  function resetAll() {
+    files = [];
+    renderFiles();
+    if (errorArea)  errorArea.style.display  = 'none';
+    if (resultArea) resultArea.style.display = 'none';
+    fileInput.value = '';
   }
 
   window._removeFile = (i) => {
@@ -67,6 +75,18 @@ function initToolPage(cfg) {
     addFiles(e.dataTransfer.files);
   });
 
+  function injectAgainBtn() {
+    if (!resultArea || resultArea.querySelector('.convert-again-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'convert-again-btn';
+    btn.style.cssText = 'margin-top:16px;display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border,#ebebeb);border-radius:20px;padding:7px 16px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;transition:all 0.15s;';
+    btn.innerHTML = '<i class="ti ti-refresh"></i>再转一个文件';
+    btn.onmouseover = () => { btn.style.borderColor = 'var(--pink,#e94c88)'; btn.style.color = 'var(--pink,#e94c88)'; };
+    btn.onmouseout  = () => { btn.style.borderColor = 'var(--border,#ebebeb)'; btn.style.color = '#888'; };
+    btn.onclick = resetAll;
+    resultArea.appendChild(btn);
+  }
+
   function progressOpts() {
     if (typeof cfg.progressOpts === 'function') return cfg.progressOpts(files);
     return cfg.progressOpts || {};
@@ -86,9 +106,9 @@ function initToolPage(cfg) {
       if (el) fd.append(name, el.value);
     });
 
-    $('progressArea').style.display = 'block';
-    $('errorArea').style.display = 'none';
-    $('resultArea').style.display = 'none';
+    if (progressArea) progressArea.style.display = 'block';
+    if (errorArea)    errorArea.style.display    = 'none';
+    if (resultArea)   resultArea.style.display   = 'none';
     convertBtn.disabled = true;
 
     const totalSize = files.reduce((s, f) => s + f.size, 0);
@@ -106,34 +126,38 @@ function initToolPage(cfg) {
     }
 
     try {
-      const res = await fetch(cfg.api, { method: 'POST', body: fd });
+      const res  = await fetch(cfg.api, { method: 'POST', body: fd });
       const data = await res.json();
       barCtrl.complete();
 
       if (data.success) {
         setTimeout(() => {
-          $('progressArea').style.display = 'none';
+          if (progressArea) progressArea.style.display = 'none';
           convertBtn.disabled = false;
-          $('resultArea').style.display = 'block';
+          if (resultArea) resultArea.style.display = 'block';
           const btn = $('downloadBtn');
-          btn.href = '/api/download/' + data.filename;
-          if (data.display_name) btn.textContent = '';
-          btn.innerHTML = '<i class="ti ti-download"></i> ' + (cfg.downloadText || '下载文件');
+          if (btn) {
+            btn.href = '/api/download/' + data.filename;
+            btn.innerHTML = '<i class="ti ti-download"></i> ' + (cfg.downloadText || '下载文件');
+          }
+          injectAgainBtn();
         }, 500);
       } else {
         barCtrl.stop();
-        $('progressArea').style.display = 'none';
+        if (progressArea) progressArea.style.display = 'none';
         convertBtn.disabled = false;
-        throw new Error(data.error || '处理失败');
+        throw new Error(data.error || '转换失败');
       }
     } catch (e) {
       barCtrl.stop();
-      $('progressArea').style.display = 'none';
+      if (progressArea) progressArea.style.display = 'none';
       convertBtn.disabled = false;
-      $('errorArea').style.display = 'block';
-      const errEl = $('errorText');
-      if (errEl) errEl.textContent = e.message || '处理失败，请换一份文件试试';
-      else $('errorArea').textContent = e.message || '处理失败，请换一份文件试试';
+      if (errorArea) {
+        errorArea.style.display = 'block';
+        const errEl = $('errorText');
+        if (errEl) errEl.textContent = e.message || '转换失败，请换一个文件试试';
+        else errorArea.textContent = e.message || '转换失败，请换一个文件试试';
+      }
     }
   };
 }

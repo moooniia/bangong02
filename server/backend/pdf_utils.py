@@ -549,6 +549,11 @@ def _merge_same_cells(ws, col_idx, start_row, end_row):
     cell.alignment = Alignment(wrap_text=True, vertical='center')
 
 
+_CELL_TEXT_COLORS = {
+    '安全': 'C62828',
+    '平安': '1565C0',
+}
+
 def _write_table_sheet(ws, rows, ncols):
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
@@ -558,9 +563,9 @@ def _write_table_sheet(ws, rows, ncols):
 
     thin = Side(style='thin', color='B0B0B0')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    header_fill = PatternFill('solid', fgColor='E8EEF4')
-    body_font = Font(size=11)
-    header_font = Font(size=11, bold=True)
+    header_fill = PatternFill('solid', fgColor='1F4E79')
+    body_font = Font(name='等线', size=11)
+    header_font = Font(name='等线', size=11, bold=True, color='FFFFFF')
     widths = [10, 28, 32, 28]
 
     merge_ranges = []
@@ -574,9 +579,13 @@ def _write_table_sheet(ws, rows, ncols):
             cell = ws.cell(r_idx, c_idx + 1, val or None)
             cell.border = border
             cell.alignment = Alignment(wrap_text=True, vertical='top')
-            cell.font = header_font if is_header else body_font
             if is_header:
+                cell.font = header_font
                 cell.fill = header_fill
+            else:
+                text_color = _CELL_TEXT_COLORS.get(val) if c_idx == 0 else None
+                cell.font = Font(name='等线', size=11, color=text_color, bold=bool(text_color)
+                                 ) if text_color else body_font
 
         if not is_header and row and row[0]:
             if row[0] == merge_val:
@@ -604,40 +613,400 @@ def _write_table_sheet(ws, rows, ncols):
         ws.column_dimensions[chr(ord('A') + i - 1)].width = w
 
 
+def _parse_md_table_sections(pages_md, _vo=None):
+    """从 Volc OCR 输出中解析表格（支持 HTML <table> 和 pipe 格式）。"""
+    import re
+    sections = []
+
+    for md in pages_md:
+        # HTML 表格优先
+        if '<table' in md.lower() and _vo is not None:
+            html_blocks = re.findall(r'<table[^>]*>.*?</table>', md, re.DOTALL | re.IGNORECASE)
+            if not html_blocks:
+                html_blocks = [md]
+            for html in html_blocks:
+                try:
+                    parsed = _vo._parse_html_table_rows(html)
+                    if not parsed:
+                        continue
+                    rows = [[cell['text'] for cell in row] for row in parsed]
+                    ncols = max(len(r) for r in rows) if rows else 0
+                    if ncols >= 2 and len(rows) >= 2:
+                        rows = [(r + [''] * ncols)[:ncols] for r in rows]
+                        sections.append({
+                            'title': '',
+                            'ncols': ncols,
+                            'rows': rows,
+                            'bounds': None,
+                            'header': rows[0],
+                        })
+                except Exception:
+                    pass
+            continue
+
+        # pipe 格式表格
+        current_rows = []
+        header_row = None
+        for line in md.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('|') and stripped.endswith('|') and len(stripped) > 2:
+                if re.match(r'^[\|\-\s:]+$', stripped):
+                    if current_rows:
+                        header_row = current_rows[-1]
+                    continue
+                cells = [c.strip() for c in stripped.split('|')[1:-1]]
+                if any(c for c in cells):
+                    current_rows.append(cells)
+            else:
+                if len(current_rows) >= 2:
+                    ncols = max(len(r) for r in current_rows)
+                    rows = [(r + [''] * ncols)[:ncols] for r in current_rows]
+                    sections.append({
+                        'title': '',
+                        'ncols': ncols,
+                        'rows': rows,
+                        'bounds': None,
+                        'header': header_row or rows[0],
+                    })
+                current_rows = []
+                header_row = None
+        if len(current_rows) >= 2:
+            ncols = max(len(r) for r in current_rows)
+            rows = [(r + [''] * ncols)[:ncols] for r in current_rows]
+            sections.append({
+                'title': '',
+                'ncols': ncols,
+                'rows': rows,
+                'bounds': None,
+                'header': header_row or rows[0],
+            })
+
+    return sections
+
+
+def _extract_pdf_doc_title(pdf_path):
+    """提取第一页表格之前的标题行。"""
+    import pdfplumber
+    title_lines = []
+    with pdfplumber.open(pdf_path) as pdf:
+        line_map = _cluster_page_words(pdf.pages[0])
+        for key in sorted(line_map):
+            words = line_map[key]
+            line = _join_line_words(words)
+            if _section_title_from_line(line) or _detect_table_header(words)[0]:
+                break
+            if line.strip():
+                title_lines.append(line)
+    return title_lines
+
+
+def _extract_pdf_text_sections(pdf_path):
+    """提取纯文字节（无表头的节，如资料清单）。"""
+    import pdfplumber
+    result = []
+    pending_title = None
+    pending_lines = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            line_map = _cluster_page_words(page)
+            for key in sorted(line_map):
+                words = line_map[key]
+                line = _join_line_words(words)
+                section_title = _section_title_from_line(line)
+                if section_title:
+                    if pending_title and pending_lines:
+                        result.append({'title': pending_title, 'lines': pending_lines})
+                    pending_title = section_title
+                    pending_lines = []
+                    continue
+                if _detect_table_header(words)[0]:
+                    # 这节有表格，丢弃已积累的文字
+                    pending_title = None
+                    pending_lines = []
+                    continue
+                if pending_title and line.strip():
+                    pending_lines.append(line)
+
+    if pending_title and pending_lines:
+        result.append({'title': pending_title, 'lines': pending_lines})
+    return result
+
+
+def _write_ocr_xlsx(ws, pages_md, _vo):
+    """OCR 扫描件模式：把 HTML 表格写入 Excel，保留 colspan/rowspan 合并。
+    按 text→table→text→table→... 顺序处理，文字段（标题、分节、页脚）各占一行合并。
+    """
+    import re
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    thin = Side(style='thin', color='B0B0B0')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    hdr_fill = PatternFill('solid', fgColor='2F75B6')
+    hdr_font = Font(name='等线', size=10, bold=True, color='FFFFFF')
+    bold_font = Font(name='等线', size=10, bold=True)
+    body_font = Font(name='等线', size=10)
+    sec_font = Font(name='等线', size=11, bold=True)
+
+    r = 1
+    max_col = 1
+    text_rows = []  # 所有纯文字行（标题/分节/页脚），事后统一合并
+
+    def _write_table(html, start_r):
+        nonlocal max_col
+        try:
+            parsed = _vo._parse_html_table_rows(html)
+        except Exception:
+            return start_r
+        if not parsed:
+            return start_r
+
+        occupied = set()
+        placements = []
+        nrows = ncols_tbl = 0
+        for ri, row in enumerate(parsed):
+            ci = 0
+            for cell in row:
+                while (ri, ci) in occupied:
+                    ci += 1
+                rs = max(cell.get('rowspan', 1), 1)
+                cs = max(cell.get('colspan', 1), 1)
+                for rr in range(ri, ri + rs):
+                    for cc in range(ci, ci + cs):
+                        occupied.add((rr, cc))
+                placements.append((ri, ci, cell, rs, cs))
+                nrows = max(nrows, ri + rs)
+                ncols_tbl = max(ncols_tbl, ci + cs)
+                ci += cs
+
+        max_col = max(max_col, ncols_tbl)
+        tbl_start = start_r
+
+        for abs_ri, abs_ci, cell, rs, cs in placements:
+            er = tbl_start + abs_ri
+            ec = abs_ci + 1
+            text = (cell.get('text') or '').strip()
+            xcell = ws.cell(er, ec, text or None)
+            xcell.border = border
+            is_header = abs_ri == 0
+            is_merged = rs > 1 or cs > 1
+            is_numeric = bool(text and re.match(r'^-?\d+\.?\d*$', text))
+            if is_header:
+                xcell.fill = hdr_fill
+                xcell.font = hdr_font
+                xcell.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
+            else:
+                xcell.font = bold_font if is_merged else body_font
+                xcell.alignment = Alignment(
+                    wrap_text=True, vertical='center',
+                    horizontal='center' if (is_merged or is_numeric) else 'left',
+                )
+            if is_merged:
+                ws.merge_cells(
+                    start_row=er, start_column=ec,
+                    end_row=er + rs - 1, end_column=ec + cs - 1,
+                )
+
+        return tbl_start + nrows + 1  # +1 空行分隔
+
+    def _write_text_block(text_block, start_r):
+        cur = start_r
+        clean = re.sub(r'<[^>]+>', '', text_block)  # 去残留 HTML
+        for line in clean.splitlines():
+            line = re.sub(r'^#+\s*', '', line).strip()
+            if line:
+                xcell = ws.cell(cur, 1, line)
+                xcell.font = sec_font
+                xcell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                text_rows.append(cur)
+                cur += 1
+        return cur
+
+    for md in pages_md:
+        # 按 text/table 顺序切分页面内容
+        pos = 0
+        for m in re.finditer(r'<table[^>]*>.*?</table>', md, re.DOTALL | re.IGNORECASE):
+            if m.start() > pos:
+                r = _write_text_block(md[pos:m.start()], r)
+            r = _write_table(m.group(), r)
+            pos = m.end()
+        # 最后一个表格之后的文字（页脚、备注等）
+        if pos < len(md):
+            tail = md[pos:].strip()
+            if tail:
+                r = _write_text_block(tail, r)
+
+    # 列宽
+    for i in range(1, max_col + 1):
+        ws.column_dimensions[chr(ord('A') + i - 1)].width = 18
+
+    # 所有纯文字行跨全列合并
+    if max_col > 1:
+        last_col = chr(ord('A') + max_col - 1)
+        for tr in text_rows:
+            try:
+                ws.merge_cells(f'A{tr}:{last_col}{tr}')
+            except Exception:
+                pass
+
+    if r > 2:
+        ws.freeze_panes = 'A2'
+
+
+def _write_single_sheet(ws, doc_title, sections, ncols, text_sections=None):
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    header_labels = set()
+    for labels in _TABLE_HEADER_SETS:
+        header_labels.update(labels)
+
+    thin = Side(style='thin', color='B0B0B0')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    header_fill = PatternFill('solid', fgColor='1F4E79')
+    body_font = Font(name='等线', size=11)
+    header_font = Font(name='等线', size=11, bold=True, color='FFFFFF')
+    col_letter = lambda i: chr(ord('A') + i)
+    last_col = col_letter(ncols - 1)
+
+    r = 1
+    # 标题块
+    title_styles = [
+        Font(name='等线', size=16, bold=True, color='1F4E79'),
+        Font(name='等线', size=11, italic=True, color='C62828'),
+        Font(name='等线', size=10, color='666666'),
+    ]
+    for i, line in enumerate(doc_title):
+        ws.merge_cells(f'A{r}:{last_col}{r}')
+        cell = ws.cell(r, 1, line)
+        cell.font = title_styles[min(i, len(title_styles) - 1)]
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[r].height = 22 if i == 0 else 18
+        r += 1
+    if doc_title:
+        r += 1  # 空行
+
+    for sec in sections:
+        # 节标题行
+        sec_title = sec.get('title') or ''
+        sec_color = 'C62828' if '安全' in sec_title else '1565C0'
+        ws.merge_cells(f'A{r}:{last_col}{r}')
+        cell = ws.cell(r, 1, sec_title)
+        cell.font = Font(name='等线', size=12, bold=True, color=sec_color)
+        cell.alignment = Alignment(vertical='center')
+        ws.row_dimensions[r].height = 20
+        r += 1
+
+        # 表格行
+        merge_ranges = []
+        merge_start = None
+        merge_val = None
+        sec_start_r = r
+        sec_header_set = set(sec.get('header') or [])
+
+        for row in sec['rows']:
+            is_header = bool(row and (row[0] in header_labels or
+                                      (sec_header_set and row[0] in sec_header_set)))
+            for c_idx in range(ncols):
+                val = row[c_idx] if c_idx < len(row) else ''
+                cell = ws.cell(r, c_idx + 1, val or None)
+                cell.border = border
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+                if is_header:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                else:
+                    text_color = _CELL_TEXT_COLORS.get(val) if c_idx == 0 else None
+                    cell.font = Font(name='等线', size=11, color=text_color,
+                                     bold=bool(text_color)) if text_color else body_font
+
+            if not is_header and row and row[0]:
+                if row[0] == merge_val:
+                    if merge_start is None:
+                        merge_start = r - 1
+                else:
+                    if merge_start and r - 1 > merge_start:
+                        merge_ranges.append((merge_start, r - 1))
+                    merge_val = row[0]
+                    merge_start = r
+            elif merge_start and r - 1 > merge_start:
+                merge_ranges.append((merge_start, r - 1))
+                merge_start = None
+                merge_val = None
+            r += 1
+
+        if merge_start and r - 1 > merge_start:
+            merge_ranges.append((merge_start, r - 1))
+
+        for start, end in merge_ranges:
+            _merge_same_cells(ws, 1, start, end)
+
+        r += 1  # 节间空行
+
+    # 文字节（如资料清单）
+    for tsec in (text_sections or []):
+        sec_title = tsec.get('title') or ''
+        sec_color = 'C62828' if '安全' in sec_title else '1565C0'
+        ws.merge_cells(f'A{r}:{last_col}{r}')
+        cell = ws.cell(r, 1, sec_title)
+        cell.font = Font(name='等线', size=12, bold=True, color=sec_color)
+        cell.alignment = Alignment(vertical='center')
+        ws.row_dimensions[r].height = 20
+        r += 1
+
+        for line in tsec['lines']:
+            ws.merge_cells(f'A{r}:{last_col}{r}')
+            cell = ws.cell(r, 1, line)
+            if line.startswith('注：') or line.startswith('注:'):
+                cell.font = Font(name='等线', size=10, italic=True, color='888888')
+            elif '安全类' in line or '平安类' in line:
+                cell.font = Font(name='等线', size=11, bold=True,
+                                 color='C62828' if '安全' in line else '1565C0')
+            else:
+                cell.font = Font(name='等线', size=11)
+            cell.alignment = Alignment(wrap_text=True, vertical='top', indent=1)
+            r += 1
+        r += 1  # 节间空行
+
+    # 列宽与冻结
+    widths = [10, 28, 32, 28]
+    for i, w in enumerate(widths[:ncols], 1):
+        ws.column_dimensions[col_letter(i - 1)].width = w
+    ws.freeze_panes = 'A2'
+
+
 def pdf_tables_to_xlsx(pdf_path, output_path):
-    """按文字坐标提取表格列，分 sheet、合并首列，并加上边框/表头样式。"""
+    """提取 PDF 所有表格及文字节，合并到单 sheet，顶部保留文件标题。"""
     from openpyxl import Workbook
 
     sections = _extract_pdf_table_sections(pdf_path)
     if not sections:
-        result = subprocess.run(
-            ['pdftotext', pdf_path, '-'],
-            capture_output=True, text=True, timeout=60,
-        )
-        text = result.stdout.strip()
-        if len(text) < 10:
-            raise ValueError('未能从 PDF 提取表格或文字，请确认文件内容清晰')
-        raise ValueError('未能识别表格结构，请换电子版 PDF 或先在 Word 中整理后再转 Excel')
+        # 扫描件：走 Volc OCR 兜底，单独路径保留合并单元格
+        _ocr_err = None
+        try:
+            import volc_ocr as _vo
+            pages_md, _ = _vo._pdf_image_mode_pages(pdf_path, with_detail=False)
+        except Exception as _e:
+            pages_md, _vo, _ocr_err = [], None, _e
+        if pages_md and _vo:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = '表格内容'
+            _write_ocr_xlsx(ws, pages_md, _vo)
+            wb.save(output_path)
+            return
+        import logging as _log
+        _log.getLogger(__name__).error('pdf_tables_to_xlsx OCR fallback failed: %s', _ocr_err)
+        raise ValueError('未能提取表格内容；扫描件请先转 Word，再在 WPS 中另存为 Excel')
+
+    doc_title = _extract_pdf_doc_title(pdf_path)
+    text_sections = _extract_pdf_text_sections(pdf_path)
+    ncols = max((sec['ncols'] for sec in sections), default=4)
+    ncols = max(ncols, 4)
 
     wb = Workbook()
-    wb.remove(wb.active)
-    used_titles = set()
-
-    for sec in sections:
-        title = sec['title'] or '数据'
-        base = title
-        n = 2
-        while title in used_titles:
-            suffix = f'_{n}'
-            title = (base[:31 - len(suffix)] + suffix) if len(base) + len(suffix) > 31 else base + suffix
-            n += 1
-        used_titles.add(title)
-        ws = wb.create_sheet(title=title)
-        ncols = max(sec['ncols'], 4)
-        _write_table_sheet(ws, sec['rows'], ncols)
-
-    if not wb.sheetnames:
-        raise ValueError('未能识别表格结构，请换电子版 PDF 或先在 Word 中整理后再转 Excel')
+    ws = wb.active
+    ws.title = '任务清单'
+    _write_single_sheet(ws, doc_title, sections, ncols, text_sections=text_sections)
 
     wb.save(output_path)
 
@@ -658,6 +1027,37 @@ def pdf_text_to_docx(pdf_path, output_path):
         if line:
             doc.add_paragraph(line)
     doc.save(output_path)
+
+
+def pdf_to_pptx(pdf_path, output_path, dpi=150):
+    """每页渲染为 PNG 嵌入 PowerPoint，完整保留原始版式。"""
+    import io as _io
+    import fitz
+    from pptx import Presentation
+    from pptx.util import Emu
+
+    pdf_doc = fitz.open(pdf_path)
+    prs = Presentation()
+
+    if len(pdf_doc) > 0:
+        fp = pdf_doc[0]
+        prs.slide_width = Emu(int(fp.rect.width * 12700))
+        prs.slide_height = Emu(int(fp.rect.height * 12700))
+
+    blank_layout = prs.slide_layouts[6]
+    mat = fitz.Matrix(dpi / 72, dpi / 72)
+
+    for page in pdf_doc:
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        img_bytes = pix.tobytes("png")
+        slide = prs.slides.add_slide(blank_layout)
+        slide.shapes.add_picture(
+            _io.BytesIO(img_bytes), 0, 0,
+            prs.slide_width, prs.slide_height,
+        )
+
+    pdf_doc.close()
+    prs.save(output_path)
 
 
 def images_to_pdf(image_paths, output_path):
