@@ -1249,7 +1249,7 @@ def _apply_compact_dense_table_style(table, nrows, font_pt, reserved_in=0.3):
         font_pt = min(font_pt, 5.0)
     elif nrows >= 35:
         font_pt = min(font_pt, 5.5)
-    else:
+    elif nrows >= 20:
         font_pt = min(font_pt, 6.0)
     for row in table.rows:
         _set_row_height(row, row_twips, exact=True)
@@ -3082,6 +3082,7 @@ def _set_cell_font(cell, pt, bold=False, color_hex=None):
 def _add_html_table(
     doc, html, landscape=False, restore_portrait=True,
     compact=False, skip_section_switch=False, row_heights=None, row_line_positions=None,
+    exact_rows=False,
 ):
     from docx.shared import Inches
 
@@ -3130,13 +3131,14 @@ def _add_html_table(
     else:
         font_pt = (
             6 if ncols >= 7 or nrows >= 22 else
+            8 if ncols >= 6 and nrows < 15 else
             6.5 if ncols >= 6 or nrows >= 15 else
             7.5 if ncols >= 5 or nrows >= 10 else 9
         )
     if compact and not task_style and not scoring_style:
         font_pt = min(
             font_pt,
-            5.0 if nrows >= 45 else 5.5 if nrows >= 35 else 6.0,
+            5.0 if nrows >= 45 else 5.5 if nrows >= 35 else 6.0 if nrows >= 20 else font_pt,
         )
 
     table = doc.add_table(rows=nrows, cols=ncols)
@@ -3185,7 +3187,7 @@ def _add_html_table(
             rh = [h / total for h in rh]
             for ri, row in enumerate(table.rows):
                 twips = max(200, min(936, int(avail_h_twips * rh[ri])))
-                _set_row_height(row, twips, exact=False)
+                _set_row_height(row, twips, exact=exact_rows)
 
     if use_landscape and restore_portrait:
         _begin_portrait_section(doc)
@@ -3207,6 +3209,7 @@ def _single_page_table_opts(total_pages, dense_table, scoring_form=False):
             "restore_portrait": False,
             "compact": True,
             "skip_section_switch": True,
+            "exact_rows": True,
         }
     return {
         "landscape": True,
