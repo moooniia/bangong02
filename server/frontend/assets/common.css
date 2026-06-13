@@ -26,6 +26,15 @@
   .translate-panel { min-height: 180px !important; }
 }
 
+.upload-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--pink, #e94c88); color: white;
+  font-size: 13px; font-weight: 700; padding: 10px 24px;
+  border-radius: 24px; border: none; cursor: pointer; font-family: inherit;
+  transition: background 0.15s, transform 0.15s;
+}
+.upload-btn:hover { background: #d43d79; transform: translateY(-1px); }
+
 @media (max-width: 600px) {
   .nav-links { display: none !important; }
   .hero h1 { font-size: 30px !important; }

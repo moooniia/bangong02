@@ -65,6 +65,19 @@ function initToolPage(cfg) {
     renderFiles();
   }
 
+  // 注入粉色选择按钮（若页面未自带）
+  if (!uploadArea.querySelector('.upload-btn')) {
+    const pickBtn = document.createElement('button');
+    pickBtn.type = 'button';
+    pickBtn.className = 'upload-btn';
+    pickBtn.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#e94c88;color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:24px;border:none;cursor:pointer;font-family:inherit;margin-top:16px;';
+    pickBtn.innerHTML = `<i class="ti ti-folder-open"></i>${cfg.uploadBtnText || '选择文件'}`;
+    pickBtn.onmouseover = () => { pickBtn.style.background = '#d43d79'; };
+    pickBtn.onmouseout  = () => { pickBtn.style.background = '#e94c88'; };
+    pickBtn.onclick = (e) => { e.stopPropagation(); fileInput.click(); };
+    uploadArea.appendChild(pickBtn);
+  }
+
   fileInput.addEventListener('change', () => addFiles(fileInput.files));
   uploadArea.addEventListener('click', () => fileInput.click());
   uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag'); });

@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-13
+
+构建号: `2026.06.13.40`
+
+Added: PDF Editor - thumbnail endpoint, export endpoint, pdf_utils pdf_thumbnails+pdf_editor_export, index.html consolidation
+
+### Added
+- PDF Editor - thumbnail endpoint, export endpoint, pdf_utils pdf_thumbnails+pdf_editor_export, index.html consolidation
+
+备份: `backups/v0.12.0/`
+
+
 ## [0.10.36] - 2026-06-13
 
 构建号: `2026.06.13.21`

@@ -1060,6 +1060,131 @@ def pdf_to_pptx(pdf_path, output_path, dpi=150):
     prs.save(output_path)
 
 
+def pdf_thumbnails(input_path, max_dim=160):
+    """Return list of base64 PNG data-URIs, one per page."""
+    import fitz
+    import base64
+
+    doc = fitz.open(input_path)
+    results = []
+    for page in doc:
+        rect = page.rect
+        scale = max_dim / max(rect.width, rect.height)
+        mat = fitz.Matrix(scale, scale)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        data = base64.b64encode(pix.tobytes('png')).decode()
+        results.append('data:image/png;base64,' + data)
+    doc.close()
+    return results
+
+
+def pdf_editor_export(upload_folder, pages_spec, output_path,
+                      uniform_size=None, watermark_text=None,
+                      grayscale=False, encrypt_password=None):
+    """
+    Assemble a new PDF from pages_spec then apply optional operations.
+    pages_spec: list of {"file": "server_uuid.pdf", "idx": 0_based_int}
+    uniform_size: 'a4', 'a3', or None
+    """
+    import fitz
+    import shutil
+
+    PAGE_SIZES = {
+        'a4': fitz.paper_rect('a4'),
+        'a3': fitz.paper_rect('a3'),
+    }
+
+    source_docs = {}
+    tmp_build = output_path + '._build.pdf'
+    tmp_gray  = output_path + '._gray.pdf'
+
+    try:
+        for item in pages_spec:
+            fname = item['file']
+            if fname not in source_docs:
+                fpath = os.path.join(upload_folder, fname)
+                if not os.path.exists(fpath):
+                    raise ValueError('源文件已过期，请重新上传')
+                source_docs[fname] = fitz.open(fpath)
+
+        out_doc = fitz.open()
+        for item in pages_spec:
+            fname = item['file']
+            idx = int(item['idx'])
+            src = source_docs[fname]
+            if idx < 0 or idx >= len(src):
+                continue
+            if uniform_size and uniform_size.lower() in PAGE_SIZES:
+                tr = PAGE_SIZES[uniform_size.lower()]
+                new_pg = out_doc.new_page(width=tr.width, height=tr.height)
+            else:
+                sr = src[idx].rect
+                new_pg = out_doc.new_page(width=sr.width, height=sr.height)
+            new_pg.show_pdf_page(new_pg.rect, src, idx)
+
+        if watermark_text and watermark_text.strip():
+            img_bytes, (tw, th) = _make_watermark_tile(watermark_text.strip(), _find_cn_font())
+            for page in out_doc:
+                rect = page.rect
+                w, h = rect.width, rect.height
+                y = -th
+                while y < h + th:
+                    x = -tw
+                    while x < w + tw:
+                        page.insert_image(
+                            fitz.Rect(x, y, x + tw, y + th),
+                            stream=img_bytes, overlay=True,
+                        )
+                        x += int(tw * 0.82)
+                    y += int(th * 0.82)
+
+        for doc in source_docs.values():
+            doc.close()
+        source_docs = {}
+
+        out_doc.save(tmp_build, garbage=4, deflate=True)
+        out_doc.close()
+        current = tmp_build
+
+        if grayscale:
+            gray_in = fitz.open(current)
+            gray_out = fitz.open()
+            for page in gray_in:
+                pix = page.get_pixmap(colorspace=fitz.csGRAY)
+                np = gray_out.new_page(width=page.rect.width, height=page.rect.height)
+                np.insert_image(np.rect, pixmap=pix)
+            gray_in.close()
+            gray_out.save(tmp_gray)
+            gray_out.close()
+            if os.path.exists(current):
+                os.remove(current)
+            current = tmp_gray
+
+        if encrypt_password:
+            from pypdf import PdfReader, PdfWriter
+            reader = PdfReader(current)
+            writer = PdfWriter()
+            for page in reader.pages:
+                writer.add_page(page)
+            writer.encrypt(encrypt_password)
+            with open(output_path, 'wb') as fh:
+                writer.write(fh)
+            if os.path.exists(current):
+                os.remove(current)
+        else:
+            shutil.move(current, output_path)
+
+    finally:
+        for doc in source_docs.values():
+            try:
+                doc.close()
+            except Exception:
+                pass
+        for p in [tmp_build, tmp_gray]:
+            if os.path.exists(p):
+                os.remove(p)
+
+
 def images_to_pdf(image_paths, output_path):
     if not image_paths:
         raise ValueError('请至少上传 1 张图片')

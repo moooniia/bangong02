@@ -1103,6 +1103,76 @@ def translate_file():
         _cleanup([path] if path else [])
 
 
+@app.route('/api/pdf/thumbnails', methods=['POST'])
+def pdf_thumbnails_route():
+    path = None
+    try:
+        f = request.files.get('file')
+        if not f:
+            return jsonify({'error': '请上传 PDF 文件'}), 400
+        paths = _save_uploads([f], {'pdf'})
+        path = paths[0]
+        from pdf_utils import pdf_thumbnails
+        thumbs = pdf_thumbnails(path)
+        session_file = os.path.basename(path)
+        path = None  # keep the file — it's needed for export
+        return jsonify({
+            'success': True,
+            'session_file': session_file,
+            'thumbnails': thumbs,
+            'page_count': len(thumbs),
+        })
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if path and os.path.exists(path):
+            os.remove(path)
+
+
+@app.route('/api/pdf/editor/export', methods=['POST'])
+def pdf_editor_export_route():
+    output_path = None
+    try:
+        pages_json = request.form.get('pages', '[]')
+        try:
+            pages_spec = json.loads(pages_json)
+        except Exception:
+            return jsonify({'error': '页面顺序参数无效'}), 400
+        if not pages_spec:
+            return jsonify({'error': '没有页面数据'}), 400
+
+        uniform_size     = request.form.get('uniform_size', '') or None
+        watermark_text   = request.form.get('watermark_text', '') or None
+        grayscale        = request.form.get('grayscale', 'false').lower() == 'true'
+        encrypt_password = request.form.get('encrypt_password', '') or None
+
+        for item in pages_spec:
+            fname = secure_filename(item.get('file', ''))
+            if not fname:
+                return jsonify({'error': '无效的文件引用'}), 400
+            item['file'] = fname
+            if not os.path.exists(os.path.join(UPLOAD_FOLDER, fname)):
+                return jsonify({'error': '源文件已过期，请重新上传'}), 400
+
+        uid = str(uuid.uuid4())
+        out_name = f'{uid}.pdf'
+        output_path = os.path.join(OUTPUT_FOLDER, out_name)
+
+        from pdf_utils import pdf_editor_export
+        pdf_editor_export(
+            UPLOAD_FOLDER, pages_spec, output_path,
+            uniform_size=uniform_size,
+            watermark_text=watermark_text,
+            grayscale=grayscale,
+            encrypt_password=encrypt_password,
+        )
+        return _ok(out_name, '编辑结果.pdf')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/download/<filename>', methods=['GET'])
 def download(filename):
     file_path = os.path.join(OUTPUT_FOLDER, secure_filename(filename))

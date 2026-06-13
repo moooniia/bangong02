@@ -28,10 +28,11 @@ BACKEND_SOURCES = [
 ]
 
 DEPLOY_FILES = [
-    ("volc_ocr.py", "/home/toolbox/backend/volc_ocr.py"),
-    ("app.py", "/home/toolbox/backend/app.py"),
-    ("preprocessing.py", "/home/toolbox/backend/preprocessing.py"),
-    ("seal_utils.py", "/home/toolbox/backend/seal_utils.py"),
+    ("volc_ocr.py",     "/home/toolbox/backend/volc_ocr.py"),
+    ("app.py",          "/home/toolbox/backend/app.py"),
+    ("preprocessing.py","/home/toolbox/backend/preprocessing.py"),
+    ("seal_utils.py",   "/home/toolbox/backend/seal_utils.py"),
+    ("pdf_utils.py",    "/home/toolbox/backend/pdf_utils.py"),
 ]
 
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
