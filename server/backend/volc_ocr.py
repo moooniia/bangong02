@@ -27,6 +27,7 @@ _SCORING_FORM_HINTS = ("考评打分表", "服务管理考评", "考评得分", 
 _SCORING_TABLE_HEADERS = frozenset({"序号", "考评内容", "分值", "扣分标准", "备注"})
 _SCORING_TABLE_COL_RATIOS = {
     5: [0.06, 0.36, 0.08, 0.36, 0.14],
+    6: [0.08, 0.06, 0.36, 0.12, 0.18, 0.20],  # WPS reference: 序号/考评内容/考评标准/分值/扣分/得分
 }
 _BLANK_PAGE_MIN_CHARS = 15
 _BLANK_PAGE_SNAPSHOT_DPI = 150
@@ -912,10 +913,13 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
 
-    usable = Inches(7.2 if not use_landscape else 9.0)
+    sec = table.part.document.sections[-1]
+    usable = sec.page_width - sec.left_margin - sec.right_margin
     ratios = _SCORING_TABLE_COL_RATIOS.get(ncols)
+    if not ratios:
+        ratios = _estimate_col_widths_from_content(parsed, ncols)
     if ratios:
-        widths = [int(usable * r) for r in ratios]
+        widths = [max(int(usable * r), 400000) for r in ratios]
         diff = int(usable) - sum(widths)
         if diff and widths:
             widths[-1] += diff
