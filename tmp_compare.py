@@ -26,5 +26,5 @@ def analyze(path, label):
             rh_in = round(int(rh) / 1440, 3) if rh else None
             print("  row[%d]: h=%sin" % (ri, rh_in))
 
-analyze(r"C:\Users\paz\Downloads\47724472-94d6-4225-bfef-49b250f7810d.docx", "PREV v0.10.27")
-analyze(r"C:\Users\paz\Downloads\p4_v0.10.30.docx", "NEW  v0.10.30")
+analyze(r"C:\Users\paz\Downloads\p4_v0.10.30.docx", "PREV v0.10.30")
+analyze(r"C:\Users\paz\Downloads\p4_v0.10.31.docx", "NEW  v0.10.31")

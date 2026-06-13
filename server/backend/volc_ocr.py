@@ -932,24 +932,14 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
             if ci < len(widths):
                 column.width = widths[ci]
 
-    header_row = {_normalize_text(c.get("text") or "") for c in parsed[0]}
     for ri, ci, cell in placements:
         tcell = table.rows[ri].cells[ci]
         text = cell.get("text") or ""
-        if ri == 0 and _normalize_text(text) in header_row:
-            _set_cell_text_style(
-                tcell,
-                font_pt,
-                bold=True,
-                color_hex=_CHECKLIST_TABLE_HEAD_FG,
-                align=WD_ALIGN_PARAGRAPH.CENTER,
-                fill_hex=_CHECKLIST_TABLE_HEAD_BG,
-            )
-            continue
         align = None
-        if ci == 0 or _normalize_text(text).isdigit():
+        if ri == 0 or ci == 0 or _normalize_text(text).isdigit():
             align = WD_ALIGN_PARAGRAPH.CENTER
-        _set_cell_text_style(tcell, font_pt, align=align)
+        bold = ri == 0
+        _set_cell_text_style(tcell, font_pt, bold=bold, align=align)
 
     # Apply row heights: proportional from image detection, or let Word auto-size
     # sec dimensions are in EMU (914400/inch); w:trHeight val is twips (1440/inch)
@@ -966,10 +956,9 @@ def _apply_scoring_form_table_style(table, parsed, placements, nrows, ncols, fon
     if rh and len(rh) == nrows:
         total = sum(rh)
         rh = [h / total for h in rh]
-        # Use atLeast mode so text can expand row height if needed (matches WPS behavior)
         for ri, row in enumerate(table.rows):
             twips = max(200, int(scaled_avail * rh[ri]))
-            _set_row_height(row, twips, exact=False)
+            _set_row_height(row, twips, exact=True)
 
 
 def _add_checklist_styled_para(doc, line):
