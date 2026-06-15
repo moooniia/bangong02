@@ -93,7 +93,7 @@ function initToolPage(cfg) {
     const btn = document.createElement('button');
     btn.className = 'convert-again-btn';
     btn.style.cssText = 'margin-top:16px;display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border,#ebebeb);border-radius:20px;padding:7px 16px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;transition:all 0.15s;';
-    btn.innerHTML = '<i class="ti ti-refresh"></i>再转一个文件';
+    btn.innerHTML = '<i class="ti ti-file-upload" style="font-size:14px"></i>再转一个';
     btn.onmouseover = () => { btn.style.borderColor = 'var(--pink,#e94c88)'; btn.style.color = 'var(--pink,#e94c88)'; };
     btn.onmouseout  = () => { btn.style.borderColor = 'var(--border,#ebebeb)'; btn.style.color = '#888'; };
     btn.onclick = resetAll;

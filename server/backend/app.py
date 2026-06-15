@@ -173,10 +173,11 @@ def analyze_pdf(pdf_path):
                 r = samples[idx * 3]
                 g = samples[idx * 3 + 1]
                 b = samples[idx * 3 + 2]
-                if r > 150 and g < 80 and b < 80:
+                if r > 150 and g < 100 and b < 80:
                     red_count += 1
             if red_count / total_pixels > 0.0003:  # 0.03%，约100px@100dpi
                 result['has_red_seal'] = True
+                print(f'[analyze_pdf] 第{i}页检出红章: red_count={red_count}, ratio={red_count/total_pixels:.5f}', flush=True)
                 break
 
         # 水印检测：两种策略并用
@@ -451,16 +452,15 @@ def convert():
             fb_docx = os.path.join(OUTPUT_FOLDER, f'{unique_name}.docx')
 
             diagnosis = analyze_pdf(input_path)
-            app.logger.info(
-                'PDF体检: tier=%d pages=%d text=%.0f%% red_seal=%s watermark=%s dense_table=%s | %s',
-                diagnosis['tier'], diagnosis['page_count'],
-                diagnosis['text_coverage'] * 100,
-                diagnosis['has_red_seal'], diagnosis['has_rotated_watermark'],
-                diagnosis['has_dense_tables'], diagnosis['reason'],
+            print(
+                f'[PDF体检] tier={diagnosis["tier"]} pages={diagnosis["page_count"]} '
+                f'text={diagnosis["text_coverage"]*100:.0f}% red_seal={diagnosis["has_red_seal"]} '
+                f'watermark={diagnosis["has_rotated_watermark"]} dense={diagnosis["has_dense_tables"]} | {diagnosis["reason"]}',
+                flush=True,
             )
 
             if diagnosis['tier'] == 0:
-                app.logger.info('第0档：普通PDF，走LibreOffice本地转换')
+                print('[PDF转换] 第0档：普通PDF，走LibreOffice本地转换', flush=True)
                 convert_meta = {'route': 'local-libreoffice', 'warning': ''}
                 subprocess.run([
                     'libreoffice', '--headless',
