@@ -156,13 +156,7 @@ def analyze_pdf(pdf_path):
         result['text_coverage'] = round(coverage, 2)
         result['has_text_layer'] = coverage >= 0.6
 
-        if result['has_text_layer']:
-            result['tier'] = 0
-            result['reason'] = '文字层覆盖率 %.0f%%，本地转换' % (coverage * 100)
-            doc.close()
-            return result
-
-        # --- 2. 扫描件：检测复杂特征 ---
+        # --- 2. 视觉检测：印章对所有 PDF 均执行（含有文字层的混合 PDF）---
         # 渲染采样页缩略图（100dpi，省内存又能看清印章）
         mat = fitz.Matrix(100 / 72.0, 100 / 72.0)
 
@@ -245,23 +239,32 @@ def analyze_pdf(pdf_path):
         doc.close()
 
         # --- 3. 定档 ---
-        complex_flags = [
-            result['has_red_seal'],
-            result['has_rotated_watermark'],
-            result['has_dense_tables'],
-        ]
-        if any(complex_flags):
-            reasons = []
+        if result['has_text_layer']:
             if result['has_red_seal']:
-                reasons.append('红章')
-            if result['has_rotated_watermark']:
-                reasons.append('旋转水印')
-            if result['has_dense_tables']:
-                reasons.append('密集表格')
-            result['reason'] = '扫描件（%s），走火山 OCR' % '、'.join(reasons)
+                # 有文字层但含红章（如公文首页盖章）→ 火山 OCR，版式还原更完整
+                result['tier'] = 2
+                result['reason'] = '有文字层但含红章，走火山 OCR'
+            else:
+                result['tier'] = 0
+                result['reason'] = '文字层覆盖率 %.0f%%，本地转换' % (coverage * 100)
         else:
-            result['reason'] = '扫描件（无文字层），走火山 OCR'
-        result['tier'] = 2
+            complex_flags = [
+                result['has_red_seal'],
+                result['has_rotated_watermark'],
+                result['has_dense_tables'],
+            ]
+            if any(complex_flags):
+                reasons = []
+                if result['has_red_seal']:
+                    reasons.append('红章')
+                if result['has_rotated_watermark']:
+                    reasons.append('旋转水印')
+                if result['has_dense_tables']:
+                    reasons.append('密集表格')
+                result['reason'] = '扫描件（%s），走火山 OCR' % '、'.join(reasons)
+            else:
+                result['reason'] = '扫描件（无文字层），走火山 OCR'
+            result['tier'] = 2
 
     except Exception as e:
         # fitz 不可用或解析失败，退回旧逻辑
