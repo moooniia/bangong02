@@ -543,21 +543,35 @@ def ocr():
         file.save(input_path)
 
         if ext == 'pdf':
-            text = ocr_pdf(input_path, tesseract_lang)
+            text, confidence = ocr_pdf(input_path, tesseract_lang)
         else:
-            text = ocr_image(input_path, tesseract_lang)
+            text, confidence = ocr_image(input_path, tesseract_lang)
 
         text = clean_ocr_text(text)
-
-        if not text:
-            return jsonify({'error': '未识别到文字，请换一张更清晰的图片重试'}), 400
-
-        # 识别结果几乎不可读时主动提示，避免行政人员对着乱码发愁
         compact = re.sub(r'\s+', '', text)
         cjk = sum(1 for c in compact if '\u4e00' <= c <= '\u9fff')
-        if len(compact) > 20 and cjk / len(compact) < 0.35:
+        low_quality = (not text) or (len(compact) > 20 and cjk / len(compact) < 0.35) or confidence < 70
+        if low_quality:
+            try:
+                from volc_ocr import volc_configured, volc_ocr_image_text, volc_ocr_pdf_text
+                if volc_configured():
+                    fallback_text = (
+                        volc_ocr_pdf_text(input_path) if ext == 'pdf'
+                        else volc_ocr_image_text(input_path)
+                    )
+                    fallback_text = clean_ocr_text(fallback_text)
+                    if fallback_text:
+                        text = fallback_text
+                        low_quality = False
+            except Exception:
+                app.logger.error(traceback.format_exc())
+
+        if not text:
+            return jsonify({'error': '\u672a\u8bc6\u522b\u5230\u6587\u5b57\uff0c\u8bf7\u6362\u4e00\u5f20\u66f4\u6e05\u6670\u7684\u56fe\u7247\u91cd\u8bd5'}), 400
+
+        if low_quality:
             return jsonify({
-                'error': '识别效果不佳，建议：① 用手机截图时尽量放大文字 ② 选择光线好、不模糊的图片 ③ 或换扫描件转文字试试'
+                'error': '\u8bc6\u522b\u6548\u679c\u4e0d\u4f73\uff0c\u5efa\u8bae\uff1a\u2460 \u7528\u624b\u673a\u622a\u56fe\u65f6\u5c3d\u91cf\u653e\u5927\u6587\u5b57 \u2461 \u9009\u62e9\u5149\u7ebf\u597d\u3001\u4e0d\u6a21\u7cca\u7684\u56fe\u7247 \u2462 \u6216\u6362\u626b\u63cf\u4ef6\u8f6c\u6587\u5b57\u8bd5\u8bd5'
             }), 400
 
         if output_type == 'file':

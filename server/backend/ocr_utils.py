@@ -78,27 +78,55 @@ def _score_text(text):
     return cjk / len(compact)
 
 
+def _text_and_conf_from_data(data):
+    """把 image_to_data 的逐词结果按行拼回文本，同时算出平均置信度。"""
+    n = len(data.get('text', []))
+    groups = {}
+    order = []
+    confs = []
+    for i in range(n):
+        word = (data['text'][i] or '').strip()
+        if not word:
+            continue
+        key = (data['block_num'][i], data['par_num'][i], data['line_num'][i])
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(word)
+        try:
+            c = float(data['conf'][i])
+            if c >= 0:
+                confs.append(c)
+        except (TypeError, ValueError):
+            pass
+    text = '\n'.join(' '.join(groups[k]) for k in order)
+    mean_conf = sum(confs) / len(confs) if confs else 0.0
+    return clean_ocr_text(text), mean_conf
+
+
 def _ocr_pil(pil_img, lang='chi_sim'):
     best_text = ''
     best_score = -1.0
+    best_conf = 0.0
     for psm in (6, 4, 3, 11):
         config = f'--psm {psm} --oem 1'
         try:
-            raw = pytesseract.image_to_string(pil_img, lang=lang, config=config)
-            cleaned = clean_ocr_text(raw)
+            data = pytesseract.image_to_data(pil_img, lang=lang, config=config, output_type=pytesseract.Output.DICT)
+            cleaned, conf = _text_and_conf_from_data(data)
             score = _score_text(cleaned)
             if score > best_score:
                 best_score = score
                 best_text = cleaned
+                best_conf = conf
             if best_score >= 0.45:
                 break
         except Exception:
             continue
-    return best_text
+    return best_text, best_conf
 
 
-def _ocr_array(binary):
-    return _ocr_pil(Image.fromarray(binary))
+def _ocr_array(binary, lang='chi_sim'):
+    return _ocr_pil(Image.fromarray(binary), lang)
 
 
 def _dedupe_chunk_overlap(parts):
@@ -121,25 +149,29 @@ def _dedupe_chunk_overlap(parts):
 
 
 def ocr_image(image_path, lang='chi_sim'):
+    """返回 (text, mean_confidence)，confidence 取自 Tesseract 逐词置信度（0~100）。"""
     binary = _preprocess(_load_bgr(image_path))
     h, w = binary.shape
 
     # 超长截图切块，避免 Tesseract 整图识别崩溃
     if h > CHUNK_HEIGHT:
         parts = []
+        confs = []
         y = 0
         while y < h:
             y2 = min(y + CHUNK_HEIGHT, h)
             chunk = binary[y:y2, 0:w]
-            part = _ocr_array(chunk)
+            part, conf = _ocr_array(chunk, lang)
             if part:
                 parts.append(part)
+                confs.append(conf)
             if y2 >= h:
                 break
             y = y2 - OVERLAP
-        return clean_ocr_text(_dedupe_chunk_overlap(parts))
+        text = clean_ocr_text(_dedupe_chunk_overlap(parts))
+        return text, (sum(confs) / len(confs) if confs else 0.0)
 
-    return _ocr_array(binary)
+    return _ocr_array(binary, lang)
 
 
 def _ocr_document_page(image_path, lang='chi_sim'):
@@ -205,17 +237,21 @@ def ocr_pdf_for_word(pdf_path, max_pages=80, lang='chi_sim'):
 
 
 def ocr_pdf(pdf_path, lang='chi_sim'):
+    """返回 (text, mean_confidence)，逐页OCR置信度取平均。"""
     tmp = tempfile.mkdtemp(prefix='ocr_pdf_')
     try:
         pages = _pdf_to_page_images(pdf_path, tmp, dpi=200, timeout=120)
         texts = []
+        confs = []
         for name in pages[:50]:
-            text = ocr_image(os.path.join(tmp, name), lang)
+            text, conf = ocr_image(os.path.join(tmp, name), lang)
             if text:
                 texts.append(text)
+                confs.append(conf)
 
         if not texts:
-            return ''
-        return '\n\n--- 下一页 ---\n\n'.join(texts)
+            return '', 0.0
+        joined = '\n\n--- 下一页 ---\n\n'.join(texts)
+        return joined, (sum(confs) / len(confs) if confs else 0.0)
     finally:
         _cleanup_tmp(tmp)

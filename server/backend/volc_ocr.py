@@ -431,6 +431,31 @@ def _ocr_normal_page(visual, image_b64):
     return resp.get("data") or {}
 
 
+def volc_ocr_image_text(image_path):
+    """任意图片转纯文本 — 给"图片转文字/扫描件转文字"在本地Tesseract识别质量差时兜底用。"""
+    visual = _visual_service()
+    with open(image_path, "rb") as f:
+        img_b64 = base64.b64encode(f.read()).decode("ascii")
+    data = _ocr_normal_page(visual, img_b64)
+    lines = [(t or "").strip() for t in (data.get("line_texts") or [])]
+    return "\n".join(l for l in lines if l)
+
+
+def volc_ocr_pdf_text(pdf_path, max_pages=50, dpi=NORMAL_OCR_DPI):
+    """扫描PDF逐页转纯文本 — Tesseract识别质量差时的兜底，跟volc_ocr_image_text同一用途。"""
+    visual = _visual_service()
+    total = min(pdf_page_count(pdf_path), max_pages)
+    pages_text = []
+    for pi in range(total):
+        img_b64, _rgb = _page_rgb_and_b64(pdf_path, pi, dpi=dpi)
+        data = _ocr_normal_page(visual, img_b64)
+        lines = [(t or "").strip() for t in (data.get("line_texts") or [])]
+        page_text = "\n".join(l for l in lines if l)
+        if page_text:
+            pages_text.append(page_text)
+    return "\n\n".join(pages_text)
+
+
 def _avg_char_height(line_chars):
     if not line_chars:
         return 0
