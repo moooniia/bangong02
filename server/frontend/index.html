@@ -115,7 +115,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 /* PDF Editor wide banner */
 .editor-banner {
   display: flex; flex-direction: row; align-items: center; gap: 20px;
-  height: 76px; padding: 0 24px; margin-top: 10px;
+  height: 108px; padding: 0 24px; margin-top: 10px;
   background: white; border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow);
   text-decoration: none; color: inherit; cursor: pointer;
@@ -128,11 +128,11 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
   border-color: var(--pink);
 }
 .eb-icon {
-  width: 44px; height: 44px; background: var(--pink-bg); border-radius: 12px;
+  width: 44px; height: 44px; background: var(--light-gray); border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; color: var(--pink); flex-shrink: 0; transition: background .2s;
+  font-size: 22px; color: var(--mid); flex-shrink: 0; transition: background .2s, color .2s;
 }
-.editor-banner:hover .eb-icon { background: white; }
+.editor-banner:hover .eb-icon { background: var(--pink-bg); color: var(--pink); }
 .eb-body { flex: 1; }
 .eb-name { font-size: 14px; font-weight: 700; letter-spacing: -.2px; transition: color .2s; }
 .eb-sub { font-size: 12px; color: var(--ink3); margin-top: 3px; }
@@ -145,17 +145,9 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
   gap: 10px;
 }
-.pdf-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-.pdf-grid .editor-banner {
-  grid-column: 1 / -1;
+.editor-banner-inline {
+  grid-column: span 4;
   margin-top: 0;
-}
-@media (max-width: 640px) {
-  .pdf-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .tool-card {
@@ -300,7 +292,7 @@ footer {
       <span class="section-name">PDF 处理</span>
       <span class="section-count">9 个工具</span>
     </div>
-    <div class="pdf-grid">
+    <div class="tools-grid">
       <a class="tool-card" href="/pdf-to-word.html"><div class="card-top"><i class="ti ti-file-type-doc card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Word</div></a>
       <a class="tool-card" href="/pdf-to-excel.html"><div class="card-top"><i class="ti ti-file-type-xls card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 Excel</div></a>
       <a class="tool-card" href="/pdf-to-ppt.html"><div class="card-top"><i class="ti ti-file-type-ppt card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 转 PPT</div></a>
@@ -309,7 +301,7 @@ footer {
       <a class="tool-card" href="/excel-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Excel 转 PDF</div></a>
       <a class="tool-card" href="/ppt-to-pdf.html"><div class="card-top"><i class="ti ti-file-type-pdf card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PPT 转 PDF</div></a>
       <a class="tool-card" href="/images-to-pdf.html"><div class="card-top"><i class="ti ti-photo-up card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">图片转 PDF</div></a>
-      <a class="editor-banner" href="/pdf-editor.html">
+      <a class="editor-banner editor-banner-inline" href="/pdf-editor.html">
         <div class="eb-icon"><i class="ti ti-layout-grid"></i></div>
         <div class="eb-body">
           <div class="eb-name">PDF 编辑器</div>

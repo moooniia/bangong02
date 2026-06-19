@@ -1078,6 +1078,26 @@ def pdf_thumbnails(input_path, max_dim=160):
     return results
 
 
+def pdf_page_preview(input_path, idx, max_dim=1600):
+    """Render a single page at higher resolution for the editor's zoom view."""
+    import fitz
+    import base64
+
+    doc = fitz.open(input_path)
+    try:
+        if idx < 0 or idx >= len(doc):
+            raise ValueError('页码超出范围')
+        page = doc[idx]
+        rect = page.rect
+        scale = max_dim / max(rect.width, rect.height)
+        mat = fitz.Matrix(scale, scale)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        data = base64.b64encode(pix.tobytes('png')).decode()
+        return 'data:image/png;base64,' + data
+    finally:
+        doc.close()
+
+
 def pdf_editor_export(upload_folder, pages_spec, output_path,
                       uniform_size=None, watermark_text=None,
                       grayscale=False, encrypt_password=None,

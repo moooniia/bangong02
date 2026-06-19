@@ -601,7 +601,15 @@ def _pdf_image_mode_pages(pdf_path, dpi=None, with_detail=False):
             img_b64, _ = _page_rgb_and_b64(
                 ocr_path, pi, dpi=dpi, correct_sideways=correct_sideways,
             )
-            data = _ocr_pdf_image_page_data(visual, img_b64)
+            try:
+                data = _ocr_pdf_image_page_data(visual, img_b64)
+            except Exception as _page_err:
+                if dpi > 200:
+                    # 图片太大被 API 拒绝，降 DPI 重试
+                    img_b64, _ = _page_rgb_and_b64(ocr_path, pi, dpi=150, correct_sideways=correct_sideways)
+                    data = _ocr_pdf_image_page_data(visual, img_b64)
+                else:
+                    raise
             pages_md.append((data.get("markdown") or "").strip())
             if with_detail:
                 details.extend(data.get("detail") or [])
@@ -2093,9 +2101,6 @@ def _doc_body_text_len(doc):
 
 def _build_page_warnings(snapshot_pages, abnormal_table_pages):
     parts = []
-    if snapshot_pages:
-        pages = "、".join(f"第{p}页" for p in snapshot_pages)
-        parts.append(f"部分页面识别困难，{pages}已插入原页截图")
     if abnormal_table_pages:
         pages = "、".join(f"第{p}页" for p in abnormal_table_pages)
         parts.append(f"{pages}表格结构异常，建议人工核对")
@@ -3852,8 +3857,10 @@ def _pdf_first_page_is_landscape(pdf_path):
         return False
 
 
-def volc_pdf_to_docx(pdf_path, output_path):
-    """返回 {"route": str, "warning": str}。"""
+def volc_pdf_to_docx(pdf_path, output_path, skip_direct=False):
+    """返回 {"route": str, "warning": str}。
+    skip_direct=True：跳过直传模式，直接走逐页 PNG 图片模式（用于旋转水印文件）。
+    """
     # PDF 含 /Rotate 元数据时，直传给 Volc API 会按原始（未旋转）坐标 OCR，
     # 导致文字错乱。改走逐页 PNG 模式：fitz 渲染时已应用旋转，Volc 看到方向正确的图像。
     # 单页横版 PDF（无旋转元数据但宽>高）同理——直传 API 会反序读文字，改走 PNG 模式。
@@ -3863,11 +3870,11 @@ def volc_pdf_to_docx(pdf_path, output_path):
         and pdf_page_count(pdf_path) == 1
         and _pdf_first_page_is_landscape(pdf_path)
     )
-    if _has_rot or _is_single_landscape:
+    if _has_rot or _is_single_landscape or skip_direct:
         try:
             log.info(
-                "PDF 走逐页 PNG 模式(has_rot=%s landscape=%s): %s",
-                _has_rot, _is_single_landscape, pdf_path,
+                "PDF 走逐页 PNG 模式(has_rot=%s landscape=%s skip_direct=%s): %s",
+                _has_rot, _is_single_landscape, skip_direct, pdf_path,
             )
             meta = _try_image_mode_docx(
                 pdf_path, output_path, markdown="", details=[], rotated_pdf=_has_rot,
@@ -3875,6 +3882,9 @@ def volc_pdf_to_docx(pdf_path, output_path):
             return {"route": meta["route"], "warning": meta.get("warning") or ""}
         except Exception as exc:
             log.warning("PNG模式失败(%.80s)，降级直传: %s", exc, pdf_path)
+            if skip_direct:
+                # 图片模式失败时不再降级直传（直传对水印文件效果差），直接报错
+                raise
 
     markdown, details = pdf_to_markdown(pdf_path)
     needs_image_mode = _detail_needs_image_mode(markdown, details)

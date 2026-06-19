@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Office 文档互转 — 办公工具箱</title>
@@ -61,6 +61,6 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 <div class="result-area" id="resultArea"><a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a></div>
 </main>
 <script src="/assets/convert-progress.js"></script>
-<script src="/assets/tool-page.js"></script>
+<script src="/assets/tool-page.js?v=0.12.6"></script>
 <script>initToolPage({api:'/api/convert',accept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',multiple:false,extraFields:[{id:'formatSelect',name:'format'}],progressTask:'office-convert',progressOpts:function(files){return{targetFormat:document.getElementById('formatSelect').value,fileName:files[0]&&files[0].name};},downloadText:'下载文件'});</script>
 </body></html>

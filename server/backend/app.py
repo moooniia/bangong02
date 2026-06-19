@@ -204,23 +204,6 @@ def analyze_pdf(pdf_path):
             if result['has_rotated_watermark']:
                 break
 
-        # 策略B：图像灰度分布（适用于印刷水印扫描件）
-        # 扫描件中对角线水印会产生大量中间灰度像素（非白非黑）
-        if not result['has_rotated_watermark']:
-            try:
-                pix0 = doc[0].getPixmap(matrix=mat, alpha=False)
-            except AttributeError:
-                pix0 = doc[0].get_pixmap(matrix=mat, alpha=False)
-            s0 = pix0.samples
-            total0 = pix0.width * pix0.height
-            mid_gray = 0
-            for idx in range(total0):
-                lum = (s0[idx*3] + s0[idx*3+1] + s0[idx*3+2]) // 3
-                if 100 < lum < 200:  # 中间灰度范围
-                    mid_gray += 1
-            if mid_gray / total0 > 0.04:  # 4%中间灰度即为有印刷水印
-                result['has_rotated_watermark'] = True
-
         # 表格检测：首页线段数量（有文字层的 PDF 才有 drawings）
         first_page = doc[0]
         try:
@@ -333,7 +316,8 @@ def convert_scanned_pdf_to_docx(pdf_path, unique_name, output_folder, diagnosis=
         from volc_ocr import volc_configured, volc_pdf_to_docx
         if volc_configured():
             app.logger.info('Stage2: 火山 OCR API')
-            meta = volc_pdf_to_docx(pdf_path, output_file)
+            has_watermark = bool(diagnosis and diagnosis.get('has_rotated_watermark'))
+            meta = volc_pdf_to_docx(pdf_path, output_file, skip_direct=has_watermark)
             if isinstance(meta, str):
                 meta = {'route': meta, 'warning': ''}
             app.logger.info(
@@ -1149,6 +1133,25 @@ def pdf_thumbnails_route():
     finally:
         if path and os.path.exists(path):
             os.remove(path)
+
+
+@app.route('/api/pdf/editor/preview', methods=['GET'])
+def pdf_editor_preview_route():
+    try:
+        fname = secure_filename(request.args.get('file', ''))
+        idx = int(request.args.get('idx', '-1'))
+        if not fname:
+            return jsonify({'error': '无效的文件引用'}), 400
+        fpath = os.path.join(UPLOAD_FOLDER, fname)
+        if not os.path.exists(fpath):
+            return jsonify({'error': '源文件已过期，请重新上传'}), 400
+
+        from pdf_utils import pdf_page_preview
+        data_uri = pdf_page_preview(fpath, idx)
+        return jsonify({'success': True, 'image': data_uri})
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/pdf/editor/export', methods=['POST'])

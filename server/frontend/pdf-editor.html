@@ -43,19 +43,49 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .add-pdf-btn:hover{border-color:var(--pink);color:var(--pink)}
 
 /* Thumbnail grid */
-.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;background:white;border:1px solid var(--border);border-radius:16px;padding:16px;min-height:170px;margin-bottom:24px}
+.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;background:white;border:1px solid var(--border);border-radius:16px;padding:16px;min-height:170px;margin-bottom:24px}
 .thumb-grid-empty{display:flex;align-items:center;justify-content:center;color:var(--ink4);font-size:13px;grid-column:1/-1}
-.thumb-card{position:relative;border:1px solid var(--border);border-radius:8px;overflow:visible;cursor:grab;background:white;transition:box-shadow .15s;user-select:none}
+.thumb-card{position:relative;border:2px solid var(--border);border-radius:8px;overflow:visible;cursor:grab;background:white;transition:box-shadow .15s,border-color .15s;user-select:none}
 .thumb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .thumb-card:active{cursor:grabbing}
-.thumb-img{width:100%;height:auto;display:block;border-radius:7px 7px 0 0;transition:transform .2s}
+.thumb-card.selected{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-bg)}
+.thumb-img-wrap{position:relative;cursor:zoom-in}
+.thumb-img{width:100%;height:auto;display:block;border-radius:6px 6px 0 0;transition:transform .2s}
+.thumb-zoom-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:.15s;border-radius:6px 6px 0 0}
+.thumb-img-wrap:hover .thumb-zoom-hint{opacity:1;background:rgba(0,0,0,.15)}
+.thumb-zoom-hint svg{width:26px;height:26px;stroke:white;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .thumb-bottom{display:flex;align-items:center;justify-content:space-between;padding:4px 6px}
 .thumb-label{font-size:11px;color:var(--ink3)}
-.thumb-rot{border:none;background:none;cursor:pointer;font-size:14px;color:var(--ink4);padding:2px 4px;border-radius:4px;line-height:1;transition:.15s;font-family:inherit}
+.thumb-rot{border:none;background:none;cursor:pointer;color:var(--ink4);padding:3px;border-radius:4px;line-height:0;transition:.15s;display:flex;align-items:center}
+.thumb-rot svg{width:15px;height:15px}
 .thumb-rot:hover{color:var(--pink);background:var(--pink-bg)}
-.thumb-del{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#ff4444;color:white;border:none;cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center;z-index:10;padding:0}
+.thumb-del{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ff4444;color:white;border:2px solid white;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;padding:0;line-height:0}
+.thumb-del svg{width:11px;height:11px;stroke:white}
 .thumb-card:hover .thumb-del{display:flex}
+.thumb-check{position:absolute;top:-8px;left:-8px;width:22px;height:22px;border-radius:50%;background:white;border:2px solid var(--ink4);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;padding:0;line-height:0;transition:.15s}
+.thumb-check svg{width:12px;height:12px;stroke:white;opacity:0}
+.thumb-card:hover .thumb-check,.thumb-card.selected .thumb-check{display:flex}
+.thumb-card.selected .thumb-check{background:var(--pink);border-color:var(--pink)}
+.thumb-card.selected .thumb-check svg{opacity:1}
 .thumb-ghost{opacity:.35;border:2px dashed var(--pink)!important}
+
+/* Selection toolbar */
+.sel-toolbar{display:none;align-items:center;gap:10px;background:var(--pink-bg);border:1px solid #f6cfe2;border-radius:12px;padding:10px 16px;margin-bottom:14px;font-size:13px}
+.sel-toolbar.active{display:flex}
+.sel-count{font-weight:700;color:var(--pink);flex:1}
+.sel-btn{display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid var(--border);border-radius:18px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--dark);cursor:pointer;font-family:inherit;transition:.15s}
+.sel-btn:hover{border-color:var(--pink);color:var(--pink)}
+.sel-btn svg{width:14px;height:14px}
+
+/* Zoom modal */
+.zoom-modal{display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center}
+.zoom-modal.open{display:flex}
+.zoom-backdrop{position:absolute;inset:0;background:rgba(20,20,20,.78)}
+.zoom-box{position:relative;max-width:92vw;max-height:92vh;background:white;border-radius:10px;padding:8px;display:flex;align-items:center;justify-content:center}
+.zoom-box img{max-width:88vw;max-height:88vh;display:block;border-radius:4px}
+.zoom-close{position:absolute;top:-16px;right:-16px;width:34px;height:34px;border-radius:50%;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.zoom-close svg{width:16px;height:16px}
+.zoom-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 
 /* Options panel */
 .options-panel{background:white;border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
@@ -141,8 +171,16 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
   <div id="editState" style="display:none">
     <div class="toolbar">
       <div class="page-count-badge" id="pageCountBadge">0 页</div>
+      <span style="font-size:12px;color:var(--ink4)">Ctrl/Shift 点击缩略图可多选</span>
       <button class="add-pdf-btn" id="addPdfBtn"><i class="ti ti-file-plus"></i>追加 PDF</button>
       <input type="file" id="addFileInput" accept=".pdf" style="display:none">
+    </div>
+
+    <div class="sel-toolbar" id="selToolbar">
+      <span class="sel-count" id="selCount">已选 0 页</span>
+      <button class="sel-btn" id="selRotateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5"/><path d="M4.6 13a8 8 0 1 0 1.5-7.5L4 9"/></svg>批量旋转</button>
+      <button class="sel-btn" id="selDeleteBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>批量删除</button>
+      <button class="sel-btn" id="selClearBtn">取消选择</button>
     </div>
 
     <div class="thumb-grid" id="thumbGrid">
@@ -211,6 +249,15 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
       <button class="again-btn" id="againBtn"><i class="ti ti-refresh"></i>重新开始</button>
     </div>
   </div>
+
+  <div class="zoom-modal" id="zoomModal">
+    <div class="zoom-backdrop" id="zoomBackdrop"></div>
+    <div class="zoom-box">
+      <button class="zoom-close" id="zoomCloseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg></button>
+      <div class="zoom-loading" id="zoomLoading"><div class="spinner"></div></div>
+      <img id="zoomImg" src="" alt="">
+    </div>
+  </div>
 </main>
 
 <script src="/assets/analytics.js" defer></script>
@@ -236,8 +283,22 @@ const againBtn     = document.getElementById('againBtn');
 const grayscaleTog = document.getElementById('grayscaleTog');
 const compressTog  = document.getElementById('compressTog');
 
-let sortable    = null;
-let isFirstLoad = true;
+let sortable      = null;
+let isFirstLoad   = true;
+let lastSelectedCard = null;
+
+const ICON_ROTATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5"/><path d="M4.6 13a8 8 0 1 0 1.5-7.5L4 9"/></svg>';
+const ICON_X      = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>';
+const ICON_CHECK  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const ICON_ZOOM   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>';
+
+function applyRotate(card, delta) {
+  const img  = card.querySelector('.thumb-img');
+  const cur  = parseInt(card.dataset.rotate || '0', 10);
+  const next = ((cur + delta) % 360 + 360) % 360;
+  card.dataset.rotate = String(next);
+  img.style.transform = next === 0 ? '' : (next === 180 ? 'rotate(180deg)' : `rotate(${next}deg) scale(0.72)`);
+}
 
 function createCard(sessionFile, pageIdx, thumbSrc) {
   const card = document.createElement('div');
@@ -246,21 +307,49 @@ function createCard(sessionFile, pageIdx, thumbSrc) {
   card.dataset.idx     = String(pageIdx);
   card.dataset.rotate  = '0';
 
+  const check = document.createElement('button');
+  check.type      = 'button';
+  check.className = 'thumb-check';
+  check.title     = '选中此页（支持 Ctrl/Shift 多选）';
+  check.innerHTML = ICON_CHECK;
+  check.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSelect(card, e.shiftKey);
+  });
+
   const del = document.createElement('button');
-  del.className = 'thumb-del';
-  del.title     = '删除此页';
-  del.innerHTML = '<i class="ti ti-x"></i>';
+  del.type       = 'button';
+  del.className  = 'thumb-del';
+  del.title      = '删除此页';
+  del.innerHTML  = ICON_X;
   del.addEventListener('click', (e) => {
     e.stopPropagation();
     card.remove();
     updatePageNumbers();
   });
 
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'thumb-img-wrap';
+
   const img = document.createElement('img');
   img.className = 'thumb-img';
   img.src       = thumbSrc;
   img.loading   = 'lazy';
   img.draggable = false;
+
+  const zoomHint = document.createElement('div');
+  zoomHint.className = 'thumb-zoom-hint';
+  zoomHint.innerHTML  = ICON_ZOOM;
+
+  imgWrap.append(img, zoomHint);
+  imgWrap.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      e.stopPropagation();
+      toggleSelect(card, e.shiftKey);
+      return;
+    }
+    openZoom(card);
+  });
 
   const bottom = document.createElement('div');
   bottom.className = 'thumb-bottom';
@@ -269,20 +358,38 @@ function createCard(sessionFile, pageIdx, thumbSrc) {
   lbl.className = 'thumb-label';
 
   const rotBtn = document.createElement('button');
+  rotBtn.type      = 'button';
   rotBtn.className = 'thumb-rot';
   rotBtn.title     = '顺时针旋转 90°';
-  rotBtn.innerHTML = '<i class="ti ti-rotate-clockwise"></i>';
+  rotBtn.innerHTML = ICON_ROTATE;
   rotBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const cur  = parseInt(card.dataset.rotate || '0', 10);
-    const next = (cur + 90) % 360;
-    card.dataset.rotate = String(next);
-    img.style.transform = next === 0 ? '' : (next === 180 ? 'rotate(180deg)' : `rotate(${next}deg) scale(0.72)`);
+    applyRotate(card, 90);
   });
 
   bottom.append(lbl, rotBtn);
-  card.append(del, img, bottom);
+  card.append(check, del, imgWrap, bottom);
   return card;
+}
+
+function toggleSelect(card, rangeFromLast) {
+  const cards = [...thumbGrid.querySelectorAll('.thumb-card')];
+  if (rangeFromLast && lastSelectedCard && cards.includes(lastSelectedCard)) {
+    const a = cards.indexOf(lastSelectedCard);
+    const b = cards.indexOf(card);
+    const [lo, hi] = a < b ? [a, b] : [b, a];
+    for (let i = lo; i <= hi; i++) cards[i].classList.add('selected');
+  } else {
+    card.classList.toggle('selected');
+  }
+  lastSelectedCard = card;
+  updateSelToolbar();
+}
+
+function updateSelToolbar() {
+  const n = thumbGrid.querySelectorAll('.thumb-card.selected').length;
+  document.getElementById('selCount').textContent = '已选 ' + n + ' 页';
+  document.getElementById('selToolbar').classList.toggle('active', n > 0);
 }
 
 function updatePageNumbers() {
@@ -293,6 +400,7 @@ function updatePageNumbers() {
   document.getElementById('pageCountBadge').textContent = cards.length + ' 页';
   const emp = thumbGrid.querySelector('.thumb-grid-empty');
   if (emp) emp.remove();
+  updateSelToolbar();
 }
 
 function initSortable() {
@@ -300,9 +408,54 @@ function initSortable() {
   sortable = new Sortable(thumbGrid, {
     animation: 150,
     ghostClass: 'thumb-ghost',
+    filter: '.thumb-check,.thumb-del,.thumb-rot,.thumb-img-wrap',
+    preventOnFilter: false,
     onEnd: updatePageNumbers,
   });
 }
+
+// Zoom modal
+const zoomModal   = document.getElementById('zoomModal');
+const zoomImg     = document.getElementById('zoomImg');
+const zoomLoading = document.getElementById('zoomLoading');
+
+async function openZoom(card) {
+  zoomModal.classList.add('open');
+  zoomImg.style.display = 'none';
+  zoomLoading.style.display = 'flex';
+  zoomImg.src = card.querySelector('.thumb-img').src; // instant low-res fallback
+  try {
+    const session = card.dataset.session;
+    const idx     = card.dataset.idx;
+    const res  = await fetch(`/api/pdf/editor/preview?file=${encodeURIComponent(session)}&idx=${encodeURIComponent(idx)}`);
+    const data = await res.json();
+    if (data.success) zoomImg.src = data.image;
+  } catch (e) { /* fall back to low-res thumbnail already shown */ }
+  finally {
+    zoomLoading.style.display = 'none';
+    zoomImg.style.display = 'block';
+    const rot = parseInt(card.dataset.rotate || '0', 10);
+    zoomImg.style.transform = rot ? `rotate(${rot}deg)` : '';
+  }
+}
+function closeZoom() { zoomModal.classList.remove('open'); }
+document.getElementById('zoomCloseBtn').addEventListener('click', closeZoom);
+document.getElementById('zoomBackdrop').addEventListener('click', closeZoom);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeZoom(); });
+
+// Batch selection toolbar actions
+document.getElementById('selRotateBtn').addEventListener('click', () => {
+  thumbGrid.querySelectorAll('.thumb-card.selected').forEach(c => applyRotate(c, 90));
+});
+document.getElementById('selDeleteBtn').addEventListener('click', () => {
+  thumbGrid.querySelectorAll('.thumb-card.selected').forEach(c => c.remove());
+  updatePageNumbers();
+});
+document.getElementById('selClearBtn').addEventListener('click', () => {
+  thumbGrid.querySelectorAll('.thumb-card.selected').forEach(c => c.classList.remove('selected'));
+  lastSelectedCard = null;
+  updateSelToolbar();
+});
 
 async function uploadPdf(file, pwd) {
   const first = isFirstLoad;
@@ -480,6 +633,8 @@ againBtn.addEventListener('click', () => {
   openPwd.value   = '';
   exportBtn.disabled = false;
   isFirstLoad = true;
+  lastSelectedCard = null;
+  updateSelToolbar();
   if (sortable) { sortable.destroy(); sortable = null; }
 });
 </script>

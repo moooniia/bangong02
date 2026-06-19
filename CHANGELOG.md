@@ -8,6 +8,90 @@
 
 ## [Unreleased]
 
+## [0.12.9] - 2026-06-19
+
+构建号: `2026.06.19.1`
+
+feat: PDF编辑器新增大图预览接口/api/pdf/editor/preview
+
+### Changed
+- feat: PDF编辑器新增大图预览接口/api/pdf/editor/preview
+
+备份: `backups/v0.12.9/`
+
+
+## [0.12.8] - 2026-06-15
+
+构建号: `2026.06.15.6`
+
+remove snapshot warning and Strategy B watermark false positive
+
+### Changed
+- remove snapshot warning and Strategy B watermark false positive
+
+备份: `backups/v0.12.8/`
+
+
+## [0.12.7] - 2026-06-15
+
+构建号: `2026.06.15.5`
+
+fix: watermark docs skip direct mode, use image-mode OCR directly
+
+### Changed
+- fix: watermark docs skip direct mode, use image-mode OCR directly
+
+备份: `backups/v0.12.7/`
+
+
+## [0.12.6] - 2026-06-15
+
+构建号: `2026.06.15.4`
+
+fix: watermark scanned docs skip OCR use image-embed directly
+
+### Changed
+- fix: watermark scanned docs skip OCR use image-embed directly
+
+备份: `backups/v0.12.6/`
+
+
+## [0.12.5] - 2026-06-15
+
+构建号: `2026.06.15.3`
+
+fix: per-page DPI fallback when Volcano API rejects large image
+
+### Changed
+- fix: per-page DPI fallback when Volcano API rejects large image
+
+备份: `backups/v0.12.5/`
+
+
+## [0.12.4] - 2026-06-15
+
+构建号: `2026.06.15.2`
+
+红章G阈值放宽+print日志
+
+### Changed
+- 红章G阈值放宽+print日志
+
+备份: `backups/v0.12.4/`
+
+
+## [0.12.3] - 2026-06-15
+
+构建号: `2026.06.15.1`
+
+文字层含红章时走火山OCR
+
+### Changed
+- 文字层含红章时走火山OCR
+
+备份: `backups/v0.12.3/`
+
+
 ## [0.12.2] - 2026-06-13
 
 构建号: `2026.06.13.42`
