@@ -556,18 +556,28 @@ def ocr():
             or confidence < 70
             or low_conf_ratio > 0.04
         )
+        app.logger.info(
+            '[OCR] 本地Tesseract: conf=%.1f low_conf_ratio=%.3f len=%d low_quality=%s',
+            confidence, low_conf_ratio, len(compact), low_quality,
+        )
         if low_quality:
             try:
                 from volc_ocr import volc_configured, volc_ocr_image_text, volc_ocr_pdf_text
                 if volc_configured():
+                    app.logger.info('[OCR] 质量不达标，改走火山OCR兜底')
                     fallback_text = (
                         volc_ocr_pdf_text(input_path) if ext == 'pdf'
                         else volc_ocr_image_text(input_path)
                     )
                     fallback_text = clean_ocr_text(fallback_text)
                     if fallback_text:
+                        app.logger.info('[OCR] 火山OCR兜底成功，已替换识别结果')
                         text = fallback_text
                         low_quality = False
+                    else:
+                        app.logger.info('[OCR] 火山OCR兜底没识别出文字，仍用本地结果')
+                else:
+                    app.logger.info('[OCR] 火山OCR未配置密钥，跳过兜底')
             except Exception:
                 app.logger.error(traceback.format_exc())
 
