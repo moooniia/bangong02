@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.17] - 2026-06-19
+
+构建号: `2026.06.19.9`
+
+fix: OCR调试日志改用print，因为app.logger.info在这个项目里不会输出到journalctl
+
+### Changed
+- fix: OCR调试日志改用print，因为app.logger.info在这个项目里不会输出到journalctl
+
+备份: `backups/v0.12.17/`
+
+
 ## [0.12.16] - 2026-06-19
 
 构建号: `2026.06.19.8`

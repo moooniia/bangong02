@@ -1,0 +1,11 @@
+-- Logs begin at Thu 2026-04-02 18:29:23 CST, end at Fri 2026-06-19 11:28:34 CST. --
+Jun 19 11:28:05 iZuf6j9r6hqhd089mjuqmeZ systemd[1]: Stopped Toolbox Flask Backend.
+Jun 19 11:28:05 iZuf6j9r6hqhd089mjuqmeZ systemd[1]: Started Toolbox Flask Backend.
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]:  * Serving Flask app 'app'
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]:  * Debug mode: off
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]:  * Running on all addresses (0.0.0.0)
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]:  * Running on http://127.0.0.1:5000
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]:  * Running on http://172.24.12.142:5000
+Jun 19 11:28:07 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]: Press CTRL+C to quit
+Jun 19 11:28:33 iZuf6j9r6hqhd089mjuqmeZ python3.8[689426]: 127.0.0.1 - - [19/Jun/2026 11:28:33] "POST /api/ocr HTTP/1.0" 200 -
