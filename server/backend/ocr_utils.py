@@ -78,8 +78,16 @@ def _score_text(text):
     return cjk / len(compact)
 
 
+LOW_CONF_WORD_THRESHOLD = 75  # 单词置信度低于这个值，大概率是认错的字
+
+
 def _text_and_conf_from_data(data):
-    """把 image_to_data 的逐词结果按行拼回文本，同时算出平均置信度。"""
+    """把 image_to_data 的逐词结果按行拼回文本，同时算出整体质量信号。
+
+    光看平均置信度会被一大堆没问题的常见字拉高（被几个认错的字拖累不明显），
+    实测发现真正认错的字置信度并不是低到离谱，但明显低于周围正常识别的字，
+    所以额外算一个"低置信度词占比"，更容易揪出夹在一段好文字里的零星错字。
+    """
     n = len(data.get('text', []))
     groups = {}
     order = []
@@ -101,28 +109,33 @@ def _text_and_conf_from_data(data):
             pass
     text = '\n'.join(' '.join(groups[k]) for k in order)
     mean_conf = sum(confs) / len(confs) if confs else 0.0
-    return clean_ocr_text(text), mean_conf
+    low_conf_ratio = (
+        sum(1 for c in confs if c < LOW_CONF_WORD_THRESHOLD) / len(confs) if confs else 0.0
+    )
+    return clean_ocr_text(text), mean_conf, low_conf_ratio
 
 
 def _ocr_pil(pil_img, lang='chi_sim'):
     best_text = ''
     best_score = -1.0
     best_conf = 0.0
+    best_low_ratio = 0.0
     for psm in (6, 4, 3, 11):
         config = f'--psm {psm} --oem 1'
         try:
             data = pytesseract.image_to_data(pil_img, lang=lang, config=config, output_type=pytesseract.Output.DICT)
-            cleaned, conf = _text_and_conf_from_data(data)
+            cleaned, conf, low_ratio = _text_and_conf_from_data(data)
             score = _score_text(cleaned)
             if score > best_score:
                 best_score = score
                 best_text = cleaned
                 best_conf = conf
+                best_low_ratio = low_ratio
             if best_score >= 0.45:
                 break
         except Exception:
             continue
-    return best_text, best_conf
+    return best_text, best_conf, best_low_ratio
 
 
 def _ocr_array(binary, lang='chi_sim'):
@@ -149,7 +162,7 @@ def _dedupe_chunk_overlap(parts):
 
 
 def ocr_image(image_path, lang='chi_sim'):
-    """返回 (text, mean_confidence)，confidence 取自 Tesseract 逐词置信度（0~100）。"""
+    """返回 (text, mean_confidence, low_conf_ratio)。"""
     binary = _preprocess(_load_bgr(image_path))
     h, w = binary.shape
 
@@ -157,19 +170,23 @@ def ocr_image(image_path, lang='chi_sim'):
     if h > CHUNK_HEIGHT:
         parts = []
         confs = []
+        low_ratios = []
         y = 0
         while y < h:
             y2 = min(y + CHUNK_HEIGHT, h)
             chunk = binary[y:y2, 0:w]
-            part, conf = _ocr_array(chunk, lang)
+            part, conf, low_ratio = _ocr_array(chunk, lang)
             if part:
                 parts.append(part)
                 confs.append(conf)
+                low_ratios.append(low_ratio)
             if y2 >= h:
                 break
             y = y2 - OVERLAP
         text = clean_ocr_text(_dedupe_chunk_overlap(parts))
-        return text, (sum(confs) / len(confs) if confs else 0.0)
+        mean_conf = sum(confs) / len(confs) if confs else 0.0
+        low_ratio = sum(low_ratios) / len(low_ratios) if low_ratios else 0.0
+        return text, mean_conf, low_ratio
 
     return _ocr_array(binary, lang)
 
@@ -237,21 +254,25 @@ def ocr_pdf_for_word(pdf_path, max_pages=80, lang='chi_sim'):
 
 
 def ocr_pdf(pdf_path, lang='chi_sim'):
-    """返回 (text, mean_confidence)，逐页OCR置信度取平均。"""
+    """返回 (text, mean_confidence, low_conf_ratio)，逐页OCR结果取平均。"""
     tmp = tempfile.mkdtemp(prefix='ocr_pdf_')
     try:
         pages = _pdf_to_page_images(pdf_path, tmp, dpi=200, timeout=120)
         texts = []
         confs = []
+        low_ratios = []
         for name in pages[:50]:
-            text, conf = ocr_image(os.path.join(tmp, name), lang)
+            text, conf, low_ratio = ocr_image(os.path.join(tmp, name), lang)
             if text:
                 texts.append(text)
                 confs.append(conf)
+                low_ratios.append(low_ratio)
 
         if not texts:
-            return '', 0.0
+            return '', 0.0, 0.0
         joined = '\n\n--- 下一页 ---\n\n'.join(texts)
-        return joined, (sum(confs) / len(confs) if confs else 0.0)
+        mean_conf = sum(confs) / len(confs) if confs else 0.0
+        low_ratio = sum(low_ratios) / len(low_ratios) if low_ratios else 0.0
+        return joined, mean_conf, low_ratio
     finally:
         _cleanup_tmp(tmp)

@@ -543,14 +543,19 @@ def ocr():
         file.save(input_path)
 
         if ext == 'pdf':
-            text, confidence = ocr_pdf(input_path, tesseract_lang)
+            text, confidence, low_conf_ratio = ocr_pdf(input_path, tesseract_lang)
         else:
-            text, confidence = ocr_image(input_path, tesseract_lang)
+            text, confidence, low_conf_ratio = ocr_image(input_path, tesseract_lang)
 
         text = clean_ocr_text(text)
         compact = re.sub(r'\s+', '', text)
         cjk = sum(1 for c in compact if '\u4e00' <= c <= '\u9fff')
-        low_quality = (not text) or (len(compact) > 20 and cjk / len(compact) < 0.35) or confidence < 70
+        low_quality = (
+            (not text)
+            or (len(compact) > 20 and cjk / len(compact) < 0.35)
+            or confidence < 70
+            or low_conf_ratio > 0.04
+        )
         if low_quality:
             try:
                 from volc_ocr import volc_configured, volc_ocr_image_text, volc_ocr_pdf_text
