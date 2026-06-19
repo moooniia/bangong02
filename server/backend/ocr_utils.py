@@ -55,8 +55,11 @@ def _preprocess(bgr):
         scale = MIN_SCALE_TARGET / max(h, w)
         gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
 
-    # 轻度去噪 + 二值化（适合白底黑字截图）
-    gray = cv2.fastNlMeansDenoising(gray, None, 6, 7, 21)
+    # 去噪很慢（大图尤其明显），原图已经够大/够清晰（手机截图，不是糊照片）时跳过，省时间
+    if max(gray.shape) < 2400:
+        gray = cv2.fastNlMeansDenoising(gray, None, 6, 7, 21)
+
+    # 二值化（适合白底黑字截图）
     binary = cv2.adaptiveThreshold(
         gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY, 31, 12,
@@ -87,8 +90,7 @@ def _ocr_pil(pil_img, lang='chi_sim'):
             if score > best_score:
                 best_score = score
                 best_text = cleaned
-            # 单栏文字截图第一遍（psm 6）通常就够好，提前结束省掉后面三遍重试的时间
-            if best_score >= 0.55:
+            if best_score >= 0.45:
                 break
         except Exception:
             continue
