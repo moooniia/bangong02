@@ -15,6 +15,8 @@ sftp = ssh.open_sftp()
 files_to_deploy = [
     'index.html',
     'pdf-editor.html',
+    'image-to-text.html',
+    'scan-to-text.html',
     'assets/tool-page.js',
     'assets/common.css',
 ]

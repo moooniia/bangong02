@@ -42,6 +42,13 @@ def _preprocess(bgr):
     if gray.mean() < 115:
         gray = 255 - gray
 
+    # 表情符号/彩色图标饱和度明显高于普通文字，Tesseract认不出这些彩色字形，
+    # 还会把它们旁边的文字一起带歪。涂成背景色直接抹掉，宁可丢表情也别带歪文字。
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    sat_mask = hsv[:, :, 1] > 90
+    if sat_mask.any():
+        gray[sat_mask] = 255  # 上面已统一转成浅底，背景色填白即可
+
     # 小图放大，提升小字识别率
     if max(h, w) < MIN_SCALE_TARGET:
         scale = MIN_SCALE_TARGET / max(h, w)
