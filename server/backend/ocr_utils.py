@@ -37,6 +37,11 @@ def _preprocess(bgr):
     gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
     h, w = gray.shape
 
+    # 深色背景截图（暗色模式聊天/App截图）反色，统一转成深字浅底，
+    # 否则下面针对"白底黑字"调的二值化参数会让暗色背景图识别全乱码
+    if gray.mean() < 115:
+        gray = 255 - gray
+
     # 小图放大，提升小字识别率
     if max(h, w) < MIN_SCALE_TARGET:
         scale = MIN_SCALE_TARGET / max(h, w)
@@ -74,6 +79,9 @@ def _ocr_pil(pil_img, lang='chi_sim'):
             if score > best_score:
                 best_score = score
                 best_text = cleaned
+            # 单栏文字截图第一遍（psm 6）通常就够好，提前结束省掉后面三遍重试的时间
+            if best_score >= 0.55:
+                break
         except Exception:
             continue
     return best_text

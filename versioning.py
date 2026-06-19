@@ -33,6 +33,7 @@ DEPLOY_FILES = [
     ("preprocessing.py","/home/toolbox/backend/preprocessing.py"),
     ("seal_utils.py",   "/home/toolbox/backend/seal_utils.py"),
     ("pdf_utils.py",    "/home/toolbox/backend/pdf_utils.py"),
+    ("ocr_utils.py",    "/home/toolbox/backend/ocr_utils.py"),
 ]
 
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")

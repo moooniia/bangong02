@@ -73,6 +73,7 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
     <div class="upload-title">拖拽图片到这里</div>
     <div class="upload-sub">支持 JPG、PNG 格式</div>
     <button class="upload-btn" onclick="document.getElementById('fileInput').click()"><i class="ti ti-photo"></i>选择图片</button>
+    <div id="fileNameDisplay" style="display:none;margin-top:14px;font-size:13px;color:var(--pink);font-weight:600;align-items:center;justify-content:center;gap:6px"><i class="ti ti-circle-check"></i><span></span></div>
   </div>
   <button class="convert-btn" id="convertBtn" onclick="startOcr()" disabled><i class="ti ti-scan"></i>开始识别</button>
   <div class="progress-area" id="progressArea">
@@ -84,15 +85,22 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
   <div class="result-text" id="resultArea">
     <h3>识别结果</h3>
     <pre id="resultText"></pre>
-    <button class="copy-btn" onclick="copyText()"><i class="ti ti-copy"></i>复制文字</button>
+    <button class="copy-btn" onclick="copyText()"><i class="ti ti-copy"></i><span id="copyBtnLabel">复制文字</span></button>
     <a href="#" class="copy-btn" id="downloadLink" style="margin-left:8px;text-decoration:none"><i class="ti ti-download"></i>下载 TXT</a>
   </div>
 </main>
 <script src="/assets/convert-progress.js"></script>
 <script>
 let selectedFile = null;
+function showSelectedFile(file) {
+  const disp = document.getElementById('fileNameDisplay');
+  if (!file) { disp.style.display = 'none'; return; }
+  disp.querySelector('span').textContent = '已选择：' + file.name;
+  disp.style.display = 'flex';
+}
 function handleFile(input) {
   selectedFile = input.files[0];
+  showSelectedFile(selectedFile);
   if (selectedFile) document.getElementById('convertBtn').disabled = false;
 }
 async function startOcr() {
@@ -131,12 +139,34 @@ async function startOcr() {
   }
 }
 function copyText() {
-  navigator.clipboard.writeText(document.getElementById('resultText').textContent);
-  alert('已复制到剪贴板');
+  const text  = document.getElementById('resultText').textContent;
+  const label = document.getElementById('copyBtnLabel');
+  const flash = (msg) => { label.textContent = msg; setTimeout(() => { label.textContent = '复制文字'; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => flash('已复制 ✓')).catch(() => fallbackCopy(text, flash));
+  } else {
+    fallbackCopy(text, flash);
+  }
+}
+function fallbackCopy(text, flash) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); flash('已复制 ✓'); }
+  catch (e) { flash('复制失败'); }
+  document.body.removeChild(ta);
 }
 const ua = document.getElementById('uploadArea');
 ua.addEventListener('dragover', e => e.preventDefault());
-ua.addEventListener('drop', e => { e.preventDefault(); selectedFile = e.dataTransfer.files[0]; if(selectedFile) document.getElementById('convertBtn').disabled = false; });
+ua.addEventListener('drop', e => {
+  e.preventDefault();
+  selectedFile = e.dataTransfer.files[0];
+  showSelectedFile(selectedFile);
+  if (selectedFile) document.getElementById('convertBtn').disabled = false;
+});
 </script>
 </body>
 </html>

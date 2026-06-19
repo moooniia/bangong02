@@ -43,14 +43,14 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .add-pdf-btn:hover{border-color:var(--pink);color:var(--pink)}
 
 /* Thumbnail grid */
-.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;background:white;border:1px solid var(--border);border-radius:16px;padding:16px;min-height:170px;margin-bottom:24px}
+.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));align-items:start;gap:14px;background:white;border:1px solid var(--border);border-radius:16px;padding:16px;min-height:170px;margin-bottom:24px}
 .thumb-grid-empty{display:flex;align-items:center;justify-content:center;color:var(--ink4);font-size:13px;grid-column:1/-1}
 .thumb-card{position:relative;border:2px solid var(--border);border-radius:8px;overflow:visible;cursor:grab;background:white;transition:box-shadow .15s,border-color .15s;user-select:none}
 .thumb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .thumb-card:active{cursor:grabbing}
 .thumb-card.selected{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-bg)}
-.thumb-img-wrap{position:relative;cursor:zoom-in}
-.thumb-img{width:100%;height:auto;display:block;border-radius:6px 6px 0 0;transition:transform .2s}
+.thumb-img-wrap{position:relative;cursor:zoom-in;height:200px;display:flex;align-items:center;justify-content:center;background:var(--light-gray);border-radius:6px 6px 0 0;overflow:hidden}
+.thumb-img{width:auto;height:auto;max-width:100%;max-height:100%;display:block}
 .thumb-zoom-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:.15s;border-radius:6px 6px 0 0}
 .thumb-img-wrap:hover .thumb-zoom-hint{opacity:1;background:rgba(0,0,0,.15)}
 .thumb-zoom-hint svg{width:26px;height:26px;stroke:white;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
@@ -68,6 +68,7 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .thumb-card.selected .thumb-check{background:var(--pink);border-color:var(--pink)}
 .thumb-card.selected .thumb-check svg{opacity:1}
 .thumb-ghost{opacity:.35;border:2px dashed var(--pink)!important}
+.marquee-box{position:fixed;border:1.5px solid var(--pink);background:rgba(233,76,136,.12);pointer-events:none;z-index:500;display:none}
 
 /* Selection toolbar */
 .sel-toolbar{display:none;align-items:center;gap:10px;background:var(--pink-bg);border:1px solid #f6cfe2;border-radius:12px;padding:10px 16px;margin-bottom:14px;font-size:13px}
@@ -82,10 +83,12 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .zoom-modal.open{display:flex}
 .zoom-backdrop{position:absolute;inset:0;background:rgba(20,20,20,.78)}
 .zoom-box{position:relative;max-width:92vw;max-height:92vh;background:white;border-radius:10px;padding:8px;display:flex;align-items:center;justify-content:center}
-.zoom-box img{max-width:88vw;max-height:88vh;display:block;border-radius:4px}
-.zoom-close{position:absolute;top:-16px;right:-16px;width:34px;height:34px;border-radius:50%;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.zoom-box img{max-width:88vw;max-height:88vh;display:block;border-radius:4px;transition:opacity .2s ease}
+.zoom-close{position:absolute;top:-16px;right:-16px;width:34px;height:34px;border-radius:50%;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.25);z-index:2}
 .zoom-close svg{width:16px;height:16px}
-.zoom-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.zoom-loading{position:absolute;bottom:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.zoom-loading.active{display:flex}
+.zoom-loading .spinner{width:16px;height:16px;border-width:2px;margin:0}
 
 /* Options panel */
 .options-panel{background:white;border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
@@ -171,7 +174,8 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
   <div id="editState" style="display:none">
     <div class="toolbar">
       <div class="page-count-badge" id="pageCountBadge">0 页</div>
-      <span style="font-size:12px;color:var(--ink4)">Ctrl/Shift 点击缩略图可多选</span>
+      <span style="font-size:12px;color:var(--ink4)">Ctrl/Shift 点击或拖拽框选可多选</span>
+      <button class="add-pdf-btn" id="selectAllBtn"><i class="ti ti-checks"></i>全选</button>
       <button class="add-pdf-btn" id="addPdfBtn"><i class="ti ti-file-plus"></i>追加 PDF</button>
       <input type="file" id="addFileInput" accept=".pdf" style="display:none">
     </div>
@@ -292,20 +296,43 @@ const ICON_X      = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_CHECK  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
 const ICON_ZOOM   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>';
 
+function rotateDataUrl(srcUrl, deg) {
+  return new Promise((resolve, reject) => {
+    if (!deg) { resolve(srcUrl); return; }
+    const img = new Image();
+    img.onload = () => {
+      const rad     = deg * Math.PI / 180;
+      const swapped = deg % 180 !== 0;
+      const w = swapped ? img.naturalHeight : img.naturalWidth;
+      const h = swapped ? img.naturalWidth  : img.naturalHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(rad);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = srcUrl;
+  });
+}
+
 function applyRotate(card, delta) {
   const img  = card.querySelector('.thumb-img');
   const cur  = parseInt(card.dataset.rotate || '0', 10);
   const next = ((cur + delta) % 360 + 360) % 360;
   card.dataset.rotate = String(next);
-  img.style.transform = next === 0 ? '' : (next === 180 ? 'rotate(180deg)' : `rotate(${next}deg) scale(0.72)`);
+  rotateDataUrl(card.dataset.origThumb, next).then(url => { img.src = url; });
 }
 
 function createCard(sessionFile, pageIdx, thumbSrc) {
   const card = document.createElement('div');
   card.className = 'thumb-card';
-  card.dataset.session = sessionFile;
-  card.dataset.idx     = String(pageIdx);
-  card.dataset.rotate  = '0';
+  card.dataset.session  = sessionFile;
+  card.dataset.idx      = String(pageIdx);
+  card.dataset.rotate   = '0';
+  card.dataset.origThumb = thumbSrc;
 
   const check = document.createElement('button');
   check.type      = 'button';
@@ -419,23 +446,36 @@ const zoomModal   = document.getElementById('zoomModal');
 const zoomImg     = document.getElementById('zoomImg');
 const zoomLoading = document.getElementById('zoomLoading');
 
+function preloadImage(src) {
+  return new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve(src);
+    im.onerror = () => resolve(src);
+    im.src = src;
+  });
+}
+
 async function openZoom(card) {
   zoomModal.classList.add('open');
-  zoomImg.style.display = 'none';
-  zoomLoading.style.display = 'flex';
-  zoomImg.src = card.querySelector('.thumb-img').src; // instant low-res fallback
+  zoomImg.style.opacity = '1';
+  zoomImg.src = card.querySelector('.thumb-img').src; // instant low-res fallback (already rotated), keeps the box correctly sized
+  zoomLoading.classList.add('active');
   try {
     const session = card.dataset.session;
     const idx     = card.dataset.idx;
+    const rot     = parseInt(card.dataset.rotate || '0', 10);
     const res  = await fetch(`/api/pdf/editor/preview?file=${encodeURIComponent(session)}&idx=${encodeURIComponent(idx)}`);
     const data = await res.json();
-    if (data.success) zoomImg.src = data.image;
+    if (data.success) {
+      const hiRes = await preloadImage(await rotateDataUrl(data.image, rot));
+      zoomImg.style.opacity = '0';
+      await new Promise(r => setTimeout(r, 200));
+      zoomImg.src = hiRes;
+      zoomImg.style.opacity = '1';
+    }
   } catch (e) { /* fall back to low-res thumbnail already shown */ }
   finally {
-    zoomLoading.style.display = 'none';
-    zoomImg.style.display = 'block';
-    const rot = parseInt(card.dataset.rotate || '0', 10);
-    zoomImg.style.transform = rot ? `rotate(${rot}deg)` : '';
+    zoomLoading.classList.remove('active');
   }
 }
 function closeZoom() { zoomModal.classList.remove('open'); }
@@ -455,6 +495,64 @@ document.getElementById('selClearBtn').addEventListener('click', () => {
   thumbGrid.querySelectorAll('.thumb-card.selected').forEach(c => c.classList.remove('selected'));
   lastSelectedCard = null;
   updateSelToolbar();
+});
+
+function selectAll() {
+  const cards = [...thumbGrid.querySelectorAll('.thumb-card')];
+  cards.forEach(c => c.classList.add('selected'));
+  lastSelectedCard = cards[cards.length - 1] || null;
+  updateSelToolbar();
+}
+document.getElementById('selectAllBtn').addEventListener('click', selectAll);
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'a') return;
+  if (editState.style.display === 'none') return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea') return;
+  e.preventDefault();
+  selectAll();
+});
+
+// Drag-to-box-select (marquee) on empty grid background
+const marqueeBox = document.createElement('div');
+marqueeBox.className = 'marquee-box';
+document.body.appendChild(marqueeBox);
+let marqueeStart = null;
+let marqueePreSelected = new Set();
+
+thumbGrid.addEventListener('mousedown', (e) => {
+  if (e.button !== 0 || e.target.closest('.thumb-card')) return;
+  const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+  marqueeStart = { x: e.clientX, y: e.clientY };
+  marqueePreSelected = additive ? new Set(thumbGrid.querySelectorAll('.thumb-card.selected')) : new Set();
+  if (!additive) thumbGrid.querySelectorAll('.thumb-card.selected').forEach(c => c.classList.remove('selected'));
+  marqueeBox.style.display = 'block';
+  document.body.style.userSelect = 'none';
+  updateMarquee(e);
+  e.preventDefault();
+});
+
+function updateMarquee(e) {
+  const x = Math.min(e.clientX, marqueeStart.x), y = Math.min(e.clientY, marqueeStart.y);
+  const w = Math.abs(e.clientX - marqueeStart.x), h = Math.abs(e.clientY - marqueeStart.y);
+  marqueeBox.style.left   = x + 'px';
+  marqueeBox.style.top    = y + 'px';
+  marqueeBox.style.width  = w + 'px';
+  marqueeBox.style.height = h + 'px';
+  thumbGrid.querySelectorAll('.thumb-card').forEach(card => {
+    const cr = card.getBoundingClientRect();
+    const overlap = cr.left < x + w && cr.right > x && cr.top < y + h && cr.bottom > y;
+    if (overlap || marqueePreSelected.has(card)) card.classList.add('selected');
+    else card.classList.remove('selected');
+  });
+  updateSelToolbar();
+}
+document.addEventListener('mousemove', (e) => { if (marqueeStart) updateMarquee(e); });
+document.addEventListener('mouseup', () => {
+  if (!marqueeStart) return;
+  marqueeStart = null;
+  marqueeBox.style.display = 'none';
+  document.body.style.userSelect = '';
 });
 
 async function uploadPdf(file, pwd) {
