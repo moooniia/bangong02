@@ -1,4 +1,5 @@
 """OCR 优化 — 针对手机截图、扫描件，尽量让行政人员看得懂。"""
+import difflib
 import os
 import re
 import subprocess
@@ -98,6 +99,25 @@ def _ocr_array(binary):
     return _ocr_pil(Image.fromarray(binary))
 
 
+def _dedupe_chunk_overlap(parts):
+    """切块识别时 OVERLAP 区域会被两块各识别一次，相邻块衔接处去掉重复行。"""
+    if not parts:
+        return ''
+    lines = [l for l in parts[0].split('\n') if l.strip()]
+    for part in parts[1:]:
+        cur = [l for l in part.split('\n') if l.strip()]
+        max_check = min(4, len(lines), len(cur))
+        overlap_n = 0
+        for n in range(max_check, 0, -1):
+            tail = ''.join(lines[-n:])
+            head = ''.join(cur[:n])
+            if tail and difflib.SequenceMatcher(None, tail, head).ratio() > 0.85:
+                overlap_n = n
+                break
+        lines.extend(cur[overlap_n:])
+    return '\n'.join(lines)
+
+
 def ocr_image(image_path, lang='chi_sim'):
     binary = _preprocess(_load_bgr(image_path))
     h, w = binary.shape
@@ -115,7 +135,7 @@ def ocr_image(image_path, lang='chi_sim'):
             if y2 >= h:
                 break
             y = y2 - OVERLAP
-        return clean_ocr_text('\n\n'.join(parts))
+        return clean_ocr_text(_dedupe_chunk_overlap(parts))
 
     return _ocr_array(binary)
 
