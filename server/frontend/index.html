@@ -130,9 +130,10 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 .eb-icon {
   width: 44px; height: 44px; background: var(--light-gray); border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; color: var(--mid); flex-shrink: 0; transition: background .2s, color .2s;
+  font-size: 22px; color: var(--mid); flex-shrink: 0;
+  transition: background .2s, color .2s, transform .28s cubic-bezier(.34,1.56,.64,1);
 }
-.editor-banner:hover .eb-icon { background: var(--pink-bg); color: var(--pink); }
+.editor-banner:hover .eb-icon { background: var(--pink-bg); color: var(--pink); transform: scale(1.12) rotate(-5deg); }
 .eb-body { flex: 1; }
 .eb-name { font-size: 14px; font-weight: 700; letter-spacing: -.2px; transition: color .2s; }
 .eb-sub { font-size: 12px; color: var(--ink3); margin-top: 3px; }
@@ -149,6 +150,8 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
   grid-column: span 4;
   margin-top: 0;
 }
+.banner-row { display: flex; gap: 10px; margin-top: 10px; }
+.banner-row .editor-banner { flex: 1; margin-top: 0; }
 
 .tool-card {
   background: white; border: 1px solid var(--border);
@@ -281,7 +284,7 @@ footer {
       <div class="hero-pills">
         <div class="pill"><i class="ti ti-bolt"></i>无需安装任何软件</div>
         <div class="pill"><i class="ti ti-shield-lock"></i>文件处理后自动删除</div>
-        <div class="pill"><i class="ti ti-currency-off"></i>永久免费使用</div>
+        <div class="pill"><i class="ti ti-currency-off"></i>免费使用无广告</div>
       </div>
     </div>
   </div>
@@ -316,20 +319,23 @@ footer {
   <div class="section" id="ocr">
     <div class="section-header">
       <span class="section-name">文字识别 OCR</span>
-      <span class="section-count">3 个工具</span>
+      <span class="section-count">1 个工具</span>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/image-to-text.html"><div class="card-top"><i class="ti ti-photo-scan card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">图片转文字</div></a>
-      <a class="tool-card" href="/scan-to-text.html"><div class="card-top"><i class="ti ti-file-search card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">扫描件转文字</div></a>
-      <a class="tool-card" href="/scan-to-text.html"><div class="card-top"><i class="ti ti-file-text card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">PDF 文档识别</div></a>
-    </div>
+    <a class="editor-banner" href="/scan-to-text.html">
+      <div class="eb-icon"><i class="ti ti-file-search"></i></div>
+      <div class="eb-body">
+        <div class="eb-name">图片/PDF转文字</div>
+        <div class="eb-sub">支持照片 · 手机截图 · 扫描版PDF</div>
+      </div>
+      <i class="ti ti-arrow-up-right eb-arrow"></i>
+    </a>
   </div>
 
   <!-- 图片 -->
   <div class="section" id="image">
     <div class="section-header">
       <span class="section-name">图片处理</span>
-      <span class="section-count">7 个工具</span>
+      <span class="section-count">8 个工具</span>
     </div>
     <div class="tools-grid">
       <a class="tool-card" href="/extract-seal.html"><div class="card-top"><i class="ti ti-rosette card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">抠章</div></a>
@@ -338,7 +344,18 @@ footer {
       <a class="tool-card" href="/image-resize.html"><div class="card-top"><i class="ti ti-resize card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">图片改尺寸</div></a>
       <a class="tool-card" href="/image-watermark.html"><div class="card-top"><i class="ti ti-droplet-half-2 card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">批量加水印</div></a>
       <a class="tool-card" href="/image-timestamp.html"><div class="card-top"><i class="ti ti-clock card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">批量加时间戳</div></a>
-      <a class="tool-card" href="/qrcode.html"><div class="card-top"><i class="ti ti-qrcode card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">生成二维码</div></a>
+    </div>
+    <div class="banner-row">
+      <a class="editor-banner" href="/qrcode.html">
+        <div class="eb-icon"><i class="ti ti-qrcode"></i></div>
+        <div class="eb-body"><div class="eb-name">生成二维码</div><div class="eb-sub">文本/链接转二维码图片</div></div>
+        <i class="ti ti-arrow-up-right eb-arrow"></i>
+      </a>
+      <a class="editor-banner" href="/image-rotate.html">
+        <div class="eb-icon"><i class="ti ti-rotate-clockwise"></i></div>
+        <div class="eb-body"><div class="eb-name">图片旋转</div><div class="eb-sub">修正手机拍照方向</div></div>
+        <i class="ti ti-arrow-up-right eb-arrow"></i>
+      </a>
     </div>
   </div>
 
@@ -348,9 +365,17 @@ footer {
       <span class="section-name">翻译</span>
       <span class="section-count">2 个工具</span>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/text-translate.html"><div class="card-top"><i class="ti ti-language card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">文本翻译</div></a>
-      <a class="tool-card" href="/file-translate.html"><div class="card-top"><i class="ti ti-file-symlink card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">文件翻译</div></a>
+    <div class="banner-row">
+      <a class="editor-banner" href="/text-translate.html">
+        <div class="eb-icon"><i class="ti ti-language"></i></div>
+        <div class="eb-body"><div class="eb-name">文本翻译</div><div class="eb-sub">中英日韩法德西等多语言互译</div></div>
+        <i class="ti ti-arrow-up-right eb-arrow"></i>
+      </a>
+      <a class="editor-banner" href="/file-translate.html">
+        <div class="eb-icon"><i class="ti ti-file-symlink"></i></div>
+        <div class="eb-body"><div class="eb-name">文件翻译</div><div class="eb-sub">上传文档，翻译后保留原格式</div></div>
+        <i class="ti ti-arrow-up-right eb-arrow"></i>
+      </a>
     </div>
   </div>
 
@@ -358,12 +383,16 @@ footer {
   <div class="section" id="file">
     <div class="section-header">
       <span class="section-name">文件工具</span>
-      <span class="section-count">2 个工具</span>
+      <span class="section-count">1 个工具</span>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/file-rename.html"><div class="card-top"><i class="ti ti-forms card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">文件批量改名</div></a>
-      <a class="tool-card" href="/office-convert.html"><div class="card-top"><i class="ti ti-refresh card-icon"></i><i class="ti ti-arrow-up-right card-arrow"></i></div><div class="tool-name">Office 文档互转</div></a>
-    </div>
+    <a class="editor-banner" href="/file-rename.html">
+      <div class="eb-icon"><i class="ti ti-forms"></i></div>
+      <div class="eb-body">
+        <div class="eb-name">文件批量改名</div>
+        <div class="eb-sub">本地浏览器处理，文件不会上传服务器</div>
+      </div>
+      <i class="ti ti-arrow-up-right eb-arrow"></i>
+    </a>
   </div>
 </main>
 
@@ -419,7 +448,7 @@ footer {
     <div class="footer-copy">© 2026 办公工具箱 · 保留所有权利</div>
     <div class="footer-badges">
       <span class="footer-badge"><i class="ti ti-shield-lock"></i>文件处理后自动删除</span>
-      <span class="footer-badge"><i class="ti ti-currency-off"></i>永久免费</span>
+      <span class="footer-badge"><i class="ti ti-currency-off"></i>免费使用无广告</span>
       <span class="footer-badge"><i class="ti ti-device-desktop-off"></i>无需安装</span>
     </div>
   </div>

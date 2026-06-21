@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>扫描件转文字 — 办公工具箱</title>
+<title>图片/PDF转文字 — 办公工具箱</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
@@ -52,19 +52,19 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
   </ul>
 </nav>
 <main>
-  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><a href="/#ocr">文字识别</a><i class="ti ti-chevron-right"></i><span>扫描件转文字</span></div>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><a href="/#ocr">文字识别</a><i class="ti ti-chevron-right"></i><span>图片/PDF转文字</span></div>
   <div class="tool-header">
     <div class="tool-title-row">
       <div class="tool-icon-big"><i class="ti ti-file-search"></i></div>
-      <h1>扫描件转文字</h1>
+      <h1>图片/PDF转文字</h1>
     </div>
-    <p class="tool-desc">专为扫描件设计，支持扫描版 PDF 和图片，逐页 OCR 识别提取文字。</p>
+    <p class="tool-desc">支持照片、手机截图、扫描版 PDF，逐页 OCR 识别提取文字。</p>
   </div>
   <div class="upload-area" id="uploadArea">
     <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFile(this)">
     <i class="ti ti-cloud-upload upload-icon"></i>
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">上传扫描件</div>
-    <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">支持扫描版 PDF、JPG、PNG</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">上传图片或PDF</div>
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">支持 JPG、PNG、扫描版 PDF</div>
     <button class="upload-btn" onclick="document.getElementById('fileInput').click()"><i class="ti ti-file"></i>选择文件</button>
     <div id="fileNameDisplay" style="display:none;margin-top:14px;font-size:13px;color:var(--pink);font-weight:600;align-items:center;justify-content:center;gap:6px"><i class="ti ti-circle-check"></i><span></span></div>
   </div>

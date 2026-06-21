@@ -1,5 +1,6 @@
-import paramiko
+import glob
 import os
+import paramiko
 
 HOST = '139.196.28.78'
 USER = 'root'
@@ -7,19 +8,19 @@ PASS = 'OpenClaw2026'
 LOCAL_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server', 'frontend')
 REMOTE_DIR = '/home/toolbox/frontend'
 
+# 自动收集所有前端文件，不再手动维护清单（之前漏掉过 image-to-text.html /
+# scan-to-text.html / image-rotate.html，靠手写清单太容易漏文件）
+files_to_deploy = sorted(
+    os.path.relpath(p, LOCAL_DIR).replace(os.sep, '/')
+    for pattern in ('*.html', 'assets/*')
+    for p in glob.glob(os.path.join(LOCAL_DIR, pattern))
+    if os.path.isfile(p)
+)
+
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect(HOST, username=USER, password=PASS, timeout=15)
 sftp = ssh.open_sftp()
-
-files_to_deploy = [
-    'index.html',
-    'pdf-editor.html',
-    'image-to-text.html',
-    'scan-to-text.html',
-    'assets/tool-page.js',
-    'assets/common.css',
-]
 
 for f in files_to_deploy:
     local  = os.path.join(LOCAL_DIR, f)

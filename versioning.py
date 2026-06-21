@@ -27,14 +27,8 @@ BACKEND_SOURCES = [
     "file_utils.py",
 ]
 
-DEPLOY_FILES = [
-    ("volc_ocr.py",     "/home/toolbox/backend/volc_ocr.py"),
-    ("app.py",          "/home/toolbox/backend/app.py"),
-    ("preprocessing.py","/home/toolbox/backend/preprocessing.py"),
-    ("seal_utils.py",   "/home/toolbox/backend/seal_utils.py"),
-    ("pdf_utils.py",    "/home/toolbox/backend/pdf_utils.py"),
-    ("ocr_utils.py",    "/home/toolbox/backend/ocr_utils.py"),
-]
+# 直接从 BACKEND_SOURCES 派生，避免两份清单手动维护、漏改其中一份导致改了文件却没真正部署
+DEPLOY_FILES = [(name, f"/home/toolbox/backend/{name}") for name in BACKEND_SOURCES]
 
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 BUILD_RE = re.compile(r"^(\d{4}\.\d{2}\.\d{2})\.(\d+)$")

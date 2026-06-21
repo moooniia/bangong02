@@ -42,6 +42,13 @@ def resize_image(input_path, output_path, width=None, height=None):
     img.save(output_path)
 
 
+def rotate_image(input_path, output_path, degrees):
+    degrees = int(degrees) % 360
+    img = Image.open(input_path)
+    img = img.rotate(-degrees, expand=True)
+    img.save(output_path)
+
+
 def convert_image_format(input_path, output_path, fmt):
     img = Image.open(input_path)
     if fmt.upper() in ('JPG', 'JPEG') and img.mode in ('RGBA', 'P'):

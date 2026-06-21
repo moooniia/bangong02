@@ -1,7 +1,9 @@
-﻿<!DOCTYPE html>
-<html lang="zh"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Office 文档互转 — 办公工具箱</title>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片旋转 — 办公工具箱</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
@@ -36,31 +38,53 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 .error-area{background:#fff5f5;border-color:#fca5a5;color:#dc2626}
 .download-btn{display:inline-flex;align-items:center;gap:8px;background:var(--dark);color:#fff;padding:12px 28px;border-radius:24px;text-decoration:none;font-weight:700}
 .tip{font-size:12px;color:var(--ink4);text-align:center;margin-bottom:24px}
-</style>  <script src="/assets/analytics.js" defer></script>
-</head><body>
+</style>
+  <script src="/assets/analytics.js" defer></script>
+</head>
+<body>
 <nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>
 <main>
-<div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>文件工具</span></div>
-<div class="tool-header"><div class="tool-title-row"><div class="tool-icon-big"><i class="ti ti-refresh"></i></div><h1>Office 文档互转</h1></div>
-<p class="tool-desc">Word、Excel、PPT、PDF 之间互相转换，选文件和目标格式即可。</p></div>
-<div class="upload-area" id="uploadArea"><input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" style="display:none">
-<i class="ti ti-cloud-upload upload-icon"></i><div style="font-weight:700">选择 Office 或 PDF 文件</div></div>
-<div class="file-list" id="fileList"></div>
-<div class="options"><div class="option-row"><span>转换为</span>
-<select class="option-select" id="formatSelect">
-<option value="pdf">PDF</option><option value="docx">Word (.docx)</option>
-<option value="xlsx">Excel (.xlsx)</option><option value="pptx">PPT (.pptx)</option>
-</select></div></div>
-<button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-transform"></i>开始转换</button>
-<div class="progress-area" id="progressArea">
-<div class="progress-label" id="progressLabel">转换中，请稍候…</div>
-<div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
-<div class="progress-pct" id="progressPct">0%</div>
-</div>
-<div class="error-area" id="errorArea"><span id="errorText"></span></div>
-<div class="result-area" id="resultArea"><a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a></div>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>图片处理</span><i class="ti ti-chevron-right"></i><span>图片旋转</span></div>
+  <div class="tool-header">
+    <div class="tool-title-row">
+      <div class="tool-icon-big"><i class="ti ti-rotate-clockwise"></i></div>
+      <h1>图片旋转</h1>
+    </div>
+    <p class="tool-desc">按角度旋转图片，常用于修正手机拍照方向。</p>
+  </div>
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png"  style="display:none">
+    <i class="ti ti-cloud-upload upload-icon"></i>
+    <div style="font-weight:700;margin-bottom:6px">点击或拖拽文件到这里</div>
+    <div style="font-size:13px;color:var(--ink3)">文件处理后自动删除</div>
+  </div>
+  <div class="file-list" id="fileList"></div>
+  <div class="options"><div class="option-row"><span>旋转角度</span><select class="option-select" id="degSelect"><option value="90">顺时针 90°</option><option value="180">旋转 180°</option><option value="270">逆时针 90°</option></select></div></div>
+  <button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-bolt"></i>开始旋转</button>
+  <p class="tip"><i class="ti ti-shield-lock"></i> 文件仅用于本次处理，完成后自动删除</p>
+  <div class="progress-area" id="progressArea">
+    <div class="progress-label" id="progressLabel">处理中，请稍候…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+  <div class="error-area" id="errorArea"><span id="errorText"></span></div>
+  <div class="result-area" id="resultArea">
+    <i class="ti ti-circle-check" style="font-size:48px;color:#22c55e"></i>
+    <p style="margin:12px 0 20px;font-weight:700">处理完成！</p>
+    <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a>
+  </div>
 </main>
 <script src="/assets/convert-progress.js"></script>
 <script src="/assets/tool-page.js?v=0.12.6"></script>
-<script>initToolPage({api:'/api/convert',accept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',multiple:false,extraFields:[{id:'formatSelect',name:'format'}],progressTask:'office-convert',progressOpts:function(files){return{targetFormat:document.getElementById('formatSelect').value,fileName:files[0]&&files[0].name};},downloadText:'下载文件'});</script>
-</body></html>
+<script>
+initToolPage({
+  api: '/api/image/rotate',
+  accept: '.jpg,.jpeg,.png',
+  multiple: false,
+  extraFields: [{id:'degSelect',name:'degrees'}],
+  progressTask: 'image-process',
+  downloadText: '下载结果'
+});
+</script>
+</body>
+</html>

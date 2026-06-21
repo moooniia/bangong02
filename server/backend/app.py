@@ -18,7 +18,7 @@ from pdf_utils import (
     check_pdf_word_pages, check_pdf_convert_pages,
 )
 from image_utils import (
-    compress_image, resize_image, convert_image_format,
+    compress_image, resize_image, convert_image_format, rotate_image,
     add_image_watermark, add_image_timestamp, batch_process_images,
 )
 from file_utils import (
@@ -880,6 +880,28 @@ def image_resize_route():
         out_name = f'{uid}.{ext}'
         resize_image(path, os.path.join(OUTPUT_FOLDER, out_name), width, height)
         return _ok(out_name, f'调整尺寸.{ext}')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    finally:
+        _cleanup([path] if path else [])
+
+
+@app.route('/api/image/rotate', methods=['POST'])
+def image_rotate_route():
+    path = None
+    try:
+        f = request.files.get('file')
+        if not f:
+            return jsonify({'error': '请上传图片'}), 400
+        paths = _save_uploads([f], IMAGE_EXTS)
+        path = paths[0]
+        degrees = request.form.get('degrees', '90')
+        ext = get_ext(f.filename)
+        uid = str(uuid.uuid4())
+        out_name = f'{uid}.{ext}'
+        rotate_image(path, os.path.join(OUTPUT_FOLDER, out_name), degrees)
+        return _ok(out_name, f'旋转图片.{ext}')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
