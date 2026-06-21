@@ -32,6 +32,7 @@ main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
 .translate-panel label { font-size:11px; font-weight:700; color:var(--ink4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
 .translate-panel textarea { flex:1; border:none; resize:none; font-family:inherit; font-size:14px; line-height:1.8; outline:none; min-height:180px; }
 .convert-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--pink); color:white; font-size:15px; font-weight:700; padding:16px; border-radius:12px; border:none; cursor:pointer; font-family:inherit; margin-top:16px; }
+.convert-btn:disabled { background:var(--ink4); cursor:not-allowed; }
 .char-count { font-size:11px; color:var(--ink4); text-align:right; margin-top:6px; }
 .error-area { display:none; margin-top:16px; padding:16px; background:#fff5f5; border:1px solid #fca5a5; border-radius:12px; color:#dc2626; font-size:13px; text-align:center; }
 </style>
@@ -76,7 +77,7 @@ main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
   <div class="translate-box">
     <div class="translate-panel">
       <label>原文</label>
-      <textarea id="sourceText" placeholder="在此输入或粘贴要翻译的文本..." oninput="updateCount()"></textarea>
+      <textarea id="sourceText" placeholder="在此输入或粘贴要翻译的文本..." oninput="updateCount();document.getElementById('translateBtn').disabled=!this.value.trim()"></textarea>
       <div class="char-count" id="charCount">0 / 5000</div>
     </div>
     <div class="translate-panel">
@@ -84,7 +85,7 @@ main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
       <textarea id="targetText" placeholder="翻译结果将显示在这里..." readonly></textarea>
     </div>
   </div>
-  <button class="convert-btn" onclick="startTranslate()"><i class="ti ti-language"></i>开始翻译</button>
+  <button class="convert-btn" id="translateBtn" onclick="startTranslate()" disabled><i class="ti ti-language"></i>开始翻译</button>
   <div class="error-area" id="errorArea"></div>
 </main>
 <script>
@@ -99,7 +100,12 @@ function swapLang() {
   const tmp = from.value; from.value = to.value; to.value = tmp;
   const src = document.getElementById('sourceText').value;
   const tgt = document.getElementById('targetText').value;
-  if (tgt) { document.getElementById('sourceText').value = tgt; document.getElementById('targetText').value = src; updateCount(); }
+  if (tgt) {
+    document.getElementById('sourceText').value = tgt;
+    document.getElementById('targetText').value = src;
+    updateCount();
+    document.getElementById('translateBtn').disabled = !tgt.trim();
+  }
 }
 async function startTranslate() {
   const text = document.getElementById('sourceText').value.trim();

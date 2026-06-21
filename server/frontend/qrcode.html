@@ -44,8 +44,8 @@ textarea{width:100%;min-height:120px;border:1px solid var(--border);border-radiu
 <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>图片处理</span></div>
 <div class="tool-header"><div class="tool-title-row"><div class="tool-icon-big"><i class="ti ti-qrcode"></i></div><h1>生成二维码</h1></div>
 <p class="tool-desc">输入网址或文字，一键生成二维码图片，可右键保存。</p></div>
-<textarea id="qrText" placeholder="输入网址、文字、WiFi 信息等..."></textarea>
-<button class="convert-btn" style="margin-top:16px" onclick="genQr()"><i class="ti ti-qrcode"></i>生成二维码</button>
+<textarea id="qrText" placeholder="输入网址、文字、WiFi 信息等..." oninput="document.getElementById('qrBtn').disabled=!this.value.trim()"></textarea>
+<button class="convert-btn" id="qrBtn" style="margin-top:16px" onclick="genQr()" disabled><i class="ti ti-qrcode"></i>生成二维码</button>
 <div class="result-area" id="resultArea" style="display:none"><canvas id="qrCanvas"></canvas>
 <p style="margin-top:12px;font-size:12px;color:var(--ink3)">右键图片 → 另存为</p></div>
 </main>

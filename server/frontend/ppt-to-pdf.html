@@ -46,6 +46,7 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 .file-item-remove:hover{color:var(--pink)}
 .convert-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--pink);color:white;font-size:15px;font-weight:700;padding:16px;border-radius:var(--radius);border:none;cursor:pointer;transition:all 0.2s;font-family:inherit;margin-bottom:12px;box-shadow:0 4px 20px rgba(233,76,136,0.25)}
 .convert-btn:hover{background:#d43d79;transform:translateY(-2px);box-shadow:0 8px 28px rgba(233,76,136,0.35)}
+.convert-btn:disabled{background:var(--ink4);cursor:not-allowed;transform:none;box-shadow:none}
 .convert-hint{text-align:center;font-size:12px;color:var(--ink4);display:flex;align-items:center;justify-content:center;gap:5px}
 .progress-area{display:none;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:32px 24px;text-align:center;margin-bottom:24px;box-shadow:var(--shadow)}
 .progress-label{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:16px}
@@ -62,11 +63,6 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 .error-text{font-size:13px;color:#dc2626}
 .retry-btn{margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:20px;padding:7px 16px;font-size:13px;color:var(--ink3);cursor:pointer;font-family:inherit;transition:all 0.15s}
 .retry-btn:hover{border-color:var(--pink);color:var(--pink)}
-.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:48px}
-.info-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;box-shadow:var(--shadow)}
-.info-card i{font-size:22px;color:var(--pink);margin-bottom:10px;display:block}
-.info-card-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px}
-.info-card-desc{font-size:12px;color:var(--ink3);line-height:1.6}
 </style>
   <script src="/assets/analytics.js" defer></script>
 </head>
@@ -114,7 +110,7 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
       <button class="file-item-remove" onclick="removeFile()"><i class="ti ti-x"></i></button>
     </div>
   </div>
-  <button class="convert-btn" id="convertBtn" onclick="startConvert()">
+  <button class="convert-btn" id="convertBtn" onclick="startConvert()" disabled>
     <i class="ti ti-transform"></i>开始转换
   </button>
   <div class="convert-hint"><i class="ti ti-shield-lock"></i>文件转换完成后自动从服务器删除</div>
@@ -134,11 +130,6 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
     <div class="result-sub">文件处理完成后将自动从服务器删除</div>
     <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a>
   </div>
-  <div class="info-grid">
-    <div class="info-card"><i class="ti ti-layout-grid"></i><div class="info-card-title">幻灯片完整保留</div><div class="info-card-desc">每张幻灯片的内容和布局完整转换。</div></div>
-    <div class="info-card"><i class="ti ti-shield-lock"></i><div class="info-card-title">隐私安全</div><div class="info-card-desc">文件处理完成后自动从服务器删除。</div></div>
-    <div class="info-card"><i class="ti ti-device-desktop"></i><div class="info-card-title">跨平台查看</div><div class="info-card-desc">无需安装 Office 即可查看。</div></div>
-  </div>
 </main>
 <script src="/assets/convert-progress.js"></script>
 <script>
@@ -153,6 +144,7 @@ function handleFile(input) {
   document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(2) + ' MB';
   document.getElementById('uploadArea').style.display = 'none';
   document.getElementById('fileList').style.display = 'block';
+  document.getElementById('convertBtn').disabled = false;
 }
 
 function removeFile() {
@@ -160,6 +152,7 @@ function removeFile() {
   document.getElementById('fileInput').value = '';
   document.getElementById('uploadArea').style.display = 'block';
   document.getElementById('fileList').style.display = 'none';
+  document.getElementById('convertBtn').disabled = true;
 }
 
 function resetAll() {
@@ -219,7 +212,7 @@ uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 
 uploadArea.addEventListener('drop', e => {
   e.preventDefault(); uploadArea.style.borderColor = '';
   const file = e.dataTransfer.files[0];
-  if (file) { selectedFile = file; document.getElementById('fileName').textContent = file.name; document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(2) + ' MB'; document.getElementById('uploadArea').style.display = 'none'; document.getElementById('fileList').style.display = 'block'; }
+  if (file) { selectedFile = file; document.getElementById('fileName').textContent = file.name; document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(2) + ' MB'; document.getElementById('uploadArea').style.display = 'none'; document.getElementById('fileList').style.display = 'block'; document.getElementById('convertBtn').disabled = false; }
 });
 </script>
 </body>

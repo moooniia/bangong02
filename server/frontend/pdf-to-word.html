@@ -74,11 +74,6 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
 .download-btn:hover { background:var(--mid); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.15); }
 .error-area { display:none; background:#fff5f5; border:1px solid #fca5a5; border-radius:var(--radius); padding:20px 24px; margin-bottom:24px; text-align:center; }
 .error-text { font-size:13px; color:#dc2626; }
-.info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:48px; }
-.info-card { background:white; border:1px solid var(--border); border-radius:var(--radius); padding:20px 18px; box-shadow:var(--shadow); }
-.info-card i { font-size:22px; color:var(--pink); margin-bottom:10px; display:block; }
-.info-card-title { font-size:13px; font-weight:700; color:var(--dark); margin-bottom:4px; }
-.info-card-desc { font-size:12px; color:var(--ink3); line-height:1.6; }
 </style>
   <script src="/assets/analytics.js" defer></script>
 </head>
@@ -136,7 +131,7 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
       </select>
     </div>
   </div>
-  <button class="convert-btn" id="convertBtn" onclick="startConvert()">
+  <button class="convert-btn" id="convertBtn" onclick="startConvert()" disabled>
     <i class="ti ti-transform"></i>开始转换
   </button>
   <div class="convert-hint"><i class="ti ti-shield-lock"></i>文件转换完成后自动从服务器删除</div>
@@ -156,11 +151,6 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
     <div class="result-sub" id="warningText" style="display:none;color:#b45309;margin-top:8px"></div>
     <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载 Word 文档</a>
   </div>
-  <div class="info-grid">
-    <div class="info-card"><i class="ti ti-layout-grid"></i><div class="info-card-title">电子版保留版式</div><div class="info-card-desc">有文字层的 PDF 尽量保留表格和段落；扫描件输出可编辑文字，版式会简化。</div></div>
-    <div class="info-card"><i class="ti ti-shield-lock"></i><div class="info-card-title">隐私安全</div><div class="info-card-desc">文件仅用于本次转换，处理完成后自动从服务器删除，不会保留。</div></div>
-    <div class="info-card"><i class="ti ti-file-check"></i><div class="info-card-title">支持中英文</div><div class="info-card-desc">针对中文文档优化识别，中英混排的合同、报告均可正常处理。</div></div>
-  </div>
 </main>
 <script src="/assets/convert-progress.js"></script>
 <script>
@@ -174,6 +164,7 @@ function handleFile(input) {
   document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
   document.getElementById('uploadArea').style.display = 'none';
   document.getElementById('fileList').style.display = 'block';
+  document.getElementById('convertBtn').disabled = false;
 }
 
 function removeFile() {
@@ -181,6 +172,7 @@ function removeFile() {
   document.getElementById('fileInput').value = '';
   document.getElementById('uploadArea').style.display = 'block';
   document.getElementById('fileList').style.display = 'none';
+  document.getElementById('convertBtn').disabled = true;
 }
 
 async function startConvert() {
