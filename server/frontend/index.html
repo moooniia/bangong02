@@ -154,6 +154,11 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 .banner-row { display: flex; gap: 10px; margin-top: 10px; }
 .banner-row .editor-banner { flex: 1; margin-top: 0; }
 
+@media (max-width: 900px) {
+  .editor-banner { height: auto; min-height: 108px; padding: 16px 20px; }
+  .banner-row { flex-direction: column; }
+}
+
 .tool-card {
   background: white; border: 1px solid var(--border);
   border-radius: var(--radius);
