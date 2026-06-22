@@ -455,5 +455,16 @@ footer {
   </div>
 </footer>
 
+<script>
+// 工具卡片点击统计：记录"哪个工具被点了"，跟页面访问量分开看
+document.querySelectorAll('.tool-card, .editor-banner').forEach(function (el) {
+  el.addEventListener('click', function () {
+    var name = (el.querySelector('.tool-name, .eb-name') || {}).textContent || el.href;
+    if (window.umami && typeof window.umami.track === 'function') {
+      window.umami.track('点击工具', { tool: name });
+    }
+  });
+});
+</script>
 </body>
 </html>

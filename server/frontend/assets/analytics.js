@@ -1,6 +1,5 @@
 (function () {
-  var id = "__UMAMI_WEBSITE_ID__";
-  if (!id || id.indexOf("__UMAMI") === 0) return;
+  var id = "45010917-8eaa-43c9-86ff-5965d927e395";
   var s = document.createElement("script");
   s.defer = true;
   s.src = "/script.js";
