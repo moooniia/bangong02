@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关于我们 — 办公工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--mid:#333;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06)}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px}
+nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:rgba(251,251,251,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none}.logo span{color:var(--pink)}
+.nav-links{display:flex;gap:2px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--ink3);font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;transition:all .15s}
+.nav-links a:hover{color:var(--dark);background:var(--light-gray)}
+main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink4);margin-bottom:32px}
+.breadcrumb a{text-decoration:none;color:var(--ink4);transition:color .15s}
+.breadcrumb a:hover{color:var(--pink)}
+.page-header{margin-bottom:48px}
+.page-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.page-label::before{content:'';width:20px;height:2px;background:var(--pink);border-radius:1px}
+.page-header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;letter-spacing:-1px;margin-bottom:16px}
+.page-header h1 em{font-style:italic;color:var(--pink)}
+.page-sub{font-size:15px;color:var(--ink3);line-height:1.85}
+section{margin-bottom:48px}
+section h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px}
+.principle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.principle-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;box-shadow:var(--shadow)}
+.principle-card i{font-size:24px;color:var(--pink);margin-bottom:12px;display:block}
+.principle-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.principle-desc{font-size:12.5px;color:var(--ink3);line-height:1.7}
+.category-list{display:flex;flex-direction:column;gap:10px}
+.category-row{display:flex;align-items:center;gap:14px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.category-icon{width:38px;height:38px;background:var(--pink-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--pink);font-size:18px}
+.category-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.category-desc{font-size:12.5px;color:var(--ink3)}
+.cta{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:var(--shadow)}
+.cta p{margin-bottom:18px}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:white;font-size:14px;font-weight:700;padding:12px 28px;border-radius:24px;text-decoration:none;transition:all .2s}
+.cta-btn:hover{background:#d43d79;transform:translateY(-2px)}
+@media (max-width:700px){.principle-grid{grid-template-columns:1fr}}
+</style>
+  <script src="/assets/analytics.js" defer></script>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/">办公<span>工具箱</span></a>
+  <ul class="nav-links">
+    <li><a href="/#pdf">PDF处理</a></li>
+    <li><a href="/#ocr">文字识别</a></li>
+    <li><a href="/#image">图片处理</a></li>
+    <li><a href="/#translate">翻译</a></li>
+    <li><a href="/#file">文件工具</a></li>
+  </ul>
+</nav>
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>关于我们</span></div>
+
+  <div class="page-header">
+    <div class="page-label">关于我们</div>
+    <h1>把散落各处的工具<br>整合成<em>一个地方</em></h1>
+    <p class="page-sub">办公工具箱是一个免费的在线文档处理网站，为行政、文员、HR、财务等日常需要处理大量文件的人而做。</p>
+  </div>
+
+  <section>
+    <h2>我们在做什么</h2>
+    <p>每天的办公场景里，总有那么几件重复又麻烦的小事：扫描合同要转成能编辑的 Word，PDF报表要拆出表格，截图上的文字想直接复制出来，一堆图片要批量压缩改名……这些事单独找工具不难，但每次都要重新搜索、辨别哪个网站靠谱、要不要注册、会不会有广告弹窗——零碎的麻烦加起来并不小。</p>
+    <p>办公工具箱把这些常用的小工具收在一个地方，打开就能用，做完就清空，不用为了一次性的需求去装软件、建账号。</p>
+  </section>
+
+  <section>
+    <h2>我们的原则</h2>
+    <div class="principle-grid">
+      <div class="principle-card">
+        <i class="ti ti-currency-off"></i>
+        <div class="principle-title">免费无广告</div>
+        <div class="principle-desc">所有工具直接使用，不收费，不插播广告，不靠会员/解锁套路赚钱</div>
+      </div>
+      <div class="principle-card">
+        <i class="ti ti-user-off"></i>
+        <div class="principle-title">不用注册</div>
+        <div class="principle-desc">打开网页直接处理文件，不需要手机号、邮箱或任何账号信息</div>
+      </div>
+      <div class="principle-card">
+        <i class="ti ti-shield-lock"></i>
+        <div class="principle-title">文件即用即删</div>
+        <div class="principle-desc">上传的文件只用于这一次处理，完成后自动从服务器删除，不会留存</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>覆盖的场景</h2>
+    <div class="category-list">
+      <div class="category-row">
+        <div class="category-icon"><i class="ti ti-file-type-pdf"></i></div>
+        <div><div class="category-name">PDF 处理</div><div class="category-desc">格式互转、合并拆分、加密压缩、可视化编辑器</div></div>
+      </div>
+      <div class="category-row">
+        <div class="category-icon"><i class="ti ti-file-search"></i></div>
+        <div><div class="category-name">文字识别 OCR</div><div class="category-desc">照片、手机截图、扫描版PDF，一键提取文字</div></div>
+      </div>
+      <div class="category-row">
+        <div class="category-icon"><i class="ti ti-photo"></i></div>
+        <div><div class="category-name">图片处理</div><div class="category-desc">压缩、格式转换、改尺寸、批量加水印/时间戳、二维码、旋转</div></div>
+      </div>
+      <div class="category-row">
+        <div class="category-icon"><i class="ti ti-language"></i></div>
+        <div><div class="category-name">翻译</div><div class="category-desc">中英日韩法德西等多语言互译，支持文本和整篇文件</div></div>
+      </div>
+      <div class="category-row">
+        <div class="category-icon"><i class="ti ti-forms"></i></div>
+        <div><div class="category-name">文件工具</div><div class="category-desc">批量改名等日常文件整理需求</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cta">
+      <p>有用得上的场景，直接打开用就好。</p>
+      <a class="cta-btn" href="/"><i class="ti ti-arrow-left"></i>回到首页</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>
