@@ -657,6 +657,24 @@ def extract_seal():
             os.remove(input_path)
 
 
+@app.route('/api/feedback', methods=['POST'])
+def feedback():
+    try:
+        data = request.get_json(silent=True) or {}
+        message = (data.get('message') or request.form.get('message', '')).strip()
+        contact = (data.get('contact') or request.form.get('contact', '')).strip()
+        if not message:
+            return jsonify({'error': '请填写反馈内容'}), 400
+        if len(message) > 2000:
+            return jsonify({'error': '内容太长，请控制在2000字以内'}), 400
+        import feedback_utils
+        feedback_utils.submit_feedback(message, contact)
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/translate', methods=['POST'])
 def translate():
     try:
