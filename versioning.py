@@ -25,6 +25,7 @@ BACKEND_SOURCES = [
     "ocr_utils.py",
     "image_utils.py",
     "file_utils.py",
+    "usage_stats.py",
 ]
 
 # 直接从 BACKEND_SOURCES 派生，避免两份清单手动维护、漏改其中一份导致改了文件却没真正部署

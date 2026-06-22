@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.19] - 2026-06-22
+
+构建号: `2026.06.22.1`
+
+feat: 新增付费API调用次数统计(usage_stats.py)，覆盖火山OCR(Word/Excel/文字识别)和翻译
+
+### Changed
+- feat: 新增付费API调用次数统计(usage_stats.py)，覆盖火山OCR(Word/Excel/文字识别)和翻译
+
+备份: `backups/v0.12.19/`
+
+
 ## [0.12.18] - 2026-06-21
 
 构建号: `2026.06.21.1`

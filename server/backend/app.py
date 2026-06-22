@@ -27,6 +27,7 @@ from file_utils import (
 )
 from ocr_utils import ocr_pdf_for_word
 from ocr_utils import ocr_image, ocr_pdf, clean_ocr_text
+import usage_stats
 
 app = Flask(__name__)
 
@@ -316,6 +317,7 @@ def convert_scanned_pdf_to_docx(pdf_path, unique_name, output_folder, diagnosis=
         from volc_ocr import volc_configured, volc_pdf_to_docx
         if volc_configured():
             app.logger.info('Stage2: 火山 OCR API')
+            usage_stats.bump('volc_word')
             has_watermark = bool(diagnosis and diagnosis.get('has_rotated_watermark'))
             meta = volc_pdf_to_docx(pdf_path, output_file, skip_direct=has_watermark)
             if isinstance(meta, str):
@@ -566,6 +568,7 @@ def ocr():
                 from volc_ocr import volc_configured, volc_ocr_image_text, volc_ocr_pdf_text
                 if volc_configured():
                     print('[OCR] 质量不达标，改走火山OCR兜底', flush=True)
+                    usage_stats.bump('volc_ocr_text')
                     fallback_text = (
                         volc_ocr_pdf_text(input_path) if ext == 'pdf'
                         else volc_ocr_image_text(input_path)
@@ -668,6 +671,7 @@ def translate():
             return jsonify({'error': '文本过长，请控制在 5000 字以内'}), 400
 
         result = translate_text(text, source, target)
+        usage_stats.bump('translate_text')
 
         return jsonify({
             'success': True,
@@ -1131,6 +1135,7 @@ def translate_file():
         if len(raw) > 30000:
             return jsonify({'error': '文件文字太多，请截取部分或拆分后再翻译'}), 400
         translated = translate_long_text(raw, source, target)
+        usage_stats.bump('translate_file')
         uid = str(uuid.uuid4())
         _, display = translated_to_output(translated, OUTPUT_FOLDER, uid, out_format)
         fname = f'{uid}.{out_format}'

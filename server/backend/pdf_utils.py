@@ -988,6 +988,8 @@ def pdf_tables_to_xlsx(pdf_path, output_path):
         except Exception as _e:
             pages_md, _vo, _ocr_err = [], None, _e
         if pages_md and _vo:
+            import usage_stats as _us
+            _us.bump('volc_excel')
             wb = Workbook()
             ws = wb.active
             ws.title = '表格内容'
