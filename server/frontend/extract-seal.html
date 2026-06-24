@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 :root { --pink:#e94c88; --pink-bg:#fdf0f6; --near-white:#fbfbfb; --light-gray:#f4f4f4; --dark:#252525; --ink3:#888; --ink4:#ccc; --border:#ebebeb; --radius:12px; }
@@ -25,17 +26,18 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
 .tool-icon-big { width:52px; height:52px; background:var(--pink-bg); border-radius:14px; display:flex; align-items:center; justify-content:center; }
 .tool-icon-big i { font-size:28px; color:var(--pink); }
 .tool-desc { font-size:14px; color:var(--ink3); line-height:1.75; margin-left:68px; margin-bottom:40px; }
-.upload-area { border:2px dashed var(--border); border-radius:16px; padding:56px 32px; text-align:center; background:white; margin-bottom:24px; }
+.upload-area { border:2px dashed var(--border); border-radius:16px; padding:56px 32px; text-align:center; background:var(--card-bg); margin-bottom:24px; }
 .upload-btn, .convert-btn { display:inline-flex; align-items:center; gap:8px; background:var(--pink); color:white; font-size:13px; font-weight:700; padding:10px 24px; border-radius:24px; border:none; cursor:pointer; font-family:inherit; }
 .convert-btn { width:100%; justify-content:center; font-size:15px; padding:16px; border-radius:12px; margin-bottom:12px; }
 .convert-btn:disabled { background:var(--ink4); }
-.preview-area { display:none; text-align:center; margin-top:24px; background:white; border:1px solid var(--border); border-radius:12px; padding:24px; }
+.preview-area { display:none; text-align:center; margin-top:24px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:24px; }
 .preview-area img { max-width:100%; max-height:300px; background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50%/20px 20px; border-radius:8px; }
 .download-btn { display:inline-flex; align-items:center; gap:8px; background:var(--dark); color:white; padding:12px 28px; border-radius:24px; text-decoration:none; margin-top:16px; font-weight:700; }
 .error-area, .progress-area { display:none; margin-top:24px; text-align:center; padding:20px; border-radius:12px; }
-.error-area { background:#fff5f5; border:1px solid #fca5a5; color:#dc2626; }
+.error-area { background:var(--error-bg); border:1px solid var(--error-border); color:var(--error-text); }
 </style>
   <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
 </head>
 <body>
 <nav>

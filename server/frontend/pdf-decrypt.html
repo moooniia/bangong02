@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06)}
@@ -20,27 +21,28 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 .tool-icon-big{width:52px;height:52px;background:var(--pink-bg);border-radius:14px;display:flex;align-items:center;justify-content:center}
 .tool-icon-big i{font-size:28px;color:var(--pink)}.tool-header h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:900}
 .tool-desc{font-size:14px;color:var(--ink3);line-height:1.75;margin-left:68px}
-.upload-area{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;text-align:center;cursor:pointer;background:#fff;margin-bottom:24px;transition:.2s}
+.upload-area{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;text-align:center;cursor:pointer;background:var(--card-bg);margin-bottom:24px;transition:.2s}
 .upload-area.drag,.upload-area:hover{border-color:var(--pink);background:var(--pink-bg)}
 .upload-icon{font-size:48px;color:var(--ink4);margin-bottom:16px;display:block}
-.file-list{display:none;margin-bottom:24px}.file-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px}
+.file-list{display:none;margin-bottom:24px}.file-item{display:flex;align-items:center;gap:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px}
 .file-item-icon{color:var(--pink)}.file-item-info{flex:1}.file-item-name{font-weight:600}.file-item-size{font-size:11px;color:var(--ink4)}
 .file-item-remove{background:none;border:none;cursor:pointer;color:var(--ink4);font-size:18px}
-.options{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:24px}
+.options{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:24px}
 .option-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
 .option-select{padding:6px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
 .convert-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--pink);color:#fff;font-size:15px;font-weight:700;padding:16px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;margin-bottom:12px}
 .convert-btn:disabled{background:var(--ink4);cursor:not-allowed}
-.progress-area,.error-area,.result-area{display:none;margin-bottom:24px;padding:32px 24px;text-align:center;border-radius:12px;background:#fff;border:1px solid var(--border)}
+.progress-area,.error-area,.result-area{display:none;margin-bottom:24px;padding:32px 24px;text-align:center;border-radius:12px;background:var(--card-bg);border:1px solid var(--border)}
 .progress-label{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:16px}
 .progress-bar-wrap{background:var(--light-gray);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px}
 .progress-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--pink),#f5a8cc);width:0%;transition:width 0.3s ease}
 .progress-pct{font-size:12px;color:var(--ink3)}
-.error-area{background:#fff5f5;border-color:#fca5a5;color:#dc2626}
+.error-area{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
 .download-btn{display:inline-flex;align-items:center;gap:8px;background:var(--dark);color:#fff;padding:12px 28px;border-radius:24px;text-decoration:none;font-weight:700}
 .tip{font-size:12px;color:var(--ink4);text-align:center;margin-bottom:24px}
 </style>
   <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
 </head>
 <body>
 <nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>

@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -88,7 +89,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 500; color: var(--ink3);
   padding: 9px 16px; border: 1px solid var(--border);
-  border-radius: 24px; background: white;
+  border-radius: 24px; background:var(--card-bg);
   transition: border-color 0.15s, color 0.15s;
 }
 .pill i { font-size: 14px; }
@@ -117,7 +118,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 .editor-banner {
   display: flex; flex-direction: row; align-items: center; gap: 20px;
   height: 108px; padding: 0 24px; margin-top: 10px;
-  background: white; border: 1px solid var(--border);
+  background:var(--card-bg); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow);
   text-decoration: none; color: inherit; cursor: pointer;
   transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background .2s, border-color .2s;
@@ -160,7 +161,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 }
 
 .tool-card {
-  background: white; border: 1px solid var(--border);
+  background:var(--card-bg); border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px 18px 16px; height: 108px;
   display: flex; flex-direction: column; justify-content: space-between;
@@ -188,7 +189,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 32px 100px; }
 
 /* ── Footer ── */
 footer {
-  background: var(--dark);
+  background: var(--footer-bg);
   color: rgba(255,255,255,0.5);
   font-size: 13px;
 }
@@ -265,6 +266,7 @@ footer {
 .footer-badge i { font-size: 13px; }
 </style>
   <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
 </head>
 <body>
 

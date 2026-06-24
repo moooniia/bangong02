@@ -1,3 +1,54 @@
+/* ============ 深色模式 ============
+   每个页面自己的 <style> 里都重复定义了一份 :root（--pink/--dark/--ink3 等），
+   不方便逐一覆盖。这里用 html[data-theme="dark"] 这种"属性选择器+元素"组合，
+   选择器优先级比单纯的 :root 更高，能直接覆盖掉每个页面自己声明的同名变量，
+   不需要把所有页面的 :root 都删掉重写。
+   --card-bg / --footer-bg / --error-bg / --error-border / --error-text 是新增变量，
+   页面原来都是写死的 white/#fff/#fff5f5 等字面量，已经统一替换成 var(...) 引用。 */
+:root {
+  --card-bg: #ffffff;
+  --footer-bg: #1a1a1a;
+  --error-bg: #fff5f5;
+  --error-border: #fca5a5;
+  --error-text: #dc2626;
+}
+
+html[data-theme="dark"] {
+  --pink: #ff5d96;
+  --pink-bg: rgba(255, 93, 150, 0.14);
+  --near-white: #14151a;
+  --light-gray: #1f2025;
+  --dark: #ececec;
+  --mid: #cfcfd2;
+  --ink3: #9a9aa0;
+  --ink4: #55565c;
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-up: 0 12px 32px rgba(255, 93, 150, 0.18), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --card-bg: #1c1d22;
+  --footer-bg: #0e0f12;
+  --error-bg: rgba(220, 38, 38, 0.12);
+  --error-border: rgba(252, 165, 165, 0.35);
+  --error-text: #ff8080;
+}
+
+html[data-theme="dark"] body { background: var(--near-white); color: var(--dark); }
+
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border, #ebebeb); background: none; cursor: pointer;
+  color: var(--ink3, #888); font-size: 16px; margin-left: 8px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.theme-toggle:hover { color: var(--pink, #e94c88); border-color: var(--pink, #e94c88); background: var(--pink-bg, #fdf0f6); }
+
+body, nav, footer, .upload-area, .file-list, .file-item, .options, .options-panel,
+.progress-area, .result-area, .error-area, .tool-card, .editor-banner,
+.thumb-card, .form-card, .principle-card, .category-row, .cta, .translate-panel {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
 /* 移动端响应式 */
 @media (max-width: 900px) {
   nav { padding: 0 20px !important; height: 56px !important; }
