@@ -11,6 +11,7 @@
   --error-bg: #fff5f5;
   --error-border: #fca5a5;
   --error-text: #dc2626;
+  --nav-bg: rgba(251, 251, 251, 0.95);
 }
 
 html[data-theme="dark"] {
@@ -30,6 +31,7 @@ html[data-theme="dark"] {
   --error-bg: rgba(220, 38, 38, 0.12);
   --error-border: rgba(252, 165, 165, 0.35);
   --error-text: #ff8080;
+  --nav-bg: rgba(20, 21, 26, 0.85);
 }
 
 html[data-theme="dark"] body { background: var(--near-white); color: var(--dark); }
