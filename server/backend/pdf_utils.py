@@ -1240,6 +1240,65 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                 os.remove(p)
 
 
+def images_to_pdf_export(image_paths, rotations, output_path, uniform_size=None):
+    """图片转PDF编辑器版：每张图可单独旋转，支持保持原尺寸或统一A4/A3。
+
+    rotate 用 PIL（image_utils.rotate_image）先把图片实际转好再贴进PDF，
+    不借助 PyMuPDF 自己的旋转参数——这个项目里 PyMuPDF 的旋转参数語意
+    跟预期不一致已经踩过坑（pdf_editor_export 的 show_pdf_page 那次），
+    图片这边干脆绕开，用已经验证过没问题的 rotate_image 来转。
+    """
+    if not image_paths:
+        raise ValueError('请至少上传 1 张图片')
+    if len(image_paths) > MAX_MERGE_FILES:
+        raise ValueError(f'一次最多 {MAX_MERGE_FILES} 张图片')
+
+    import fitz
+    from image_utils import rotate_image
+
+    PAGE_SIZES = {'a4': fitz.paper_rect('a4'), 'a3': fitz.paper_rect('a3')}
+    out_doc = fitz.open()
+    tmp_files = []
+    try:
+        for i, src_path in enumerate(image_paths):
+            rotate = int(rotations[i]) % 360 if i < len(rotations) else 0
+            if rotate:
+                base, ext = os.path.splitext(src_path)
+                tmp_path = f'{base}._rot{rotate}{ext}'
+                rotate_image(src_path, tmp_path, rotate)
+                tmp_files.append(tmp_path)
+                img_path = tmp_path
+            else:
+                img_path = src_path
+
+            pix = fitz.Pixmap(img_path)
+            iw, ih = pix.width, pix.height
+            pix = None
+
+            if uniform_size and uniform_size.lower() in PAGE_SIZES:
+                base_rect = PAGE_SIZES[uniform_size.lower()]
+                pw, ph = base_rect.width, base_rect.height
+                scale = min(pw / iw, ph / ih)
+                dw, dh = iw * scale, ih * scale
+                x0, y0 = (pw - dw) / 2, (ph - dh) / 2
+                img_rect = fitz.Rect(x0, y0, x0 + dw, y0 + dh)
+            else:
+                pw, ph = iw * 72.0 / 96, ih * 72.0 / 96
+                img_rect = fitz.Rect(0, 0, pw, ph)
+
+            new_pg = out_doc.new_page(width=pw, height=ph)
+            new_pg.insert_image(img_rect, filename=img_path)
+
+        out_doc.save(output_path, garbage=4, deflate=True)
+    finally:
+        out_doc.close()
+        for t in tmp_files:
+            try:
+                os.remove(t)
+            except OSError:
+                pass
+
+
 def images_to_pdf(image_paths, output_path):
     if not image_paths:
         raise ValueError('请至少上传 1 张图片')

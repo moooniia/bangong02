@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
@@ -15,21 +15,47 @@
 body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px}
 nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
 .logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none}.logo span{color:var(--pink)}
-main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
+main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
 .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink4);margin-bottom:32px}.breadcrumb a{text-decoration:none;color:var(--ink4)}
 .tool-header{margin-bottom:40px}.tool-title-row{display:flex;align-items:center;gap:16px;margin-bottom:10px}
 .tool-icon-big{width:52px;height:52px;background:var(--pink-bg);border-radius:14px;display:flex;align-items:center;justify-content:center}
 .tool-icon-big i{font-size:28px;color:var(--pink)}.tool-header h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:900}
 .tool-desc{font-size:14px;color:var(--ink3);line-height:1.75;margin-left:68px}
+
 .upload-area{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;text-align:center;cursor:pointer;background:var(--card-bg);margin-bottom:24px;transition:.2s}
 .upload-area.drag,.upload-area:hover{border-color:var(--pink);background:var(--pink-bg)}
 .upload-icon{font-size:48px;color:var(--ink4);margin-bottom:16px;display:block}
-.file-list{display:none;margin-bottom:24px}.file-item{display:flex;align-items:center;gap:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px}
-.file-item-icon{color:var(--pink)}.file-item-info{flex:1}.file-item-name{font-weight:600}.file-item-size{font-size:11px;color:var(--ink4)}
-.file-item-remove{background:none;border:none;cursor:pointer;color:var(--ink4);font-size:18px}
-.options{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:24px}
-.option-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
-.option-select{padding:6px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
+
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.page-count-badge{font-size:13px;font-weight:700;color:var(--ink3);flex:1}
+.add-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:7px 16px;font-size:13px;font-weight:600;color:var(--dark);cursor:pointer;font-family:inherit;transition:.15s}
+.add-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));align-items:start;gap:14px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:16px;min-height:170px;margin-bottom:24px}
+.thumb-grid-empty{display:flex;align-items:center;justify-content:center;color:var(--ink4);font-size:13px;grid-column:1/-1}
+.thumb-card{position:relative;border:2px solid var(--border);border-radius:8px;overflow:visible;cursor:grab;background:var(--card-bg);transition:box-shadow .15s,border-color .15s;user-select:none}
+.thumb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.thumb-card:active{cursor:grabbing}
+.thumb-img-wrap{position:relative;height:200px;display:flex;align-items:center;justify-content:center;background:var(--light-gray);border-radius:6px 6px 0 0;overflow:hidden}
+.thumb-img{width:auto;height:auto;max-width:100%;max-height:100%;display:block}
+.thumb-bottom{display:flex;align-items:center;justify-content:space-between;padding:4px 6px}
+.thumb-label{font-size:11px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px}
+.thumb-rot{border:none;background:none;cursor:pointer;color:var(--ink4);padding:3px;border-radius:4px;line-height:0;transition:.15s;display:flex;align-items:center}
+.thumb-rot svg{width:15px;height:15px}
+.thumb-rot:hover{color:var(--pink);background:var(--pink-bg)}
+.thumb-del{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#ff4444;color:#fff;border:2px solid var(--card-bg);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;padding:0;line-height:0}
+.thumb-del svg{width:11px;height:11px;stroke:#fff}
+.thumb-card:hover .thumb-del{display:flex}
+.thumb-ghost{opacity:.35;border:2px dashed var(--pink)!important}
+
+.options-panel{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.opt-row{display:flex;align-items:center;gap:12px;padding:6px 0}
+.opt-row>span{font-size:14px;font-weight:500;min-width:120px}
+.radios{display:flex;gap:8px;flex-wrap:wrap}
+.srad{display:none}
+.srad-label{padding:6px 14px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;transition:.15s}
+.srad:checked+.srad-label{border-color:var(--pink);background:var(--pink-bg);color:var(--pink);font-weight:700}
+
 .convert-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--pink);color:#fff;font-size:15px;font-weight:700;padding:16px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;margin-bottom:12px}
 .convert-btn:disabled{background:var(--ink4);cursor:not-allowed}
 .progress-area,.error-area,.result-area{display:none;margin-bottom:24px;padding:32px 24px;text-align:center;border-radius:12px;background:var(--card-bg);border:1px solid var(--border)}
@@ -39,6 +65,8 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 .progress-pct{font-size:12px;color:var(--ink3)}
 .error-area{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
 .download-btn{display:inline-flex;align-items:center;gap:8px;background:var(--dark);color:#fff;padding:12px 28px;border-radius:24px;text-decoration:none;font-weight:700}
+.again-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--ink3);cursor:pointer;font-family:inherit;transition:.15s;margin-left:10px}
+.again-btn:hover{border-color:var(--pink);color:var(--pink)}
 .tip{font-size:12px;color:var(--ink4);text-align:center;margin-bottom:24px}
 </style>
   <script src="/assets/analytics.js" defer></script>
@@ -53,18 +81,45 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
       <div class="tool-icon-big"><i class="ti ti-photo-up"></i></div>
       <h1>图片转 PDF</h1>
     </div>
-    <p class="tool-desc">把多张图片合成一个 PDF，顺序按选择先后。</p>
+    <p class="tool-desc">把多张图片合成一个 PDF，可以拖拽调整顺序、单张旋转、选择是否统一页面大小。</p>
   </div>
+
   <div class="upload-area" id="uploadArea">
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" multiple style="display:none">
     <i class="ti ti-cloud-upload upload-icon"></i>
     <div style="font-weight:700;margin-bottom:6px">选择图片（可多选）</div>
     <div style="font-size:13px;color:var(--ink3)">文件处理后自动删除</div>
   </div>
-  <div class="file-list" id="fileList"></div>
-  
-  <button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-bolt"></i>生成 PDF</button>
-  <p class="tip"><i class="ti ti-shield-lock"></i> 文件仅用于本次处理，完成后自动删除</p>
+
+  <div id="editArea" style="display:none">
+    <div class="toolbar">
+      <div class="page-count-badge" id="pageCountBadge">0 张</div>
+      <button class="add-btn" id="addBtn"><i class="ti ti-photo-plus"></i>追加图片</button>
+      <input type="file" id="addFileInput" accept=".jpg,.jpeg,.png" multiple style="display:none">
+    </div>
+
+    <div class="thumb-grid" id="thumbGrid">
+      <div class="thumb-grid-empty">暂无图片</div>
+    </div>
+
+    <div class="options-panel">
+      <div class="opt-row">
+        <span>统一页面大小</span>
+        <div class="radios">
+          <input class="srad" type="radio" name="usize" id="usizeKeep" value="" checked>
+          <label class="srad-label" for="usizeKeep">保持原样</label>
+          <input class="srad" type="radio" name="usize" id="usizeA4" value="a4">
+          <label class="srad-label" for="usizeA4">A4</label>
+          <input class="srad" type="radio" name="usize" id="usizeA3" value="a3">
+          <label class="srad-label" for="usizeA3">A3</label>
+        </div>
+      </div>
+    </div>
+
+    <button class="convert-btn" id="convertBtn"><i class="ti ti-file-export"></i>生成 PDF</button>
+    <p class="tip"><i class="ti ti-shield-lock"></i> 文件仅用于本次处理，完成后自动删除</p>
+  </div>
+
   <div class="progress-area" id="progressArea">
     <div class="progress-label" id="progressLabel">处理中，请稍候…</div>
     <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
@@ -73,20 +128,217 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
   <div class="error-area" id="errorArea"><span id="errorText"></span></div>
   <div class="result-area" id="resultArea">
     <i class="ti ti-circle-check" style="font-size:48px;color:#22c55e"></i>
-    <p style="margin:12px 0 20px;font-weight:700">处理完成！</p>
+    <p style="margin:12px 0 20px;font-weight:700">PDF 生成成功！</p>
     <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a>
+    <button class="again-btn" id="againBtn"><i class="ti ti-refresh"></i>重新开始</button>
   </div>
 </main>
-<script src="/assets/convert-progress.js"></script>
-<script src="/assets/tool-page.js?v=0.12.6"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-initToolPage({
-  api: '/api/images/to-pdf',
-  accept: '.jpg,.jpeg,.png',
-  multiple: true,
-  extraFields: [],
-  progressTask: 'image-process',
-  downloadText: '下载结果'
+const uploadArea  = document.getElementById('uploadArea');
+const fileInput   = document.getElementById('fileInput');
+const editArea    = document.getElementById('editArea');
+const thumbGrid   = document.getElementById('thumbGrid');
+const addBtn      = document.getElementById('addBtn');
+const addFileInput = document.getElementById('addFileInput');
+const convertBtn  = document.getElementById('convertBtn');
+const progressArea = document.getElementById('progressArea');
+const progBar     = document.getElementById('progressBar');
+const progPct     = document.getElementById('progressPct');
+const errorArea   = document.getElementById('errorArea');
+const errorText   = document.getElementById('errorText');
+const resultArea  = document.getElementById('resultArea');
+const downloadBtn = document.getElementById('downloadBtn');
+const againBtn    = document.getElementById('againBtn');
+
+let sortable = null;
+const ICON_ROTATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5"/><path d="M4.6 13a8 8 0 1 0 1.5-7.5L4 9"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>';
+
+function rotateDataUrl(srcUrl, deg) {
+  return new Promise((resolve, reject) => {
+    if (!deg) { resolve(srcUrl); return; }
+    const img = new Image();
+    img.onload = () => {
+      const rad = deg * Math.PI / 180;
+      const swapped = deg % 180 !== 0;
+      const w = swapped ? img.naturalHeight : img.naturalWidth;
+      const h = swapped ? img.naturalWidth : img.naturalHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(rad);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = srcUrl;
+  });
+}
+
+function applyRotate(card, delta) {
+  const img = card.querySelector('.thumb-img');
+  const cur = parseInt(card.dataset.rotate || '0', 10);
+  const next = ((cur + delta) % 360 + 360) % 360;
+  card.dataset.rotate = String(next);
+  rotateDataUrl(card.dataset.origThumb, next).then(url => { img.src = url; });
+}
+
+function createCard(file) {
+  const card = document.createElement('div');
+  card.className = 'thumb-card';
+  card.dataset.rotate = '0';
+  card._file = file;
+
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'thumb-del';
+  del.title = '删除此图';
+  del.innerHTML = ICON_X;
+  del.addEventListener('click', (e) => {
+    e.stopPropagation();
+    card.remove();
+    updatePageNumbers();
+  });
+
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'thumb-img-wrap';
+  const img = document.createElement('img');
+  img.className = 'thumb-img';
+  img.draggable = false;
+  imgWrap.appendChild(img);
+
+  const bottom = document.createElement('div');
+  bottom.className = 'thumb-bottom';
+  const lbl = document.createElement('div');
+  lbl.className = 'thumb-label';
+  lbl.textContent = file.name;
+  lbl.title = file.name;
+
+  const rotBtn = document.createElement('button');
+  rotBtn.type = 'button';
+  rotBtn.className = 'thumb-rot';
+  rotBtn.title = '顺时针旋转 90°';
+  rotBtn.innerHTML = ICON_ROTATE;
+  rotBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyRotate(card, 90);
+  });
+
+  bottom.append(lbl, rotBtn);
+  card.append(del, imgWrap, bottom);
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    card.dataset.origThumb = reader.result;
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+
+  return card;
+}
+
+function updatePageNumbers() {
+  const cards = thumbGrid.querySelectorAll('.thumb-card');
+  document.getElementById('pageCountBadge').textContent = cards.length + ' 张';
+  const emp = thumbGrid.querySelector('.thumb-grid-empty');
+  if (emp) emp.remove();
+  if (!cards.length) {
+    thumbGrid.innerHTML = '<div class="thumb-grid-empty">暂无图片</div>';
+  }
+}
+
+function initSortable() {
+  if (sortable) { sortable.destroy(); sortable = null; }
+  sortable = new Sortable(thumbGrid, {
+    animation: 150,
+    ghostClass: 'thumb-ghost',
+    filter: '.thumb-del,.thumb-rot',
+    preventOnFilter: false,
+  });
+}
+
+function addFiles(fileList) {
+  const arr = Array.from(fileList).filter(f => /\.(jpe?g|png)$/i.test(f.name));
+  if (!arr.length) return;
+  const first = editArea.style.display === 'none';
+  arr.forEach(f => thumbGrid.appendChild(createCard(f)));
+  updatePageNumbers();
+  if (first) {
+    uploadArea.style.display = 'none';
+    editArea.style.display = 'block';
+    initSortable();
+  }
+}
+
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
+addBtn.addEventListener('click', () => addFileInput.click());
+addFileInput.addEventListener('change', () => { addFiles(addFileInput.files); addFileInput.value = ''; });
+
+convertBtn.addEventListener('click', async () => {
+  const cards = [...thumbGrid.querySelectorAll('.thumb-card')];
+  if (!cards.length) { alert('请先选择图片'); return; }
+
+  const formData = new FormData();
+  cards.forEach(c => formData.append('files', c._file, c._file.name));
+  const rotations = cards.map(c => parseInt(c.dataset.rotate || '0', 10));
+  formData.append('rotations', JSON.stringify(rotations));
+  const uniformSize = (document.querySelector('input[name="usize"]:checked') || {}).value || '';
+  if (uniformSize) formData.append('uniform_size', uniformSize);
+
+  editArea.style.display = 'none';
+  progressArea.style.display = 'block';
+  errorArea.style.display = 'none';
+  resultArea.style.display = 'none';
+  progBar.style.width = '0%';
+  progPct.textContent = '0%';
+
+  let pct = 0;
+  const timer = setInterval(() => {
+    pct = Math.min(pct + 3, 88);
+    progBar.style.width = pct + '%';
+    progPct.textContent = pct + '%';
+  }, 200);
+
+  try {
+    const res = await fetch('/api/images/to-pdf/export', { method: 'POST', body: formData });
+    const data = await res.json();
+    clearInterval(timer);
+    progBar.style.width = '100%';
+    progPct.textContent = '100%';
+    if (!data.success) throw new Error(data.error || '生成失败');
+    setTimeout(() => {
+      progressArea.style.display = 'none';
+      resultArea.style.display = 'block';
+      downloadBtn.href = '/api/download/' + data.filename;
+    }, 400);
+  } catch (e) {
+    clearInterval(timer);
+    progressArea.style.display = 'none';
+    errorArea.style.display = 'block';
+    errorText.textContent = e.message || '生成失败，请重试';
+    editArea.style.display = 'block';
+  }
+});
+
+againBtn.addEventListener('click', () => {
+  thumbGrid.innerHTML = '<div class="thumb-grid-empty">暂无图片</div>';
+  document.getElementById('usizeKeep').checked = true;
+  resultArea.style.display = 'none';
+  errorArea.style.display = 'none';
+  progressArea.style.display = 'none';
+  editArea.style.display = 'none';
+  uploadArea.style.display = 'block';
+  if (sortable) { sortable.destroy(); sortable = null; }
 });
 </script>
 </body>

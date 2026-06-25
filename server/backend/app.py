@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 
 from pdf_utils import (
     merge_pdfs, split_pdf, rotate_pdf, compress_pdf,
-    pdf_to_images_zip, images_to_pdf, delete_pdf_pages,
+    pdf_to_images_zip, images_to_pdf, images_to_pdf_export, delete_pdf_pages,
     add_pdf_watermark, encrypt_pdf, decrypt_pdf, pdf_to_grayscale,
     extract_pdf_images_zip, pdf_layout_to_docx, pdf_tables_to_xlsx,
     pdf_has_extractable_tables,
@@ -858,6 +858,38 @@ def images_to_pdf_route():
         out_name = f'{uid}.pdf'
         images_to_pdf(paths, os.path.join(OUTPUT_FOLDER, out_name))
         return _ok(out_name, '图片合并.pdf')
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    finally:
+        _cleanup(paths)
+
+
+@app.route('/api/images/to-pdf/export', methods=['POST'])
+def images_to_pdf_export_route():
+    paths = []
+    try:
+        files = request.files.getlist('files')
+        if not files:
+            return jsonify({'error': '请上传图片文件'}), 400
+        paths = _save_uploads(files, IMAGE_EXTS)
+        if not paths:
+            return jsonify({'error': '请上传图片文件'}), 400
+
+        rotations_raw = request.form.get('rotations', '[]')
+        try:
+            rotations = json.loads(rotations_raw)
+        except Exception:
+            rotations = []
+        uniform_size = request.form.get('uniform_size', '') or None
+
+        uid = str(uuid.uuid4())
+        out_name = f'{uid}.pdf'
+        images_to_pdf_export(
+            paths, rotations, os.path.join(OUTPUT_FOLDER, out_name),
+            uniform_size=uniform_size,
+        )
+        return _ok(out_name, '图片转PDF.pdf')
     except Exception as e:
         app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
