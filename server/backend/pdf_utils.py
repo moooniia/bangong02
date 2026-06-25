@@ -1277,7 +1277,14 @@ def images_to_pdf_export(image_paths, rotations, output_path, uniform_size=None)
 
             if uniform_size and uniform_size.lower() in PAGE_SIZES:
                 base_rect = PAGE_SIZES[uniform_size.lower()]
-                pw, ph = base_rect.width, base_rect.height
+                bw, bh = base_rect.width, base_rect.height
+                # 旋转90/270后图片变成横向，页面也要跟着从竖向A4/A3换成横向，
+                # 不然旋转后的图片会被挤在竖向页面的宽度里，上下露白
+                # （跟 pdf_editor_export 里 item_rot in (90,270) 时换宽高是同一个道理）
+                if rotate in (90, 270):
+                    pw, ph = bh, bw
+                else:
+                    pw, ph = bw, bh
                 scale = min(pw / iw, ph / ih)
                 dw, dh = iw * scale, ih * scale
                 x0, y0 = (pw - dw) / 2, (ph - dh) / 2
