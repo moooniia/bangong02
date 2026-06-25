@@ -1155,7 +1155,14 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
             else:
                 pw, ph = bw, bh
             new_pg = out_doc.new_page(width=pw, height=ph)
-            new_pg.show_pdf_page(new_pg.rect, src, idx, rotate=item_rot)
+            # show_pdf_page() 的 rotate 是相对于源页面"原始未旋转内容"算的，
+            # 完全不管源页面自带的 /Rotate 元数据；但缩略图/预览(get_pixmap)是会
+            # 自动套用源页面自带旋转的。两者基准不一样，源页面本身带旋转时，
+            # 这里如果只传 item_rot 会跟预览里看到的方向差了源页面自带的那部分角度
+            # （实测：源页带180度时，预览转正后导出却整页倒了180度，正是这个原因）。
+            # 把源页面自带的旋转角度叠加进去，才能让导出方向跟预览保持一致。
+            effective_rotate = (item_rot + src[idx].rotation) % 360
+            new_pg.show_pdf_page(new_pg.rect, src, idx, rotate=effective_rotate)
 
         if watermark_text and watermark_text.strip():
             img_bytes, (tw, th) = _make_watermark_tile(watermark_text.strip(), _find_cn_font())
