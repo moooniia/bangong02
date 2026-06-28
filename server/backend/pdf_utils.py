@@ -131,16 +131,25 @@ def compress_pdf(input_path, output_path):
 
 
 def pdf_to_images_zip(input_path, output_dir, unique_name, dpi=150):
-    """PDF 转图片 — 限制 DPI 和页数保护内存。"""
+    """PDF 转图片 — 限制 DPI 和页数保护内存。只有1页时直接返回图片本身，
+    多页才打包成zip（没必要为单张图片多套一层压缩包）。"""
     import fitz
 
     check_pages(input_path, MAX_PDF_PAGES)
     doc = fitz.open(input_path)
-    images = []
+    page_count = len(doc)
     zoom = dpi / 72
     mat = fitz.Matrix(zoom, zoom)
 
-    for i in range(len(doc)):
+    if page_count == 1:
+        pix = doc[0].get_pixmap(matrix=mat, colorspace=fitz.csRGB)
+        img_path = os.path.join(output_dir, f'{unique_name}.png')
+        pix.save(img_path)
+        doc.close()
+        return img_path
+
+    images = []
+    for i in range(page_count):
         pix = doc[i].get_pixmap(matrix=mat, colorspace=fitz.csRGB)
         img_path = os.path.join(output_dir, f'{unique_name}_page{i + 1}.png')
         pix.save(img_path)

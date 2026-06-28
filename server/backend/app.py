@@ -835,8 +835,10 @@ def pdf_to_images():
         paths = _save_uploads([f], {'pdf'})
         path = paths[0]
         uid = str(uuid.uuid4())
-        zip_path = pdf_to_images_zip(path, OUTPUT_FOLDER, uid)
-        return _ok(os.path.basename(zip_path), 'PDF图片.zip')
+        result_path = pdf_to_images_zip(path, OUTPUT_FOLDER, uid)
+        out_name = os.path.basename(result_path)
+        display_name = 'PDF图片.png' if out_name.endswith('.png') else 'PDF图片.zip'
+        return _ok(out_name, display_name)
     except Exception as e:
         app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
