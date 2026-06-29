@@ -116,6 +116,42 @@ def rotate_pdf(input_path, output_path, angle=90):
         writer.write(f)
 
 
+def compress_pdf_to_target(input_path, output_path, target_mb):
+    """用 Ghostscript 逐档加大压缩力度（主要是降采样/重新压缩内嵌图片），
+    直到体积压到目标以内；实在压不到目标也会返回能压到的最小结果（尽力而为）。
+    返回 True 表示已压到目标以内，False 表示已是最大力度但仍超出目标。
+    """
+    import shutil
+    target_bytes = target_mb * 1024 * 1024
+    tmp = output_path + '._gstry.pdf'
+
+    def run_gs(extra_args):
+        cmd = [
+            'gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
+            '-dNOPAUSE', '-dBATCH', '-dQUIET',
+            *extra_args,
+            f'-sOutputFile={tmp}', input_path,
+        ]
+        subprocess.run(cmd, check=True, timeout=180)
+        return os.path.getsize(tmp)
+
+    attempts = [
+        ['-dPDFSETTINGS=/printer'],
+        ['-dPDFSETTINGS=/ebook'],
+        ['-dPDFSETTINGS=/screen'],
+        ['-dPDFSETTINGS=/screen', '-dColorImageResolution=50', '-dGrayImageResolution=50'],
+        ['-dPDFSETTINGS=/screen', '-dColorImageResolution=30', '-dGrayImageResolution=30'],
+    ]
+    hit_target = False
+    for args in attempts:
+        size = run_gs(args)
+        if size <= target_bytes:
+            hit_target = True
+            break
+    shutil.move(tmp, output_path)
+    return hit_target
+
+
 def compress_pdf(input_path, output_path):
     """轻度压缩 — 无 Ghostscript 时用 pypdf 流压缩，体积降幅有限但稳定。"""
     reader = _open_reader(input_path)
@@ -1112,13 +1148,14 @@ def pdf_page_preview(input_path, idx, max_dim=1600):
 def pdf_editor_export(upload_folder, pages_spec, output_path,
                       uniform_size=None, watermark_text=None,
                       grayscale=False, encrypt_password=None,
-                      rotate_deg=0, compress=False):
+                      rotate_deg=0, compress=False, compress_target_mb=None):
     """
     Assemble a new PDF from pages_spec then apply optional operations.
     pages_spec: list of {"file": "server_uuid.pdf", "idx": 0_based_int}
     uniform_size: 'a4', 'a3', or None
     rotate_deg: 0, 90, 180, 270 — applied to every page
     compress: run pypdf content-stream compression on output
+    compress_target_mb: 若指定，用 Ghostscript 压到目标体积以内（优先于 compress）
     """
     import fitz
     import shutil
@@ -1211,7 +1248,12 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                 os.remove(current)
             current = tmp_gray
 
-        if compress:
+        if compress_target_mb:
+            compress_pdf_to_target(current, tmp_cmp, float(compress_target_mb))
+            if os.path.exists(current):
+                os.remove(current)
+            current = tmp_cmp
+        elif compress:
             from pypdf import PdfReader, PdfWriter
             rdr = PdfReader(current)
             wtr = PdfWriter()

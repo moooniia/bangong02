@@ -224,11 +224,16 @@ main{max-width:920px;margin:0 auto;padding:56px 32px 100px}
         </div>
         <div class="opt-row">
           <span>压缩文件</span>
-          <label class="toggle-wrap">
-            <input class="tog-input" type="checkbox" id="compressTog">
-            <span class="tog-track"></span>
-            <span class="tog-lbl" id="togCmp">关</span>
-          </label>
+          <div class="radios">
+            <input class="srad" type="radio" name="cmpTarget" id="cmpNone" value="" checked>
+            <label class="srad-label" for="cmpNone">不压缩</label>
+            <input class="srad" type="radio" name="cmpTarget" id="cmpLight" value="light">
+            <label class="srad-label" for="cmpLight">标准压缩</label>
+            <input class="srad" type="radio" name="cmpTarget" id="cmp5m" value="5">
+            <label class="srad-label" for="cmp5m">5MB以下</label>
+            <input class="srad" type="radio" name="cmpTarget" id="cmp2m" value="2">
+            <label class="srad-label" for="cmp2m">2MB以下</label>
+          </div>
         </div>
       </div>
       <div class="opt-section">
@@ -288,7 +293,6 @@ const resultArea   = document.getElementById('resultArea');
 const downloadBtn  = document.getElementById('downloadBtn');
 const againBtn     = document.getElementById('againBtn');
 const grayscaleTog = document.getElementById('grayscaleTog');
-const compressTog  = document.getElementById('compressTog');
 
 let sortable      = null;
 let isFirstLoad   = true;
@@ -643,9 +647,6 @@ addFileInput.addEventListener('change', () => {
 grayscaleTog.addEventListener('change', () => {
   document.getElementById('togGray').textContent = grayscaleTog.checked ? '开' : '关';
 });
-compressTog.addEventListener('change', () => {
-  document.getElementById('togCmp').textContent = compressTog.checked ? '开' : '关';
-});
 
 // Export
 exportBtn.addEventListener('click', doExport);
@@ -663,7 +664,9 @@ async function doExport() {
   const uniformSize   = (document.querySelector('input[name="usize"]:checked') || {}).value || '';
   const watermarkText = document.getElementById('watermarkText').value.trim();
   const grayscale     = grayscaleTog.checked;
-  const compress      = compressTog.checked;
+  const cmpTarget     = (document.querySelector('input[name="cmpTarget"]:checked') || {}).value || '';
+  const compress      = cmpTarget === 'light';
+  const compressTargetMb = (cmpTarget && cmpTarget !== 'light') ? cmpTarget : '';
   const encryptPwd    = document.getElementById('encryptPwd').value;
 
   exportBtn.disabled        = true;
@@ -688,6 +691,7 @@ async function doExport() {
     if (watermarkText) fd.append('watermark_text', watermarkText);
     fd.append('grayscale', grayscale ? 'true' : 'false');
     fd.append('compress',  compress  ? 'true' : 'false');
+    if (compressTargetMb) fd.append('compress_target_mb', compressTargetMb);
     if (encryptPwd)    fd.append('encrypt_password', encryptPwd);
 
     const res  = await fetch('/api/pdf/editor/export', { method: 'POST', body: fd });
@@ -721,9 +725,8 @@ againBtn.addEventListener('click', () => {
   document.getElementById('encryptPwd').value    = '';
   document.getElementById('usizeKeep').checked   = true;
   grayscaleTog.checked = false;
-  compressTog.checked  = false;
+  document.getElementById('cmpNone').checked = true;
   document.getElementById('togGray').textContent = '关';
-  document.getElementById('togCmp').textContent  = '关';
   resultArea.style.display   = 'none';
   errorArea.style.display    = 'none';
   progressArea.style.display = 'none';

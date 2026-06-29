@@ -1281,6 +1281,9 @@ def pdf_editor_export_route():
         encrypt_password = request.form.get('encrypt_password', '') or None
         rotate_deg       = int(request.form.get('rotate_deg', '0') or '0')
         compress         = request.form.get('compress', 'false').lower() == 'true'
+        compress_target_mb = request.form.get('compress_target_mb', '') or None
+        if compress_target_mb:
+            compress_target_mb = float(compress_target_mb)
 
         for item in pages_spec:
             fname = secure_filename(item.get('file', ''))
@@ -1303,6 +1306,7 @@ def pdf_editor_export_route():
             encrypt_password=encrypt_password,
             rotate_deg=rotate_deg,
             compress=compress,
+            compress_target_mb=compress_target_mb,
         )
         return _ok(out_name, '编辑结果.pdf')
     except Exception as e:
