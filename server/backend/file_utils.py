@@ -18,17 +18,35 @@ def extract_text_from_file(path, ext, ocr_pdf_func):
     raise ValueError('暂不支持该格式，请上传 TXT、Word 或 PDF')
 
 
+def _convert_legacy_doc_to_docx(path):
+    """老版.doc（97-2003，OLE2二进制格式）先用LibreOffice转成.docx再处理。"""
+    outdir = os.path.dirname(path)
+    subprocess.run(
+        ['libreoffice', '--headless', '--convert-to', 'docx', '--outdir', outdir, path],
+        capture_output=True, text=True, timeout=120,
+    )
+    converted = os.path.splitext(path)[0] + '.docx'
+    if not os.path.exists(converted):
+        raise ValueError('老版.doc文件转换失败，请用Word打开后"另存为" .docx 格式再上传')
+    return converted
+
+
 def _open_docx(path):
-    """打开Word文档，遇到老版.doc或损坏文件时给出明确提示，而不是把python-docx
-    内部的报错原样抛给用户。"""
+    """打开Word文档；老版.doc先转成.docx，损坏文件给出明确提示，而不是把
+    python-docx内部的报错原样抛给用户。"""
     with open(path, 'rb') as f:
         head = f.read(8)
+    converted_tmp = None
+    target = path
     if head[:4] == b'\xd0\xcf\x11\xe0':
-        raise ValueError('这是老版 .doc（97-2003）格式，暂不支持直接处理，请用Word打开后"另存为" .docx 格式再上传')
+        target = converted_tmp = _convert_legacy_doc_to_docx(path)
     try:
-        return Document(path)
+        return Document(target)
     except Exception:
-        raise ValueError('无法读取这个Word文档，文件可能已损坏或不是标准.docx格式，请确认后重新上传')
+        raise ValueError('无法读取这个Word文档，文件可能已损坏或不是标准Word格式，请确认后重新上传')
+    finally:
+        if converted_tmp and os.path.exists(converted_tmp):
+            os.remove(converted_tmp)
 
 
 def _extract_docx(path):

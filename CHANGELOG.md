@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.12.29] - 2026-06-29
+
+构建号: `2026.06.29.4`
+
+feat: Word翻译支持老版.doc格式，先用LibreOffice转成docx再原地保格式翻译
+
+### Changed
+- feat: Word翻译支持老版.doc格式，先用LibreOffice转成docx再原地保格式翻译
+
+备份: `backups/v0.12.29/`
+
+
 ## [0.12.28] - 2026-06-29
 
 构建号: `2026.06.29.3`
