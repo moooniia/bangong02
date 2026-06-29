@@ -32,6 +32,10 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
 .convert-btn:disabled { background:var(--ink4); }
 .preview-area { display:none; text-align:center; margin-top:24px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:24px; }
 .preview-area img { max-width:100%; max-height:300px; background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50%/20px 20px; border-radius:8px; }
+.selected-preview { display:none; }
+.selected-preview img { max-width:100%; max-height:240px; border-radius:8px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.selected-name { font-size:13px; color:var(--dark); font-weight:600; margin-bottom:6px; }
+.selected-change { font-size:12px; color:var(--ink3); cursor:pointer; text-decoration:underline; background:none; border:none; font-family:inherit; }
 .download-btn { display:inline-flex; align-items:center; gap:8px; background:var(--dark); color:white; padding:12px 28px; border-radius:24px; text-decoration:none; margin-top:16px; font-weight:700; }
 .error-area, .progress-area { display:none; margin-top:24px; text-align:center; padding:20px; border-radius:12px; }
 .error-area { background:var(--error-bg); border:1px solid var(--error-border); color:var(--error-text); }
@@ -53,12 +57,19 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
     </div>
     <p class="tool-desc">自动提取图片中的红色印章，生成透明背景 PNG，可直接插入文档使用。</p>
   </div>
-  <div class="upload-area">
+  <div class="upload-area" id="uploadArea">
     <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleFile(this)">
-    <i class="ti ti-cloud-upload" style="font-size:48px;color:var(--ink4);display:block;margin-bottom:16px"></i>
-    <div style="font-weight:700;margin-bottom:6px">上传含红章的图片</div>
-    <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">支持 JPG、PNG，印章颜色越红效果越好</div>
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()"><i class="ti ti-photo"></i>选择图片</button>
+    <div id="uploadPrompt">
+      <i class="ti ti-cloud-upload" style="font-size:48px;color:var(--ink4);display:block;margin-bottom:16px"></i>
+      <div style="font-weight:700;margin-bottom:6px">上传含红章的图片</div>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">支持 JPG、PNG，印章颜色越红效果越好</div>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()"><i class="ti ti-photo"></i>选择图片</button>
+    </div>
+    <div class="selected-preview" id="selectedPreview">
+      <img id="selectedImg" src="" alt="已选择的图片">
+      <div class="selected-name" id="selectedName"></div>
+      <button class="selected-change" onclick="document.getElementById('fileInput').click()">更换图片</button>
+    </div>
   </div>
   <button class="convert-btn" id="convertBtn" onclick="startExtract()" disabled><i class="ti ti-cut"></i>开始抠章</button>
   <div class="progress-area" id="progressArea">正在提取红色印章...</div>
@@ -73,7 +84,15 @@ main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
 <script>
 let selectedFile = null;
 let resultBlob = null;
-function handleFile(input) { selectedFile = input.files[0]; if(selectedFile) document.getElementById('convertBtn').disabled = false; }
+function handleFile(input) {
+  selectedFile = input.files[0];
+  if (!selectedFile) return;
+  document.getElementById('convertBtn').disabled = false;
+  document.getElementById('uploadPrompt').style.display = 'none';
+  document.getElementById('selectedName').textContent = selectedFile.name;
+  document.getElementById('selectedImg').src = URL.createObjectURL(selectedFile);
+  document.getElementById('selectedPreview').style.display = 'block';
+}
 async function startExtract() {
   if (!selectedFile) return;
   const fd = new FormData();
