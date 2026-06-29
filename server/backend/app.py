@@ -1183,7 +1183,7 @@ def translate_file():
         f.save(path)
         uid = str(uuid.uuid4())
 
-        if ext == 'docx' and out_format == 'docx':
+        if ext in ('doc', 'docx') and out_format == 'docx':
             out_path = os.path.join(OUTPUT_FOLDER, f'{uid}.docx')
             translate_docx_inplace(
                 path, out_path,

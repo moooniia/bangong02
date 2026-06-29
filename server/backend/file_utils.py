@@ -18,8 +18,21 @@ def extract_text_from_file(path, ext, ocr_pdf_func):
     raise ValueError('暂不支持该格式，请上传 TXT、Word 或 PDF')
 
 
+def _open_docx(path):
+    """打开Word文档，遇到老版.doc或损坏文件时给出明确提示，而不是把python-docx
+    内部的报错原样抛给用户。"""
+    with open(path, 'rb') as f:
+        head = f.read(8)
+    if head[:4] == b'\xd0\xcf\x11\xe0':
+        raise ValueError('这是老版 .doc（97-2003）格式，暂不支持直接处理，请用Word打开后"另存为" .docx 格式再上传')
+    try:
+        return Document(path)
+    except Exception:
+        raise ValueError('无法读取这个Word文档，文件可能已损坏或不是标准.docx格式，请确认后重新上传')
+
+
 def _extract_docx(path):
-    doc = Document(path)
+    doc = _open_docx(path)
     parts = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
     if not parts:
         raise ValueError('文档里没有读到文字')
@@ -73,7 +86,7 @@ def translate_docx_inplace(input_path, output_path, translate_func, max_workers=
     """
     from concurrent.futures import ThreadPoolExecutor
 
-    doc = Document(input_path)
+    doc = _open_docx(input_path)
     targets = list(_iter_text_paragraphs(doc))
     if not targets:
         raise ValueError('文档里没有读到文字')
