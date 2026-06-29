@@ -23,7 +23,7 @@ from image_utils import (
 )
 from file_utils import (
     extract_text_from_file, translated_to_output,
-    write_translated_docx, write_ocr_docx,
+    write_translated_docx, write_ocr_docx, translate_docx_inplace,
 )
 from ocr_utils import ocr_pdf_for_word
 from ocr_utils import ocr_image, ocr_pdf, clean_ocr_text
@@ -1181,6 +1181,17 @@ def translate_file():
         out_format = request.form.get('format', 'txt')
         path = os.path.join(UPLOAD_FOLDER, str(uuid.uuid4()) + '.' + ext)
         f.save(path)
+        uid = str(uuid.uuid4())
+
+        if ext == 'docx' and out_format == 'docx':
+            out_path = os.path.join(OUTPUT_FOLDER, f'{uid}.docx')
+            translate_docx_inplace(
+                path, out_path,
+                lambda t: translate_long_text(t, source, target),
+            )
+            usage_stats.bump('translate_file')
+            return _ok(f'{uid}.docx', '译文.docx')
+
         raw = extract_text_from_file(path, ext, ocr_pdf)
         if not raw:
             return jsonify({'error': '文件里没有读到可翻译的文字'}), 400
@@ -1188,7 +1199,6 @@ def translate_file():
             return jsonify({'error': '文件文字太多，请截取部分或拆分后再翻译'}), 400
         translated = translate_long_text(raw, source, target)
         usage_stats.bump('translate_file')
-        uid = str(uuid.uuid4())
         _, display = translated_to_output(translated, OUTPUT_FOLDER, uid, out_format)
         fname = f'{uid}.{out_format}'
         return _ok(fname, display)
