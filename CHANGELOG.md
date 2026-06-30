@@ -8,6 +8,17 @@
 
 ## [Unreleased]
 
+## [0.12.30] - 2026-06-30
+
+构建号: `2026.06.30.1`
+
+fix: images_to_pdf_export A4 page orientation uses image aspect ratio instead of rotate parameter
+
+### Changed
+- fix: images_to_pdf_export A4 page orientation: use post-rotation image dimensions (iw > ih) instead of rotate param (90,270), so landscape images get landscape pages and portrait images get portrait pages, eliminating asymmetric white borders
+
+备份: `backups/v0.12.22/`
+
 ## [0.12.29] - 2026-06-29
 
 构建号: `2026.06.29.4`
