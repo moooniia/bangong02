@@ -1190,16 +1190,22 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                 continue
             # Per-page rotation overrides the global rotate_deg
             item_rot = int(item.get('rotate', rotate_deg)) % 360
+            sr = src[idx].rect
+            final_landscape = sr.width > sr.height
+            if item_rot in (90, 270):
+                final_landscape = not final_landscape
+
             if uniform_size and uniform_size.lower() in PAGE_SIZES:
                 base = PAGE_SIZES[uniform_size.lower()]
                 bw, bh = base.width, base.height
-                sr = src[idx].rect
-                if (sr.width > sr.height) != (bw > bh):
+                if final_landscape != (bw > bh):
                     pw, ph = bh, bw
                 else:
                     pw, ph = bw, bh
+            elif item_rot in (90, 270):
+                pw, ph = sr.height, sr.width
             else:
-                sr = src[idx].rect
+
                 pw, ph = sr.width, sr.height
             new_pg = out_doc.new_page(width=pw, height=ph)
             # show_pdf_page() 的 rotate 是相对于源页面"原始未旋转内容"算的，
