@@ -13,20 +13,30 @@ _SIGNATURE_HINTS = (
 
 def red_mask(img_bgr, strict=False):
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-    sat_min = 90 if strict else 70
-    val_min = 60 if strict else 50
-    lower_red1 = np.array([0, sat_min, val_min])
-    upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([170, sat_min, val_min])
-    upper_red2 = np.array([180, 255, 255])
-    mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-    mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-    mask = cv2.bitwise_or(mask1, mask2)
+    h, sat, val = cv2.split(hsv)
+
+    # A stamp photo often contains pale red antialiasing and dark red ink over text.
+    # HSV alone drops those pixels, so combine hue with RGB red dominance.
+    b, g, r = [c.astype(np.int16) for c in cv2.split(img_bgr)]
+    red_over_green = r - g
+    red_over_blue = r - b
+
     if strict:
+        sat_min = 82
+        val_min = 45
+        hue_red = (((h <= 12) | (h >= 168)) & (sat >= sat_min) & (val >= val_min))
+        dominance = (r >= 55) & (red_over_green >= 16) & (red_over_blue >= 12)
+        mask = (hue_red | (dominance & (sat >= 45))).astype(np.uint8) * 255
         return mask
+
+    hue_red = (((h <= 16) | (h >= 162)) & (sat >= 28) & (val >= 35))
+    orange_red = ((h <= 22) & (sat >= 40) & (val >= 45))
+    dominance = (r >= 48) & (red_over_green >= 10) & (red_over_blue >= 8)
+    strong_dominance = (r >= 60) & (red_over_green >= 18) & (red_over_blue >= 14)
+    mask = ((hue_red & dominance) | (orange_red & dominance) | strong_dominance).astype(np.uint8) * 255
+
     kernel = np.ones((3, 3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
     return mask
 
 
@@ -43,25 +53,66 @@ def _contour_score(cnt, bw, bh):
 
 
 def _make_seal_rgba(crop_bgr):
-    """仅保留红色像素，去掉黑字/阴影，输出透明 PNG 数据。"""
+    """Extract red stamp pixels into a transparent PNG while preserving thin strokes."""
     strict = red_mask(crop_bgr, strict=True)
-    if cv2.countNonZero(strict) < 80:
+    broad = red_mask(crop_bgr, strict=False)
+    if cv2.countNonZero(strict) < 40 and cv2.countNonZero(broad) < 120:
         return None
 
-    b, g, r = cv2.split(crop_bgr)
+    b8, g8, r8 = cv2.split(crop_bgr)
+    b = b8.astype(np.int16)
+    g = g8.astype(np.int16)
+    r = r8.astype(np.int16)
     gray = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2GRAY)
-    # 黑色文字/阴影：亮度低且红色饱和度不足
-    dark_non_red = (gray < 95) & (strict == 0)
-    alpha = strict.copy()
-    alpha[dark_non_red] = 0
+    hsv = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2HSV)
+    h, sat8, val8 = cv2.split(hsv)
 
-    alpha = cv2.erode(alpha, np.ones((2, 2), np.uint8), iterations=1)
+    red_delta = np.minimum(r - g, r - b)
+    max_delta = np.maximum(r - g, r - b)
+    red_hue = ((h <= 18) | (h >= 160))
+
+    # Include weak/low-contrast red ink, but reject neutral dark printed text behind it.
+    candidate = (broad > 0) | (
+        red_hue &
+        (r >= 45) &
+        (red_delta >= 7) &
+        ((sat8 >= 22) | (max_delta >= 18))
+    )
+    neutral_dark_text = (gray < 105) & (red_delta < 12) & (sat8 < 75)
+    candidate[neutral_dark_text] = False
+
+    mask = candidate.astype(np.uint8) * 255
+    if cv2.countNonZero(mask) < 80:
+        return None
+
+    # Bridge tiny gaps from paper texture without eating fine characters.
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((2, 2), np.uint8), iterations=1)
+
+    # Drop isolated speckles only; stamp glyph dots and broken strokes are usually larger than this.
+    num, labels, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
+    cleaned = np.zeros_like(mask)
+    for i in range(1, num):
+        area = stats[i, cv2.CC_STAT_AREA]
+        if area >= 3:
+            cleaned[labels == i] = 255
+    mask = cleaned
+
+    sat = sat8.astype(np.float32)
+    val = val8.astype(np.float32)
+    strength_delta = np.clip((red_delta.astype(np.float32) - 4.0) / 36.0, 0.0, 1.0)
+    strength_sat = np.clip((sat - 18.0) / 95.0, 0.0, 1.0)
+    strength_val = np.clip((val - 28.0) / 85.0, 0.0, 1.0)
+    alpha_f = np.maximum(strength_delta, strength_sat * 0.85) * np.maximum(strength_val, 0.38)
+    alpha = np.where(mask > 0, np.clip(55 + alpha_f * 200, 0, 255), 0).astype(np.uint8)
+
+    # Smooth alpha edges, then restore solid cores so the result is readable at normal size.
     alpha = cv2.GaussianBlur(alpha, (3, 3), 0)
+    alpha[strict > 0] = np.maximum(alpha[strict > 0], 210)
 
     vis = alpha > 0
-    out_r = np.where(vis, np.maximum(r, 120), 0).astype(np.uint8)
-    out_g = np.where(vis, np.minimum(g, (out_r * 0.35).astype(np.uint8)), 0).astype(np.uint8)
-    out_b = np.where(vis, np.minimum(b, (out_r * 0.25).astype(np.uint8)), 0).astype(np.uint8)
+    out_r = np.where(vis, np.maximum(r8, 135), 0).astype(np.uint8)
+    out_g = np.where(vis, np.minimum(g8, np.maximum(24, (out_r * 0.36).astype(np.uint8))), 0).astype(np.uint8)
+    out_b = np.where(vis, np.minimum(b8, np.maximum(18, (out_r * 0.24).astype(np.uint8))), 0).astype(np.uint8)
     return cv2.merge([out_b, out_g, out_r, alpha])
 
 

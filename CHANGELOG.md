@@ -13,6 +13,18 @@
 
 ## [Unreleased]
 
+## [0.12.32] - 2026-07-03
+
+构建号: `2026.07.03.1`
+
+Fixed: improve seal extraction for pale low-contrast stamps and stamps over text
+
+### Fixed
+- improve seal extraction for pale low-contrast stamps and stamps over text
+
+备份: `backups/v0.12.32/`
+
+
 ## [0.12.30] - 2026-06-30
 
 构建号: `2026.06.30.1`
