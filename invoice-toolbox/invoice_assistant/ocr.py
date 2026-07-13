@@ -32,7 +32,7 @@ def recognize_image(path: Path) -> List[OcrLine]:
 
 def _recognize_with_rapidocr(path: Path) -> List[OcrLine]:
     try:
-        from PIL import Image
+        from PIL import Image, ImageEnhance, ImageFilter, ImageOps
         import fitz
         import numpy as np
         from rapidocr_onnxruntime import RapidOCR
@@ -65,16 +65,49 @@ def _recognize_with_rapidocr(path: Path) -> List[OcrLine]:
             finally:
                 document.close()
         else:
-            image = Image.open(path)
+            image = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
             width, height = image.size
-            result, _ = engine(str(path))
-            image_lines = _lines_from_result(result, width, height)
+            image_lines = _best_image_ocr(engine, image)
             lines.extend(image_lines)
             if _needs_party_crops(image_lines):
                 lines.extend(_recognize_party_crops(engine, np.asarray(image.convert("RGB"))))
     except Exception:
         return []
     return lines
+
+
+def _best_image_ocr(engine, image) -> List[OcrLine]:
+    import numpy as np
+    from PIL import ImageEnhance, ImageFilter, ImageOps
+
+    candidates = [image]
+    enhanced = ImageOps.autocontrast(image)
+    enhanced = ImageEnhance.Contrast(enhanced).enhance(1.35)
+    enhanced = ImageEnhance.Sharpness(enhanced).enhance(1.25)
+    candidates.append(enhanced)
+    candidates.append(enhanced.filter(ImageFilter.MedianFilter(size=3)))
+
+    best_lines: List[OcrLine] = []
+    best_score = -1
+    for candidate in candidates:
+        width, height = candidate.size
+        result, _ = engine(np.asarray(candidate))
+        lines = _lines_from_result(result, width, height)
+        score = _ocr_quality_score(lines)
+        if score > best_score:
+            best_score = score
+            best_lines = lines
+    return best_lines
+
+
+def _ocr_quality_score(lines: List[OcrLine]) -> int:
+    joined = "".join(line.text for line in lines)
+    score = len(lines)
+    signals = ("名称", "纳税人识别号", "统一社会信用代码", "发票号码", "开票日期", "合计", "税率", "税额", "价税合计")
+    score += sum(8 for token in signals if token in joined)
+    score += sum(2 for line in lines if any(token in line.text for token in ("公司", "研究院", "分院", "银行", "商行", "店", "厂")))
+    score += sum(2 for line in lines if any(char.isdigit() for char in line.text))
+    return score
 
 
 def _extract_pdf_text_layer(document) -> List[OcrLine]:

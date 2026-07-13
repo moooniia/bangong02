@@ -11,6 +11,7 @@ from invoice_assistant.report_exporter import export_invoice_report
 
 
 _stdout_lock = threading.Lock()
+_IMAGE_PREVIEW_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 
 
 def send(payload):
@@ -43,13 +44,25 @@ def main():
                 if not source.is_file():
                     send({"ok": False, "error": "preview file not found"})
                     continue
-                document = fitz.open(source)
-                page = document.load_page(0)
-                pixmap = page.get_pixmap(matrix=fitz.Matrix(1.8, 1.8), alpha=False)
-                key = hashlib.sha1(str(source.resolve()).encode("utf-8")).hexdigest()[:16]
-                target = Path.home() / "AppData" / "Local" / "Temp" / f"invoice_toolbox_preview_{key}.png"
-                pixmap.save(str(target))
-                document.close()
+                stat = source.stat()
+                key_raw = f"{source.resolve()}|{stat.st_size}|{stat.st_mtime_ns}"
+                key = hashlib.sha1(key_raw.encode("utf-8")).hexdigest()[:16]
+                target = Path.home() / "AppData" / "Local" / "Temp" / f"invoice_toolbox_preview_{key}.jpg"
+                if not target.exists():
+                    if source.suffix.lower() in _IMAGE_PREVIEW_SUFFIXES:
+                        from PIL import Image, ImageOps
+
+                        image = ImageOps.exif_transpose(Image.open(source)).convert("RGB")
+                        image.thumbnail((2200, 2200), Image.Resampling.LANCZOS)
+                        image.save(target, quality=88, optimize=True)
+                    else:
+                        document = fitz.open(source)
+                        try:
+                            page = document.load_page(0)
+                            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.8, 1.8), alpha=False)
+                            pixmap.save(str(target))
+                        finally:
+                            document.close()
                 send({"event": "preview_complete", "path": str(target)})
                 continue
             if request.get("command") != "scan":

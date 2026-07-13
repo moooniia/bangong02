@@ -15,24 +15,24 @@
 body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px;-webkit-font-smoothing:antialiased}
 nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
 .logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none;letter-spacing:-.5px}.logo span{color:var(--pink)}
-main{max-width:1120px;margin:0 auto;padding:0 32px 96px}
-.hero{padding:70px 0 58px;border-bottom:1px solid var(--border);margin-bottom:48px;display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;align-items:center}
+main{max-width:1260px;margin:0 auto;padding:0 32px 96px}
+.hero{padding:70px 0 42px;margin-bottom:28px;display:grid;grid-template-columns:1fr;gap:30px;align-items:center}
 .hero-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}.hero-label::before{content:'';width:20px;height:2px;background:var(--pink);border-radius:1px}
 h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;line-height:1.08;letter-spacing:-1px;margin-bottom:20px}h1 em{font-style:normal;color:var(--pink)}
 .hero-sub{font-size:15px;color:var(--ink3);line-height:1.85;max-width:560px}
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
 .primary-btn{display:inline-flex;align-items:center;gap:9px;border-radius:28px;padding:13px 24px;font-weight:700;text-decoration:none;transition:all .18s;background:var(--pink);color:white;box-shadow:0 12px 30px rgba(233,76,136,.24)}
 .primary-btn:hover{background:#d43d79;transform:translateY(-2px)}
-.windows-mark{font-size:18px}
-.showcase{background:var(--card-bg);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-up);overflow:hidden}
-.showcase-stage{padding:18px;background:linear-gradient(180deg,rgba(233,76,136,.05),transparent 38%)}
-.app-frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#f8fafc;min-height:350px;box-shadow:0 12px 36px rgba(15,23,42,.08)}
-.app-top{height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid #e5e7eb;background:white}.app-dot{width:9px;height:9px;border-radius:50%;background:#e94c88}.app-title{font-weight:800;margin-left:4px}.app-version{font-size:11px;color:#9ca3af}
-.mock{display:none;grid-template-columns:170px 1fr 210px;min-height:310px}.mock.active{display:grid}
-.mock-left{padding:14px;border-right:1px solid #e5e7eb;background:#fff}.mock-panel{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}.mock-label{font-size:11px;color:#64748b;margin-bottom:6px}.mock-value{font-size:22px;font-weight:900}.mock-button{height:36px;border-radius:9px;background:#e94c88;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;margin-top:10px}
-.mock-main{padding:14px}.mock-toolbar{height:34px;display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px}.pill{border:1px solid #e5e7eb;border-radius:9px;padding:7px 12px;background:white;font-size:12px}.pill.hot{background:#e94c88;color:white;border-color:#e94c88}
-.mock-table{border-radius:10px;overflow:hidden;border:1px solid #dbe1ea}.mock-head,.mock-row{display:grid;grid-template-columns:1.2fr .9fr 1.3fr .8fr .8fr;align-items:center}.mock-head{height:38px;background:#242936;color:white;font-weight:700;font-size:12px}.mock-cell{padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mock-row{height:34px;font-size:12px;border-top:1px solid #e5e7eb;background:white}.mock-row:nth-child(odd){background:#f6f7f9}.mock-row.pending{background:#fde8f0;color:#d91b5c;font-weight:700}
-.mock-review{border-left:1px solid #e5e7eb;background:white;padding:14px}.review-title{font-size:20px;font-weight:900;margin-bottom:8px}.invoice-preview{height:145px;border:1px solid #e5e7eb;border-radius:10px;background:linear-gradient(180deg,#fff,#f6f7f9);position:relative;margin-bottom:12px;overflow:hidden}.invoice-preview::before{content:'';position:absolute;left:18px;right:18px;top:35px;height:2px;background:#d17b6f}.invoice-preview::after{content:'电子发票';position:absolute;left:42px;top:48px;color:#b45309;font-weight:700;font-size:18px}
+.win11-logo{width:18px;height:18px;display:block}
+.showcase{background:var(--card-bg);border:1px solid var(--border);border-radius:26px;box-shadow:var(--shadow-up);overflow:hidden}
+.showcase-stage{padding:24px;background:radial-gradient(circle at 18% 0,rgba(233,76,136,.11),transparent 34%),linear-gradient(180deg,rgba(255,255,255,.86),rgba(247,248,251,.68))}
+.app-frame{border:1px solid var(--border);border-radius:20px;overflow:hidden;background:#f8fafc;min-height:520px;box-shadow:0 24px 70px rgba(15,23,42,.12)}
+.app-top{height:46px;display:flex;align-items:center;gap:9px;padding:0 18px;border-bottom:1px solid #e5e7eb;background:white}.app-dot{width:10px;height:10px;border-radius:50%;background:#e94c88}.app-title{font-weight:900;margin-left:4px}.app-version{font-size:12px;color:#9ca3af}
+.mock{display:none;grid-template-columns:220px 1fr 350px;min-height:474px}.mock.active{display:grid}
+.mock-left{padding:18px;border-right:1px solid #e5e7eb;background:#fff}.mock-panel{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}.mock-label{font-size:12px;color:#64748b;margin-bottom:6px}.mock-value{font-size:25px;font-weight:900}.mock-button{height:42px;border-radius:11px;background:#e94c88;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;margin-top:10px}
+.mock-main{padding:18px}.mock-toolbar{height:38px;display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}.pill{border:1px solid #e5e7eb;border-radius:10px;padding:8px 13px;background:white;font-size:12px}.pill.hot{background:#e94c88;color:white;border-color:#e94c88}
+.mock-table{border-radius:12px;overflow:hidden;border:1px solid #dbe1ea}.mock-head,.mock-row{display:grid;grid-template-columns:1.25fr .9fr 1.35fr .8fr .85fr;align-items:center}.mock-head{height:42px;background:#242936;color:white;font-weight:700;font-size:12px}.mock-cell{padding:0 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mock-row{height:40px;font-size:12.5px;border-top:1px solid #e5e7eb;background:white}.mock-row:nth-child(odd){background:#f6f7f9}.mock-row.pending{background:#fde8f0;color:#d91b5c;font-weight:700}
+.mock-review{border-left:1px solid #e5e7eb;background:white;padding:18px}.review-title{font-size:24px;font-weight:900;margin-bottom:10px}.invoice-preview{height:210px;border:1px solid #e5e7eb;border-radius:12px;background:linear-gradient(180deg,#fff,#f6f7f9);position:relative;margin-bottom:14px;overflow:hidden}.invoice-preview::before{content:'';position:absolute;left:24px;right:24px;top:48px;height:2px;background:#d17b6f}.invoice-preview::after{content:'电子发票';position:absolute;left:56px;top:66px;color:#b45309;font-weight:700;font-size:22px}
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{height:31px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa}
 .archive-list{display:grid;gap:8px}.archive-item{height:38px;border:1px solid #e5e7eb;border-radius:9px;background:white;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12px}.archive-item strong{color:#e94c88}
 .dark-mock{background:#111827;color:#e5e7eb}.dark-mock .app-top,.dark-mock .mock-left,.dark-mock .mock-review,.dark-mock .mock-row,.dark-mock .mock-panel,.dark-mock .pill,.dark-mock .archive-item{background:#151b26;border-color:#2b3342}.dark-mock .mock-main{background:#0f141c}.dark-mock .mock-head{background:#1f2937}.dark-mock .mock-row:nth-child(odd){background:#111827}.dark-mock .mock-row.pending{background:#3a1f2c;color:#ff8db6}
@@ -41,7 +41,7 @@ h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;line-heig
 .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.feature-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}.feature-card i{font-size:24px;color:var(--pink);display:block;margin-bottom:12px}.feature-title{font-weight:700;margin-bottom:6px}.feature-desc{font-size:12.5px;color:var(--ink3);line-height:1.7}
 .release-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);display:grid;grid-template-columns:220px 1fr;gap:24px}.version{font-size:28px;font-weight:900;color:var(--pink);margin-bottom:6px}.release-date{font-size:12px;color:var(--ink3)}.notes{display:flex;flex-direction:column;gap:8px}.note{display:flex;gap:9px;color:var(--mid);line-height:1.7}.note i{color:var(--pink);margin-top:4px}
 footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);font-size:12px}
-@media(max-width:980px){nav{padding:0 20px}.hero{grid-template-columns:1fr;padding-top:48px}h1{font-size:38px}.feature-grid{grid-template-columns:1fr 1fr}.release-card{grid-template-columns:1fr}.mock{grid-template-columns:150px 1fr}.mock-review{display:none}}
+@media(max-width:980px){nav{padding:0 20px}.hero{padding-top:48px}h1{font-size:38px}.feature-grid{grid-template-columns:1fr 1fr}.release-card{grid-template-columns:1fr}.mock{grid-template-columns:170px 1fr}.mock-review{display:none}}
 @media(max-width:560px){main{padding-left:20px;padding-right:20px}.feature-grid{grid-template-columns:1fr}.hero-actions{flex-direction:column}.primary-btn{justify-content:center}.mock-left{display:none}.mock{grid-template-columns:1fr}}
 </style>
 <script src="/assets/analytics.js" defer></script>
@@ -58,13 +58,13 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
       <h1>发票<em>工具箱</em></h1>
       <p class="hero-sub">为财务、行政和项目资料整理而做：批量识别发票文件夹，自动标出需要人工核对的字段，按可拖拽的规则导出报表并归档。</p>
       <div class="hero-actions">
-        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_latest.msix"><i class="ti ti-brand-windows windows-mark"></i>下载发票工具箱</a>
+        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_latest.msix"><svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 4.5 10.7 3.4v7.7H3V4.5Zm9.3-1.3L21 2v9.1h-8.7V3.2ZM3 12.9h7.7v7.7L3 19.5v-6.6Zm9.3 0H21V22l-8.7-1.2v-7.9Z"/></svg>下载发票工具箱</a>
       </div>
     </div>
     <div class="showcase">
       <div class="showcase-stage">
         <div class="app-frame" id="showcaseFrame">
-          <div class="app-top"><span class="app-dot"></span><span class="app-title">发票工具箱</span><span class="app-version">1.0.0.47</span></div>
+          <div class="app-top"><span class="app-dot"></span><span class="app-title">发票工具箱</span><span class="app-version">1.0.0.48</span></div>
           <div class="mock active" data-title="批量识别" data-desc="读取项目文件夹和子文件夹，进度、重复与待核对数量同步变化。">
             <div class="mock-left"><div class="mock-panel"><div class="mock-label">总文件</div><div class="mock-value">160</div></div><div class="mock-panel"><div class="mock-label">待确认</div><div class="mock-value" style="color:#e94c88">6</div></div><div class="mock-button">开始识别</div></div>
             <div class="mock-main"><div class="mock-toolbar"><span class="pill">仅看待确认</span><span class="pill hot">导出</span></div><div class="mock-table"><div class="mock-head"><div class="mock-cell">公司抬头</div><div class="mock-cell">开票日期</div><div class="mock-cell">销售方</div><div class="mock-cell">金额</div><div class="mock-cell">状态</div></div><div class="mock-row"><div class="mock-cell">江西省勘察设计研究院...</div><div class="mock-cell">2026-03-04</div><div class="mock-cell">江苏京东信息技术有限公司</div><div class="mock-cell">61.00</div><div class="mock-cell">已确认</div></div><div class="mock-row pending"><div class="mock-cell">个人</div><div class="mock-cell">2026-01-08</div><div class="mock-cell">昆山东广...</div><div class="mock-cell">446.20</div><div class="mock-cell">待确认</div></div></div></div>
@@ -105,12 +105,12 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
     <div class="section-header"><span class="section-name">当前版本</span><span class="section-count">用于软件自动检查更新</span></div>
     <div class="release-card">
       <div>
-        <div class="version">v1.0.0.47</div>
+        <div class="version">v1.0.0.48</div>
         <div class="release-date">发布日期：2026-07-13</div>
       </div>
       <div class="notes">
         <div class="note"><i class="ti ti-check"></i><span>增强待确认判定：同批次补全、可疑公司名、税号异常、购销方疑似反写都会继续提示核对。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>优化主题切换同步、更新忽略逻辑、按钮高度和 Windows 图标资源。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>优化照片预览缓存、主题切换同步、按钮高度和 Windows 图标资源。</span></div>
         <div class="note"><i class="ti ti-check"></i><span>保留离线可用能力；发现新版本时只在界面显示更新按钮。</span></div>
       </div>
     </div>

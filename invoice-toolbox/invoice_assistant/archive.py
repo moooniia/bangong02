@@ -1,4 +1,3 @@
-import re
 import filecmp
 import shutil
 from pathlib import Path
@@ -63,14 +62,7 @@ def _duplicate_identity(record: InvoiceRecord) -> str:
 def _clear_generated_duplicates(folder: Path) -> None:
     if not folder.exists():
         return
-    for path in folder.rglob("*"):
-        if path.is_file() and re.search(r"_重复\d+$", path.stem):
-            path.unlink()
-    for path in sorted((item for item in folder.rglob("*") if item.is_dir()), reverse=True):
-        try:
-            path.rmdir()
-        except OSError:
-            pass
+    shutil.rmtree(folder)
 
 
 def _archive_name(record: InvoiceRecord, source: Path, name_fields: Optional[Sequence[str]] = None, separator: str = "_") -> str:
