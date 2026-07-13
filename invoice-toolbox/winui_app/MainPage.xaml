@@ -1,0 +1,212 @@
+<UserControl
+    x:Class="InvoiceToolbox.WinUI.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="RootLayout" Background="{ThemeResource AppCanvasBrush}" RequestedTheme="Light">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="18,0" Padding="0,0,138,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Image Width="28" Height="28" Source="ms-appx:///Assets/invoice-toolbox-icon-256.png" />
+                    <StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Center"><TextBlock Text="发票" FontFamily="Noto Serif SC" FontSize="20" FontWeight="Bold" /><TextBlock Text="工具箱" FontFamily="Noto Serif SC" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPanelColumn" Width="228" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="ReviewPanelColumn" Width="500" />
+            </Grid.ColumnDefinitions>
+
+            <Border x:Name="LeftPanel" Grid.Column="0" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,1,0">
+                <Grid Padding="14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="0" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="LeftPanelToggleButton" Width="36" Height="36" CornerRadius="8" ToolTipService.ToolTip="收起或展开左栏" Click="OnToggleLeftPanel" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit">
+                            <FontIcon Glyph="&#xE700;" FontSize="15" />
+                        </Button>
+                        <StackPanel x:Name="UpdatePanel" Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Visibility="Collapsed">
+                            <Button x:Name="UpdateButton" Content="更新" MinWidth="64" Style="{StaticResource AccentButtonStyle}" Click="OnUpdateClick" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" PointerPressed="OnCommandPressed" PointerReleased="OnCommandReleased" />
+                            <Button x:Name="IgnoreUpdateButton" Content="忽略" MinWidth="64" Click="OnIgnoreUpdate" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ScrollViewer x:Name="LeftPanelScroll" Grid.Row="1" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="12">
+                            <Border Style="{StaticResource PanelStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="项目文件夹" Style="{StaticResource SectionTitleStyle}" />
+                                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="7" Background="{ThemeResource SurfaceMutedBrush}" BorderBrush="{ThemeResource DividerBrush}" Click="OnChooseInputFolder" PointerEntered="OnFolderEnter" PointerExited="OnInteractiveExit">
+                                        <StackPanel Orientation="Horizontal" Spacing="9"><FontIcon Glyph="&#xE8B7;" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="选择发票文件夹" /></StackPanel>
+                                    </Button>
+                                    <TextBlock x:Name="InputPathText" Text="未选择" Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis" />
+                                    <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="7" Background="{ThemeResource SurfaceMutedBrush}" BorderBrush="{ThemeResource DividerBrush}" Click="OnChooseArchiveFolder" PointerEntered="OnFolderEnter" PointerExited="OnInteractiveExit">
+                                        <StackPanel Orientation="Horizontal" Spacing="9"><FontIcon Glyph="&#xE8B7;" /><TextBlock Text="选择归档文件夹" /></StackPanel>
+                                    </Button>
+                                    <TextBlock x:Name="ArchivePathText" Text="未选择" Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource PanelStyle}">
+                                <Grid RowSpacing="8">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="统计信息" Style="{StaticResource SectionTitleStyle}" />
+                                    <TextBlock Grid.Row="1" Text="总文件" Style="{StaticResource MutedTextStyle}" /><TextBlock x:Name="TotalCountText" Grid.Row="1" Grid.Column="1" Text="0" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="2" Text="待确认" Style="{StaticResource MutedTextStyle}" /><TextBlock x:Name="ReviewCountText" Grid.Row="2" Grid.Column="1" Text="0" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="3" Text="已确认" Style="{StaticResource MutedTextStyle}" /><TextBlock x:Name="ConfirmedCountText" Grid.Row="3" Grid.Column="1" Text="0" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="4" Text="重复跳过" Style="{StaticResource MutedTextStyle}" /><TextBlock x:Name="DuplicateCountText" Grid.Row="4" Grid.Column="1" Text="0" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="5" Text="已识别金额" Style="{StaticResource MutedTextStyle}" /><TextBlock x:Name="TotalAmountSummaryText" Grid.Row="5" Grid.Column="1" Text="¥0.00" FontWeight="SemiBold" />
+                                </Grid>
+                            </Border>
+                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" MinHeight="44" CornerRadius="8" Click="OnOpenArchiveFolder" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE8B7;" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="打开已归档文件" /></StackPanel></Button>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <StackPanel x:Name="LeftPanelActions" Grid.Row="3" Spacing="8">
+                        <TextBlock x:Name="ProgressText" Text="就绪" Style="{StaticResource MutedTextStyle}" />
+                        <ProgressBar x:Name="ScanProgress" Value="0" Height="6" />
+                        <Button x:Name="ScanButton" Content="开始识别" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Click="OnStartScan" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" PointerPressed="OnCommandPressed" PointerReleased="OnCommandReleased" />
+                        <Button x:Name="CancelButton" Content="取消识别" HorizontalAlignment="Stretch" Visibility="Collapsed" Click="OnCancelScan" />
+                        <Button Content="重新开始" HorizontalAlignment="Stretch" Click="OnReset" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1" Padding="18,12,12,14">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom">
+                        <TextBlock Text="发票列表" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock x:Name="SummaryText" Text="选择发票文件夹后开始识别" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="PendingOnlyButton" Content="仅看待确认  0" CornerRadius="8" Click="OnTogglePendingOnly" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" />
+                        <Button x:Name="ReviewToggleButton" Content="打开核对  0" CornerRadius="8" Click="OnToggleReviewPanel" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" />
+                        <Button x:Name="ExportButton" Content="导出" CornerRadius="8" Style="{StaticResource AccentButtonStyle}" Click="OnExport" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" PointerPressed="OnCommandPressed" PointerReleased="OnCommandReleased" />
+                        <Button Width="56" Height="34" CornerRadius="17" ToolTipService.ToolTip="切换深浅主题" Click="OnThemeClick" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit"><StackPanel Orientation="Horizontal" Spacing="5"><FontIcon x:Name="SunThemeIcon" Glyph="&#xE706;" FontSize="13" /><FontIcon x:Name="MoonThemeIcon" Glyph="&#xE708;" FontSize="13" Opacity="0.35" /></StackPanel></Button>
+                        <Button Width="38" Height="34" CornerRadius="8" ToolTipService.ToolTip="关于" Click="OnAboutClick" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit"><FontIcon Glyph="&#xE946;" FontSize="15" /></Button>
+                    </StackPanel>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" Grid.RowSpan="2" Margin="0,6,0,0" HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled" VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
+                    <Grid MinWidth="1910">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                        <Border Background="{ThemeResource TableHeaderBrush}" CornerRadius="8,8,0,0" Padding="12,11">
+                            <Grid x:Name="TableHeaderGrid" />
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"><StackPanel x:Name="RecordRows" /></ScrollViewer>
+                    </Grid>
+                </ScrollViewer>
+
+            </Grid>
+
+            <Border x:Name="ReviewPanel" Grid.Column="2" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled" HorizontalScrollBarVisibility="Disabled">
+                <Grid Padding="18,16" MinHeight="760">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" MinHeight="300" MaxHeight="380" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Grid><TextBlock Text="人工核对" Style="{StaticResource PageTitleStyle}" /><Button Content="×" HorizontalAlignment="Right" Background="Transparent" FontSize="20" Click="OnToggleReviewPanel" /></Grid>
+                    <TextBlock x:Name="ReviewMetaText" Grid.Row="1" Text="请从表格中选择一张发票" Style="{StaticResource MutedTextStyle}" Margin="0,8,0,12" />
+                    <Border x:Name="PreviewViewport" Grid.Row="2" Background="{ThemeResource PreviewBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" CornerRadius="9" PointerWheelChanged="OnPreviewWheel" PointerPressed="OnPreviewPressed" PointerMoved="OnPreviewMoved" PointerReleased="OnPreviewReleased">
+                        <Grid><Grid.RowDefinitions><RowDefinition Height="48" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                            <Border Grid.Row="1" CornerRadius="1" Background="{ThemeResource PreviewBrush}"><Image x:Name="PreviewImage" Stretch="Uniform" Margin="12" RenderTransformOrigin="0.5,0.5"><Image.RenderTransform><CompositeTransform x:Name="PreviewTransform" ScaleX="1" ScaleY="1" /></Image.RenderTransform></Image></Border>
+                            <Border Grid.Row="0" Canvas.ZIndex="20" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1"><StackPanel Orientation="Horizontal" Spacing="6" Margin="10,7"><Button Content="−" ToolTipService.ToolTip="缩小" Click="OnZoomOut" /><Button Content="+" ToolTipService.ToolTip="放大" Click="OnZoomIn" /><Button Content="原大小" ToolTipService.ToolTip="按图片原始大小显示" Click="OnActualSize" /><Button Content="适应窗口" Click="OnFitPreview" /><Button Width="38" Height="34" Padding="0" ToolTipService.ToolTip="向左旋转" Click="OnRotateLeft"><FontIcon Glyph="&#xE7AD;" FontSize="16" /></Button><Button Width="38" Height="34" Padding="0" ToolTipService.ToolTip="向右旋转" Click="OnRotateRight"><FontIcon Glyph="&#xE7AD;" FontSize="16" RenderTransformOrigin="0.5,0.5"><FontIcon.RenderTransform><ScaleTransform ScaleX="-1" /></FontIcon.RenderTransform></FontIcon></Button></StackPanel></Border>
+                            <ProgressRing x:Name="PreviewLoadingRing" Grid.Row="1" Width="32" Height="32" IsActive="False" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="22" Margin="0,14,0,10"><TextBlock Text="发票信息" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" /><TextBlock Text="明细信息" Foreground="{ThemeResource MutedTextBrush}" /></StackPanel>
+                    <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
+                        <Grid ColumnSpacing="12" RowSpacing="10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <StackPanel><TextBlock Text="发票号码" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="InvoiceNoInput" /></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Text="购买方税号" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="BuyerTaxInput" /></StackPanel>
+                            <StackPanel Grid.Row="1"><TextBlock Text="开票日期" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="InvoiceDateInput" /></StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Text="价税合计" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="TotalAmountInput" /></StackPanel>
+                            <StackPanel Grid.Row="2"><TextBlock Text="销售方名称" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="SellerNameInput" /></StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Text="销售方税号" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="SellerTaxInput" /></StackPanel>
+                            <StackPanel Grid.Row="3"><TextBlock Text="购买方名称" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="BuyerNameInput" /></StackPanel>
+                            <StackPanel Grid.Row="3" Grid.Column="1"><TextBlock Text="税额" Style="{StaticResource MutedTextStyle}" /><TextBox x:Name="TaxAmountInput" /></StackPanel>
+                            <StackPanel Grid.Row="4"><TextBlock Text="发票类型" Style="{StaticResource MutedTextStyle}" /><ComboBox x:Name="InvoiceTypeInput" IsEditable="True" HorizontalAlignment="Stretch" MinHeight="36"><ComboBoxItem Content="增值税普通发票" /><ComboBoxItem Content="增值税专用发票" /><ComboBoxItem Content="增值税电子发票" /></ComboBox></StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="1"><TextBlock Text="业务分类" Style="{StaticResource MutedTextStyle}" /><Grid ColumnSpacing="6"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><ComboBox x:Name="CategoryInput" IsEditable="True" HorizontalAlignment="Stretch" MinHeight="36" /><Button Grid.Column="1" Width="38" Height="36" Padding="0" ToolTipService.ToolTip="永久添加当前分类" Click="OnAddCategory"><FontIcon Glyph="&#xE710;" FontSize="15" /></Button><Button Grid.Column="2" Width="38" Height="36" Padding="0" ToolTipService.ToolTip="删除当前分类" Click="OnDeleteCategory"><FontIcon Glyph="&#xE74D;" FontSize="15" /></Button></Grid><TextBlock x:Name="CategoryFeedbackText" Margin="2,4,0,0" FontSize="11" Foreground="{StaticResource AccentBrush}" /></StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,12,0,0"><Button Content="取消" MinWidth="90" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" /><Button Content="保存" MinWidth="100" Style="{StaticResource AccentButtonStyle}" Click="OnSaveReview" PointerEntered="OnInteractiveEnter" PointerExited="OnInteractiveExit" PointerPressed="OnCommandPressed" PointerReleased="OnCommandReleased" /></StackPanel>
+                </Grid>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Canvas.ZIndex="50" Background="#73000000" Visibility="Collapsed">
+            <Border Width="520" CornerRadius="12" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Padding="32,28,32,26" RowSpacing="20">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" Background="Transparent" ToolTipService.ToolTip="关闭" Click="OnCloseAbout"><FontIcon Glyph="&#xE711;" FontSize="14" /></Button>
+                        <StackPanel Orientation="Horizontal" Spacing="18">
+                            <Image Width="64" Height="64" Source="ms-appx:///Assets/invoice-toolbox-icon-256.png" />
+                            <StackPanel VerticalAlignment="Center" Spacing="5"><StackPanel Orientation="Horizontal"><TextBlock Text="发票" FontFamily="Noto Serif SC" FontSize="27" FontWeight="Bold" /><TextBlock Text="工具箱" FontFamily="Noto Serif SC" FontSize="27" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></StackPanel><TextBlock Text="办公工具箱出品" Foreground="{ThemeResource MutedTextBrush}" FontSize="14" /></StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Spacing="8"><TextBlock Text="让发票整理回到清晰、可靠的工作流" FontSize="17" FontWeight="SemiBold" /><TextBlock Text="批量识别、人工核对、智能归档与报表导出，所有数据均在本机处理。" Foreground="{ThemeResource MutedTextBrush}" TextWrapping="Wrap" LineHeight="22" /><StackPanel Orientation="Horizontal" Spacing="18"><TextBlock Text="版本  1.0.0.46" FontWeight="SemiBold" /><TextBlock Text="版本日期  2026-07-13" Foreground="{ThemeResource MutedTextBrush}" /></StackPanel></StackPanel>
+                        <Border Grid.Row="2" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,1,0,1" Padding="0,14"><StackPanel Spacing="6"><TextBlock Text="新版本请前往办公工具箱网站下载更新" Foreground="{ThemeResource MutedTextBrush}" /><HyperlinkButton Content="前往办公工具箱网站  →" NavigateUri="https://www.bangong02.com/" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Left" Padding="0" FontWeight="SemiBold" /></StackPanel></Border>
+                        <TextBlock Grid.Row="3" Text="Copyright © 2026 办公工具箱. All rights reserved." Foreground="{ThemeResource MutedTextBrush}" FontSize="12" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ExportSettingsOverlay" Grid.RowSpan="2" Canvas.ZIndex="55" Background="#73000000" Visibility="Collapsed">
+            <Border Width="760" CornerRadius="12" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Grid Padding="28,22,22,18"><StackPanel Spacing="4"><TextBlock Text="导出与归档设置" FontSize="23" FontWeight="SemiBold" /><TextBlock Text="确认本次归档结构和文件命名方式" Foreground="{ThemeResource MutedTextBrush}" /></StackPanel><Button HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" Background="Transparent" Click="OnCloseExportSettings"><FontIcon Glyph="&#xE711;" FontSize="14" /></Button></Grid>
+                    <Grid Grid.Row="1" Margin="28,0" ColumnSpacing="16">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Border Background="{ThemeResource SurfaceMutedBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions><TextBlock Text="文件重命名规则" FontSize="16" FontWeight="SemiBold" /><StackPanel Grid.Row="1" Margin="0,7,0,10" Spacing="7"><TextBlock Text="归档目录结构" Style="{StaticResource MutedTextStyle}" /><ComboBox x:Name="ArchiveModeCombo" SelectedIndex="0" HorizontalAlignment="Stretch"><ComboBoxItem Content="按开票年月" /><ComboBoxItem Content="按业务分类 / 年月" /><ComboBoxItem Content="按销售方 / 年月" /></ComboBox></StackPanel><ListView x:Name="NameFieldsList" Grid.Row="2" SelectionMode="None" CanReorderItems="True" ReorderMode="Enabled" AllowDrop="True" MaxHeight="280" /><StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0"><TextBlock Text="字段分隔符" VerticalAlignment="Center" /><TextBox x:Name="NameSeparatorInput" Text="_" Width="64" MaxLength="3" /></StackPanel></Grid>
+                        </Border>
+                        <Border Grid.Column="1" Background="{ThemeResource SurfaceMutedBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions><TextBlock Text="Excel 导出列与顺序" FontSize="16" FontWeight="SemiBold" /><TextBlock Grid.Row="1" Text="勾选控制是否导出，拖动整行控制列顺序" Style="{StaticResource MutedTextStyle}" Margin="0,7,0,10" /><ListView x:Name="ReportFieldsList" Grid.Row="2" SelectionMode="None" CanReorderItems="True" ReorderMode="Enabled" AllowDrop="True" MaxHeight="350" /></Grid>
+                        </Border>
+                    </Grid>
+                    <Border Grid.Row="2" Margin="0,22,0,0" Padding="28,16" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,1,0,0"><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10"><Button Content="取消" MinWidth="92" Click="OnCloseExportSettings" /><Button Content="开始导出与归档" MinWidth="150" Style="{StaticResource AccentButtonStyle}" Click="OnConfirmExport" /></StackPanel></Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ExportOverlay" Grid.RowSpan="2" Canvas.ZIndex="60" Background="#73000000" Visibility="Collapsed">
+            <Border Width="500" CornerRadius="12" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="32,30">
+                <StackPanel Spacing="20">
+                    <Grid><Border Width="52" Height="52" CornerRadius="26" Background="{ThemeResource SuccessSoftBrush}" HorizontalAlignment="Left"><FontIcon x:Name="ExportResultIcon" Glyph="&#xE73E;" Foreground="{StaticResource SuccessBrush}" FontSize="22" /></Border><Button HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" Background="Transparent" ToolTipService.ToolTip="关闭" Click="OnCloseExport"><FontIcon Glyph="&#xE711;" FontSize="14" /></Button></Grid>
+                    <StackPanel Spacing="7"><TextBlock x:Name="ExportResultTitle" Text="导出完成" FontSize="24" FontWeight="SemiBold" /><TextBlock x:Name="ExportResultMessage" Text="报表和发票已经保存。" Foreground="{ThemeResource MutedTextBrush}" TextWrapping="Wrap" /></StackPanel>
+                    <Border x:Name="ExportPathPanel" Background="{ThemeResource SurfaceMutedBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12"><TextBlock x:Name="ExportPathText" TextWrapping="Wrap" FontFamily="Consolas" FontSize="12" /></Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10"><Button Content="完成" MinWidth="88" Click="OnCloseExport" /><Button x:Name="ExportOpenButton" Content="打开文件夹" MinWidth="112" Style="{StaticResource AccentButtonStyle}" Click="OnOpenExportFolder" /></StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

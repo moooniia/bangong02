@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>发票工具箱</title>
+    <link rel="stylesheet" href="/static/design.css">
+  </head>
+  <body>
+    <svg class="sprite" aria-hidden="true">
+      <symbol id="icon-receipt" viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6M9 16h4"/></symbol>
+      <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+      <symbol id="icon-archive" viewBox="0 0 24 24"><path d="M4 7h16M6 7v12h12V7M9 11h6"/><path d="M5 3h14l1 4H4Z"/></symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7Z"/></symbol>
+      <symbol id="icon-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5Z"/></symbol>
+      <symbol id="icon-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="icon-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></symbol>
+      <symbol id="icon-zoom-out" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></symbol>
+      <symbol id="icon-rotate" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v7h-7"/></symbol>
+      <symbol id="icon-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+      <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    </svg>
+
+    <div class="appShell" id="appShell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brandMark"><svg><use href="#icon-receipt"/></svg></div>
+          <div>
+            <h1>发票工具箱</h1>
+            <p>批量识别 · 归档 · 核对</p>
+          </div>
+        </div>
+
+        <section class="sourcePanel">
+          <div class="pathButton">
+            <svg><use href="#icon-folder"/></svg>
+            <span><strong>发票文件夹</strong><input id="folderInput" placeholder="点击右侧按钮选择" aria-label="发票文件夹路径"></span>
+            <button type="button" class="pathChooseButton" id="folderChooseButton">选择</button>
+          </div>
+          <div class="pathButton">
+            <svg><use href="#icon-archive"/></svg>
+            <span><strong>归档文件夹</strong><input id="outputInput" placeholder="点击右侧按钮选择" aria-label="归档输出文件夹"></span>
+            <button type="button" class="pathChooseButton" id="outputChooseButton">选择</button>
+          </div>
+        </section>
+
+        <section class="archivePanel" aria-label="归档规则">
+          <div class="panelTitle">归档规则</div>
+          <label><input type="radio" name="archiveMode" value="month" checked> 按开票年月</label>
+          <label><input type="radio" name="archiveMode" value="category_month"> 按业务分类 / 年月</label>
+          <label><input type="radio" name="archiveMode" value="seller_month"> 按销售方 / 年月</label>
+        </section>
+
+        <section class="statsGrid">
+          <div class="statTile"><span>总文件</span><strong id="totalFiles">0</strong></div>
+          <div class="statTile"><span>已确认</span><strong id="confirmedFiles">0</strong></div>
+          <div class="statTile warn"><span>待确认</span><strong id="reviewFiles">0</strong></div>
+          <div class="statTile"><span>重复跳过</span><strong id="duplicateFiles">0</strong></div>
+        </section>
+
+        <div class="totalBox">
+          <span>价税合计</span>
+          <strong id="totalAmount">¥0.00</strong>
+        </div>
+
+        <section class="scanProgress" id="scanProgress" aria-live="polite" hidden>
+          <div class="progressHeader">
+            <strong id="scanProgressLabel">准备识别</strong>
+            <span id="scanProgressCount">0 / 0</span>
+          </div>
+          <div class="progressTrack"><div class="progressBar" id="scanProgressBar"></div></div>
+          <p id="scanProgressCurrent">等待开始</p>
+        </section>
+
+        <button class="primaryButton" id="scanButton"><svg><use href="#icon-play"/></svg>开始识别</button>
+        <button class="resetButton" id="resetButton"><svg><use href="#icon-rotate"/></svg>重新开始</button>
+      </aside>
+
+      <main class="workspace">
+        <header class="toolbar">
+          <div class="toolbarTitle">
+            <span class="statusDot"></span>
+            <strong>发票明细</strong>
+            <em id="summaryText">未加载</em>
+          </div>
+          <div class="toolbarActions">
+            <button class="ghostButton" id="themeToggle" title="切换深浅色">
+              <svg class="sun"><use href="#icon-sun"/></svg>
+              <svg class="moon"><use href="#icon-moon"/></svg>
+            </button>
+            <button class="ghostButton" id="aboutButton" title="关于发票工具箱">
+              <svg><use href="#icon-info"/></svg>
+            </button>
+            <button class="exportButton" id="exportButton"><svg><use href="#icon-export"/></svg>导出报表与归档</button>
+          </div>
+        </header>
+
+        <section class="contentGrid">
+          <div class="tablePanel">
+            <table class="invoiceTable">
+              <thead>
+              <tr data-open-review>
+                  <th>公司抬头</th>
+                  <th>购买方税号</th>
+                  <th>销售方</th>
+                  <th>销售方税号</th>
+                  <th>开票日期</th>
+                  <th>不含税金额</th>
+                  <th>税额</th>
+                  <th>价税合计</th>
+                  <th>税率</th>
+                  <th>发票类型</th>
+                  <th>发票号码</th>
+                  <th>业务分类</th>
+                  <th>月份归档</th>
+                  <th>原文件</th>
+                  <th>归档文件</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceRows"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="7" id="tableTotalLabel">合计（共 0 张）</td>
+                  <td class="amount strong" id="tableTotalAmount">¥0.00</td>
+                  <td colspan="7"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <footer class="hintbar">
+          <span>双击行可设置业务分类与修改数据</span>
+          <span>右键可删除行</span>
+          <span>点任意行打开核对面板</span>
+        </footer>
+      </main>
+
+      <aside class="reviewDrawer" id="reviewDrawer" aria-hidden="true">
+        <div class="drawerHead">
+          <div>
+            <strong>人工核对</strong>
+            <p id="drawerFileName">选择一张发票</p>
+          </div>
+          <button class="ghostButton iconOnly" id="closeDrawer" title="收起"><svg><use href="#icon-x"/></svg></button>
+        </div>
+        <button class="previewCard" id="openPreview">
+          <img id="previewThumb" alt="发票预览">
+          <span>打开浮动原图</span>
+        </button>
+        <div class="fieldList">
+          <label><span>购买方抬头</span><input name="buyer_name"></label>
+          <label><span>购买方税号</span><input name="buyer_tax"></label>
+          <label><span>销售方名称</span><input name="seller_name"></label>
+          <label><span>销售方税号</span><input name="seller_tax"></label>
+          <label><span>开票日期</span><input name="invoice_date"></label>
+          <label><span>不含税金额</span><input name="pretax_amount"></label>
+          <label><span>税额</span><input name="tax_amount"></label>
+          <label><span>价税合计</span><input name="total_amount"></label>
+          <label><span>税率</span><input name="tax_rate"></label>
+          <label><span>发票类型</span><input name="invoice_type"></label>
+          <label><span>发票号码</span><input name="invoice_no"></label>
+          <label><span>业务分类</span><input name="category"></label>
+          <label><span>商品/服务</span><input name="line_items"></label>
+        </div>
+        <div class="drawerActions">
+          <button class="saveButton" id="saveButton"><svg><use href="#icon-check"/></svg>保存修改</button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="aboutOverlay" id="aboutOverlay" aria-hidden="true">
+      <section class="aboutDialog" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+        <div class="aboutMark"><svg><use href="#icon-receipt"/></svg></div>
+        <h2 id="aboutTitle">发票工具箱</h2>
+        <p class="aboutVersion">版本 1.0.0</p>
+        <p class="aboutVersion">办公工具箱出品</p>
+        <p class="aboutCopy">Copyright © 2026 办公工具箱. All rights reserved.</p>
+        <a class="aboutLink" href="https://www.bangong02.com/" target="_blank" rel="noreferrer">访问办公工具箱官网</a>
+        <button class="plainButton aboutClose" id="closeAbout">关闭</button>
+      </section>
+    </div>
+
+    <div class="floatingPreview" id="floatingPreview" aria-hidden="true">
+      <div class="floatingToolbar" id="floatingToolbar">
+        <strong>发票原图核对</strong>
+        <div>
+          <button class="previewTool" id="zoomOut" title="缩小"><svg><use href="#icon-zoom-out"/></svg></button>
+          <button class="previewTool" id="zoomIn" title="放大"><svg><use href="#icon-zoom-in"/></svg></button>
+          <button class="previewTool" id="fitImage" title="适合窗口"><svg><use href="#icon-fit"/></svg></button>
+          <button class="previewTool" id="rotateImage" title="旋转"><svg><use href="#icon-rotate"/></svg></button>
+          <button class="previewTool" id="closePreview" title="关闭" data-no-drag><svg><use href="#icon-x"/></svg></button>
+        </div>
+      </div>
+      <div class="previewStage" id="previewStage">
+        <img id="largePreview" alt="放大发票">
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/static/design.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "product": "发票工具箱",
+  "appId": "Paz.InvoiceToolbox",
+  "version": "1.0.0.46",
+  "releaseDate": "2026-07-13",
+  "build": "2026.07.13.2",
+  "downloadUrl": "/downloads/InvoiceToolbox.WinUI_latest.msix",
+  "appInstallerUrl": "",
+  "mandatory": false,
+  "notes": [
+    "优化发票批量识别、人工核对和报表归档工作流。",
+    "新增网站版本检查入口，后续版本可从办公工具箱网站获取更新。",
+    "统一发票工具箱标题字体，并将导出按钮调整为粉色主操作。",
+    "调整界面细节，使发票工具箱与办公工具箱视觉风格保持一致。"
+  ]
+}

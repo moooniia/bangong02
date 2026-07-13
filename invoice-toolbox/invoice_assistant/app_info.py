@@ -1,0 +1,5 @@
+APP_NAME = "发票工具箱"
+APP_VERSION = "1.0.0"
+APP_BRAND = "办公工具箱"
+APP_WEBSITE = "https://www.bangong02.com/"
+APP_COPYRIGHT = "Copyright © 2026 办公工具箱. All rights reserved."

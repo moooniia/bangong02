@@ -1,0 +1,65 @@
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from invoice_assistant.models import InvoiceRecord
+from invoice_assistant.record_builder import _enrich_consistent_party_fields, _validate_final_records, scan_invoice_files
+
+
+class RecordBuilderScanTest(unittest.TestCase):
+    def test_fills_only_unambiguous_party_values_learned_in_same_batch(self):
+        known = InvoiceRecord(row_id=1, original_path="1.pdf", original_name="1.pdf", seller_name="示例销售有限公司", seller_tax="91310115MA1234567X")
+        missing_name = InvoiceRecord(row_id=2, original_path="2.pdf", original_name="2.pdf", seller_tax="91310115MA1234567X")
+        missing_name.add_review("seller_name", "missing")
+        missing_tax = InvoiceRecord(row_id=3, original_path="3.pdf", original_name="3.pdf", seller_name="示例销售有限公司")
+        missing_tax.add_review("seller_tax", "missing")
+
+        _enrich_consistent_party_fields([known, missing_name, missing_tax])
+
+        self.assertEqual(missing_name.seller_name, "示例销售有限公司")
+        self.assertEqual(missing_tax.seller_tax, "91310115MA1234567X")
+        self.assertNotIn("seller_name", missing_name.fields_needing_review)
+        self.assertNotIn("seller_tax", missing_tax.fields_needing_review)
+
+    def test_final_validation_never_confirms_an_empty_required_field(self):
+        record = InvoiceRecord(
+            row_id=1,
+            original_path="1.pdf",
+            original_name="1.pdf",
+            buyer_name="测试购买方",
+            buyer_tax="91310115MA1234567X",
+            seller_name="",
+            seller_tax="91310115MA7654321X",
+            invoice_date="2026-07-12",
+            total_amount="100.00",
+            invoice_type="增值税电子发票",
+            invoice_no="26310000000000000001",
+            status="已确认",
+        )
+
+        _validate_final_records([record])
+
+        self.assertIn("seller_name", record.fields_needing_review)
+        self.assertEqual(record.status, "需人工确认")
+
+    @patch("invoice_assistant.record_builder.build_record")
+    def test_scans_nested_folders_but_excludes_selected_archive_root(self, build_record):
+        build_record.side_effect = lambda path, row_id: InvoiceRecord(row_id=row_id, original_path=str(path), original_name=path.name)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            nested = root / "客户资料" / "2025年11月"
+            archive = root / "归档文件夹"
+            nested.mkdir(parents=True)
+            archive.mkdir()
+            (root / "top.pdf").write_bytes(b"pdf")
+            (nested / "nested.pdf").write_bytes(b"pdf")
+            (archive / "archived.pdf").write_bytes(b"pdf")
+
+            records = scan_invoice_files(root, max_workers=1, exclude_roots=[archive])
+
+        self.assertEqual({record.original_name for record in records}, {"top.pdf", "nested.pdf"})
+
+
+if __name__ == "__main__":
+    unittest.main()

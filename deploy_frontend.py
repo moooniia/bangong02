@@ -12,7 +12,7 @@ REMOTE_DIR = '/home/toolbox/frontend'
 # scan-to-text.html / image-rotate.html，靠手写清单太容易漏文件）
 files_to_deploy = sorted(
     os.path.relpath(p, LOCAL_DIR).replace(os.sep, '/')
-    for pattern in ('*.html', 'assets/*')
+    for pattern in ('*.html', '*.json', 'assets/*', 'downloads/*')
     for p in glob.glob(os.path.join(LOCAL_DIR, pattern))
     if os.path.isfile(p)
 )

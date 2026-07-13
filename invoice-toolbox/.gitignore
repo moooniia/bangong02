@@ -1,0 +1,17 @@
+build/
+dist/
+outputs/
+__pycache__/
+*.pyc
+*.pfx
+*.cer
+*.msix
+*.appinstaller
+*.exe
+*.log
+*.jsonl
+tools/vision_ocr_bin
+winui_app/bin/
+winui_app/obj/
+winui_app/AppPackages/
+winui_app/Backend/

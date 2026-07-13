@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>发票工具箱</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>发票工具箱</h1>
+        <p id="folderText">未加载文件夹</p>
+      </div>
+      <div class="actions">
+        <input id="folderInput" value="/Users/paz/Desktop/发票助手/文件" aria-label="文件夹路径">
+        <button id="scanBtn">扫描</button>
+        <button id="exportBtn">导出 Excel</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="tablePane">
+        <div class="summary">
+          <span id="totalCount">0 张</span>
+          <span id="reviewCount">0 需确认</span>
+          <span id="savedState">未导出</span>
+        </div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>购买方</th>
+                <th>销售方</th>
+                <th>日期</th>
+                <th>价税合计</th>
+                <th>原因</th>
+                <th>原文件</th>
+              </tr>
+            </thead>
+            <tbody id="recordRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="detailPane">
+        <div class="previewBar">
+          <strong id="detailTitle">选择一张发票</strong>
+          <a id="openFile" href="#" target="_blank" rel="noreferrer">打开原文件</a>
+        </div>
+        <div class="preview">
+          <img id="previewImage" alt="发票预览">
+        </div>
+        <form id="detailForm">
+          <div class="formGrid">
+            <label>状态<input name="status"></label>
+            <label>业务分类<input name="category"></label>
+            <label data-field="buyer_name">购买方抬头<input name="buyer_name"></label>
+            <label data-field="buyer_tax">购买方税号<input name="buyer_tax"></label>
+            <label data-field="seller_name">销售方名称<input name="seller_name"></label>
+            <label data-field="seller_tax">销售方税号<input name="seller_tax"></label>
+            <label data-field="invoice_date">开票日期<input name="invoice_date" placeholder="YYYY-MM-DD"></label>
+            <label data-field="pretax_amount">不含税金额<input name="pretax_amount"></label>
+            <label data-field="tax_amount">税额<input name="tax_amount"></label>
+            <label data-field="total_amount">价税合计<input name="total_amount"></label>
+            <label>税率<input name="tax_rate"></label>
+            <label>发票类型<input name="invoice_type"></label>
+            <label>发票号码<input name="invoice_no"></label>
+            <label class="wide">商品/服务<input name="line_items"></label>
+          </div>
+          <div class="reviewBox">
+            <strong>需人工确认</strong>
+            <div id="reviewReasons">无</div>
+          </div>
+          <button type="submit">保存本行</button>
+        </form>
+      </aside>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

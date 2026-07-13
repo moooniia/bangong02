@@ -28,5 +28,26 @@ Thumbs.db
 .vscode/
 *.swp
 
+# 桌面软件构建产物与签名材料
+invoice-toolbox/build/
+invoice-toolbox/dist/
+invoice-toolbox/outputs/
+invoice-toolbox/winui_app/bin/
+invoice-toolbox/winui_app/obj/
+invoice-toolbox/winui_app/AppPackages/
+invoice-toolbox/winui_app/Backend/
+invoice-toolbox/**/*.pfx
+invoice-toolbox/**/*.cer
+invoice-toolbox/**/*.msix
+invoice-toolbox/**/*.appinstaller
+invoice-toolbox/**/*.exe
+invoice-toolbox/**/*.log
+invoice-toolbox/**/*.jsonl
+invoice-toolbox/tools/vision_ocr_bin
+
 # 临时脚本输出
 /tmp/
+
+# 网站发布下载包（部署用，不进源码）
+server/frontend/downloads/*.msix
+server/frontend/downloads/*.appinstaller

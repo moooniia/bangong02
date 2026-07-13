@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>发票工具箱图标预览</title>
+    <style>
+      :root {
+        --pink: #e94c88;
+        --pink-deep: #d73576;
+        --ink: #252525;
+        --muted: #888;
+        --line: #ebebeb;
+        --bg: #fbfbfb;
+        --surface: #fff;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 34px;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 10px 30px rgba(233,76,136,.08);
+      }
+
+      .hero {
+        height: 156px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #fdf0f6;
+      }
+
+      .card h2 {
+        margin: 14px 0 8px;
+        font-size: 16px;
+      }
+
+      .sizes {
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        min-height: 54px;
+      }
+
+      .size {
+        display: grid;
+        gap: 5px;
+        justify-items: center;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .icon {
+        display: block;
+        border-radius: 22%;
+      }
+
+      @media (max-width: 900px) {
+        body { padding: 22px; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>发票工具箱图标预览</h1>
+    <p>最终 exe 名称：发票工具箱。下面是三个方向，小尺寸也放在下面一起看。</p>
+
+    <main class="grid">
+      <section class="card">
+        <div class="hero">
+          <svg class="icon" width="112" height="112" viewBox="0 0 256 256" aria-label="方案A">
+            <defs>
+              <linearGradient id="gA" x1="42" y1="24" x2="214" y2="232" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#f47bab"/>
+                <stop offset="1" stop-color="#e94c88"/>
+              </linearGradient>
+              <filter id="sA" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#b51d5b" flood-opacity=".25"/>
+              </filter>
+            </defs>
+            <rect x="24" y="24" width="208" height="208" rx="48" fill="url(#gA)"/>
+            <path filter="url(#sA)" d="M83 59h90c10 0 18 8 18 18v121l-19-11-16 11-16-11-16 11-16-11-17 11-16-10V77c0-10 8-18 18-18Z" fill="#fff"/>
+            <path d="M103 98h50M103 126h66M103 154h42" stroke="#e94c88" stroke-width="12" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>A. 发票票据</h2>
+        <div class="sizes">
+          <div class="size"><svg class="icon" width="16" height="16" viewBox="0 0 256 256"><use href="#miniA"/></svg><span>16</span></div>
+          <div class="size"><svg class="icon" width="32" height="32" viewBox="0 0 256 256"><use href="#miniA"/></svg><span>32</span></div>
+          <div class="size"><svg class="icon" width="48" height="48" viewBox="0 0 256 256"><use href="#miniA"/></svg><span>48</span></div>
+          <div class="size"><svg class="icon" width="64" height="64" viewBox="0 0 256 256"><use href="#miniA"/></svg><span>64</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hero">
+          <svg class="icon" width="112" height="112" viewBox="0 0 256 256" aria-label="方案B">
+            <rect x="24" y="24" width="208" height="208" rx="48" fill="#e94c88"/>
+            <path d="M72 104h112v84c0 11-9 20-20 20H92c-11 0-20-9-20-20v-84Z" fill="#fff"/>
+            <path d="M91 86V72c0-13 10-23 23-23h28c13 0 23 10 23 23v14" fill="none" stroke="#fff" stroke-width="15" stroke-linecap="round"/>
+            <path d="M95 126h66M95 153h48" stroke="#e94c88" stroke-width="11" stroke-linecap="round"/>
+            <path d="M74 105h108" stroke="#d73576" stroke-width="10" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>B. 工具箱 + 发票</h2>
+        <div class="sizes">
+          <div class="size"><svg class="icon" width="16" height="16" viewBox="0 0 256 256"><use href="#miniB"/></svg><span>16</span></div>
+          <div class="size"><svg class="icon" width="32" height="32" viewBox="0 0 256 256"><use href="#miniB"/></svg><span>32</span></div>
+          <div class="size"><svg class="icon" width="48" height="48" viewBox="0 0 256 256"><use href="#miniB"/></svg><span>48</span></div>
+          <div class="size"><svg class="icon" width="64" height="64" viewBox="0 0 256 256"><use href="#miniB"/></svg><span>64</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hero">
+          <svg class="icon" width="112" height="112" viewBox="0 0 256 256" aria-label="方案C">
+            <rect x="24" y="24" width="208" height="208" rx="48" fill="#252525"/>
+            <path d="M77 57h89c11 0 19 8 19 19v121l-18-10-15 10-15-10-15 10-15-10-17 10-13-9V76c0-11 8-19 19-19Z" fill="#fff"/>
+            <path d="M102 95h54M102 123h58M102 151h35" stroke="#e94c88" stroke-width="12" stroke-linecap="round"/>
+            <circle cx="174" cy="178" r="28" fill="#e94c88"/>
+            <path d="m162 178 9 9 18-22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>C. 深色正式版</h2>
+        <div class="sizes">
+          <div class="size"><svg class="icon" width="16" height="16" viewBox="0 0 256 256"><use href="#miniC"/></svg><span>16</span></div>
+          <div class="size"><svg class="icon" width="32" height="32" viewBox="0 0 256 256"><use href="#miniC"/></svg><span>32</span></div>
+          <div class="size"><svg class="icon" width="48" height="48" viewBox="0 0 256 256"><use href="#miniC"/></svg><span>48</span></div>
+          <div class="size"><svg class="icon" width="64" height="64" viewBox="0 0 256 256"><use href="#miniC"/></svg><span>64</span></div>
+        </div>
+      </section>
+    </main>
+
+    <svg width="0" height="0" aria-hidden="true">
+      <symbol id="miniA" viewBox="0 0 256 256">
+        <rect x="24" y="24" width="208" height="208" rx="48" fill="#e94c88"/>
+        <path d="M83 59h90c10 0 18 8 18 18v121l-19-11-16 11-16-11-16 11-16-11-17 11-16-10V77c0-10 8-18 18-18Z" fill="#fff"/>
+        <path d="M103 99h50M103 128h66M103 157h42" stroke="#e94c88" stroke-width="13" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="miniB" viewBox="0 0 256 256">
+        <rect x="24" y="24" width="208" height="208" rx="48" fill="#e94c88"/>
+        <path d="M72 104h112v84c0 11-9 20-20 20H92c-11 0-20-9-20-20v-84Z" fill="#fff"/>
+        <path d="M91 86V72c0-13 10-23 23-23h28c13 0 23 10 23 23v14" fill="none" stroke="#fff" stroke-width="15" stroke-linecap="round"/>
+        <path d="M96 130h64M96 157h45" stroke="#e94c88" stroke-width="12" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="miniC" viewBox="0 0 256 256">
+        <rect x="24" y="24" width="208" height="208" rx="48" fill="#252525"/>
+        <path d="M77 57h89c11 0 19 8 19 19v121l-18-10-15 10-15-10-15 10-15-10-17 10-13-9V76c0-11 8-19 19-19Z" fill="#fff"/>
+        <path d="M102 98h54M102 128h58M102 158h35" stroke="#e94c88" stroke-width="13" stroke-linecap="round"/>
+        <circle cx="174" cy="178" r="27" fill="#e94c88"/>
+      </symbol>
+    </svg>
+  </body>
+</html>
