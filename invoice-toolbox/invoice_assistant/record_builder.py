@@ -157,14 +157,14 @@ def _is_suspicious_party_name(value: str) -> bool:
         return False
     if len(compact) < 3:
         return True
-    if compact.startswith(("名称", "称：", "称:", "机店号", "税号", "纳税人识别号")):
+    if compact.startswith(("名称", "称：", "称:", "桥：", "桥:", "社：", "社:", "祢：", "祢:", "林：", "林:", "机店号", "税号", "纳税人识别号", "供货单位")):
         return True
     if re.fullmatch(r"[\dA-Z]+", compact, re.I):
         return True
     label_tokens = (
         "统一社会信用", "纳税人识别", "开户银行", "开户行", "银行账号", "地址电话",
         "机器编号", "校验码", "发票号码", "发票代码", "项目名称", "规格型号",
-        "收款人", "复核人", "开票人", "销方开户", "购买方信息", "销售方信息",
+        "收款人", "复核人", "开票人", "销方开户", "供货单位", "购买方信息", "销售方信息",
     )
     if any(token in compact for token in label_tokens):
         return True

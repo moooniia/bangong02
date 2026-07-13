@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap desktop rescap">
-  <Identity Name="Paz.InvoiceToolbox" Publisher="CN=Paz Invoice Toolbox" Version="1.0.0.48" />
+  <Identity Name="Paz.InvoiceToolbox" Publisher="CN=Paz Invoice Toolbox" Version="1.0.0.50" />
   <Properties>
     <DisplayName>发票工具箱</DisplayName>
     <PublisherDisplayName>Paz</PublisherDisplayName>
@@ -19,7 +19,7 @@
   </Dependencies>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
-      <uap:VisualElements DisplayName="发票工具箱" Description="批量识别、归档和核对发票" BackgroundColor="#ED478A" Square44x44Logo="Assets\Square44x44Logo.png" Square150x150Logo="Assets\Square150x150Logo.png">
+      <uap:VisualElements DisplayName="发票工具箱" Description="批量识别、归档和核对发票" BackgroundColor="transparent" Square44x44Logo="Assets\Square44x44Logo.png" Square150x150Logo="Assets\Square150x150Logo.png">
         <uap:DefaultTile ShortName="发票工具箱" Square71x71Logo="Assets\SmallTile.png" Wide310x150Logo="Assets\Wide310x150Logo.png" Square310x310Logo="Assets\Square310x310Logo.png" />
       </uap:VisualElements>
       <Extensions>
@@ -31,3 +31,4 @@
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>
+

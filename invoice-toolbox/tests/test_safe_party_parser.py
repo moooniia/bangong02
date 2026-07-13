@@ -55,6 +55,21 @@ class SafePartyParserTest(unittest.TestCase):
         self.assertEqual(parsed.seller_tax, "91110000MA1SELL001")
         self.assertNotIn("seller_name", parsed.fields_needing_review)
 
+    def test_cleans_damaged_name_label_prefixes(self):
+        parsed = parse_party_fields(
+            [
+                "购买方信息",
+                "称：江西省勘察设计研究院有限公司",
+                "统一社会信用代码：91360000158286715E",
+                "销售方信息",
+                "社：上海浦东华海加油站有限公司",
+                "纳税人识别号：91310115133504376H",
+            ]
+        )
+
+        self.assertEqual(parsed.buyer_name, "江西省勘察设计研究院有限公司")
+        self.assertEqual(parsed.seller_name, "上海浦东华海加油站有限公司")
+
     def test_clears_seller_when_it_matches_buyer(self):
         parsed = parse_party_fields(
             [

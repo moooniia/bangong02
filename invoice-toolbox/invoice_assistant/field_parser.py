@@ -361,6 +361,11 @@ def _guess_line_item(lines: List[OcrLine]) -> str:
 
 def _clean_name(value: str) -> str:
     value = re.sub(r"\s+", "", value)
+    value = re.sub(
+        r"^(?:购买方|购方|销售方|销方)?(?:名称|名|称|桥|社|祢|林|抬头)\s*[：:]+",
+        "",
+        value,
+    )
     if not re.search(r"[（(]个体工商户[）)]$", value):
         value = re.sub(r"[（(][^）)]*[）)]$", "", value)
     return value.strip("：:，,。 ")

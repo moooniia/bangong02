@@ -110,6 +110,25 @@ class FieldParserTest(unittest.TestCase):
         self.assertEqual(record.seller_name, "上海建科检验有限公司")
         self.assertEqual(record.seller_tax, "91310112666068482G")
 
+    def test_strips_damaged_name_label_prefixes_from_party_names(self):
+        record = build_record_from_ocr_lines(
+            1,
+            Path("photo.jpg"),
+            [
+                OcrLine("林：江西省勘察设计研究院有限公司", 0.095, 0.736, 0.24, 0.023),
+                OcrLine("统一社会信用代码/纳税人识别号：91360000158286715E", 0.055, 0.653, 0.38, 0.034),
+                OcrLine("桥：上海浦东华海加油站有限公司", 0.571, 0.736, 0.22, 0.023),
+                OcrLine("统一社会信用代码/纳税人识别号：91310115133504376H", 0.733, 0.653, 0.22, 0.034),
+                OcrLine("开票日期：2022年06月14日", 0.736, 0.854, 0.18, 0.023),
+                OcrLine("（小写）￥253.31", 0.68, 0.274, 0.18, 0.03),
+            ],
+        )
+
+        self.assertEqual(record.buyer_name, "江西省勘察设计研究院有限公司")
+        self.assertEqual(record.seller_name, "上海浦东华海加油站有限公司")
+        self.assertNotIn("林：", record.buyer_name)
+        self.assertNotIn("桥：", record.seller_name)
+
     def test_identifies_ordinary_vat_invoice_type(self):
         record = build_record_from_ocr_lines(
             1,

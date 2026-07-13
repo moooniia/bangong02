@@ -7,7 +7,7 @@ TextLine = Union[str, Tuple[str, float]]
 
 BUYER_ANCHOR_RE = re.compile(r"^(?:购|买方信息|购买方\s*[：:]?\s*$|购方信息|购货单位|购买方信息)")
 SELLER_ANCHOR_RE = re.compile(r"^(?:销|销方信息|售方信息|销售方\s*[：:]?\s*$|销货单位|销售方信息)")
-NAME_RE = re.compile(r"名\s*称\s*[：:]\s*(.+)")
+NAME_RE = re.compile(r"(?:名\s*称|名|称|桥|社|祢|林|抬头)\s*[：:]\s*(.+)")
 TAX_RE = re.compile(r"(?:纳税人识别号|统一社会信用代码|税号)\s*[：:]\s*([A-Z0-9]{15,20})", re.I)
 
 
@@ -24,6 +24,9 @@ def parse_party_fields(text_lines: Sequence[TextLine]) -> InvoicePartyFields:
 
     direct_buyer_name = _first_line_match(r"购买方名称[：:·]?\s*(.+)", lines)
     direct_seller_name = _first_line_match(r"销售方名称[：:·]?\s*(.+)", lines)
+
+    direct_buyer_name = _clean_name(direct_buyer_name)
+    direct_seller_name = _clean_name(direct_seller_name)
 
     if _valid_name(direct_buyer_name):
         result.buyer_name = direct_buyer_name
@@ -66,8 +69,9 @@ def _extract_section_values(lines: Iterable[str]) -> dict:
             continue
 
         name_match = NAME_RE.search(line)
-        if name_match and _valid_name(name_match.group(1)):
-            values.setdefault(f"{current_section}_name", name_match.group(1).strip())
+        cleaned_name = _clean_name(name_match.group(1) if name_match else None)
+        if name_match and _valid_name(cleaned_name):
+            values.setdefault(f"{current_section}_name", cleaned_name)
 
         tax_match = TAX_RE.search(line)
         if tax_match:
@@ -147,3 +151,15 @@ def _valid_name(value: Optional[str]) -> bool:
     if re.fullmatch(r"[\d\s./\\\-_]+", value):
         return False
     return True
+
+
+def _clean_name(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    value = re.sub(r"\s+", "", value)
+    value = re.sub(
+        r"^(?:购买方|购方|销售方|销方)?(?:名称|名|称|桥|社|祢|林|抬头)\s*[：:]+",
+        "",
+        value,
+    )
+    return value.strip("：:，,。 ") or None

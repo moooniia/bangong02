@@ -1,4 +1,5 @@
 import filecmp
+import re
 import shutil
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
