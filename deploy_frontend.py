@@ -25,6 +25,16 @@ sftp = ssh.open_sftp()
 for f in files_to_deploy:
     local  = os.path.join(LOCAL_DIR, f)
     remote = f'{REMOTE_DIR}/{f}'
+    remote_dir = os.path.dirname(remote)
+    if remote_dir and remote_dir != REMOTE_DIR:
+        parts = remote_dir.replace(REMOTE_DIR, '').strip('/').split('/')
+        current = REMOTE_DIR
+        for part in parts:
+            current = f'{current}/{part}'
+            try:
+                sftp.mkdir(current)
+            except OSError:
+                pass
     sftp.put(local, remote)
     print(f'Uploaded: {f}')
 
