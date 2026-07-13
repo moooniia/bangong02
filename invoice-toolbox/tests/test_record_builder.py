@@ -24,8 +24,8 @@ class RecordBuilderScanTest(unittest.TestCase):
 
         self.assertEqual(missing_name.seller_name, "示例销售有限公司")
         self.assertEqual(missing_tax.seller_tax, "91310115MA1234567X")
-        self.assertIn("seller_name", missing_name.fields_needing_review)
-        self.assertIn("seller_tax", missing_tax.fields_needing_review)
+        self.assertNotIn("seller_name", missing_name.fields_needing_review)
+        self.assertNotIn("seller_tax", missing_tax.fields_needing_review)
 
     def test_exact_duplicate_clears_missing_review_after_reliable_fill(self):
         clean = InvoiceRecord(

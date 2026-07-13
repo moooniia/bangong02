@@ -165,10 +165,10 @@ def _enrich_consistent_party_fields(records: List[InvoiceRecord]) -> None:
                 not tax or not is_valid_uscc(tax) or tax != unique_tax[name]
             ):
                 setattr(record, tax_field, unique_tax[name])
-                _mark_review_once(record, tax_field, "最终复查：由同批次记录补全税号，请人工核对")
+                _clear_review(record, tax_field)
             elif tax and not name and tax in unique_name:
                 setattr(record, name_field, unique_name[tax])
-                _mark_review_once(record, name_field, "最终复查：由同批次记录补全名称，请人工核对")
+                _clear_review(record, name_field)
 
 
 def _enrich_dominant_batch_fields(records: List[InvoiceRecord]) -> None:

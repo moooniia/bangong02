@@ -5,9 +5,11 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "assets" / "icons"
+WINUI_ASSETS = ROOT / "winui_app" / "Assets"
 PNG_PATH = OUT_DIR / "invoice-toolbox-icon-256.png"
 ICO_PATH = OUT_DIR / "invoice-toolbox.ico"
 SIZES = [16, 24, 32, 48, 64, 128, 256]
+TASKBAR_SIZES = [16, 24, 32, 44, 48, 64, 256]
 
 
 def rounded_rectangle(draw: ImageDraw.ImageDraw, xy, radius, fill):
@@ -74,9 +76,14 @@ def receipt_polygon(scale: float, offset=(0, 0)):
 
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    WINUI_ASSETS.mkdir(parents=True, exist_ok=True)
     icons = [make_icon(size) for size in SIZES]
     make_icon(256).save(PNG_PATH)
     icons[-1].save(ICO_PATH, sizes=[(size, size) for size in SIZES], append_images=icons[:-1])
+    for size in TASKBAR_SIZES:
+        icon = make_icon(size)
+        icon.save(WINUI_ASSETS / f"Square44x44Logo.targetsize-{size}.png")
+        icon.save(WINUI_ASSETS / f"Square44x44Logo.targetsize-{size}_altform-unplated.png")
     print(f"wrote {PNG_PATH}")
     print(f"wrote {ICO_PATH}")
 

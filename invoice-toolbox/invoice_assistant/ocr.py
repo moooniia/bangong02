@@ -66,38 +66,60 @@ def _recognize_with_rapidocr(path: Path) -> List[OcrLine]:
                 document.close()
         else:
             image = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
-            width, height = image.size
+            image = _prepare_image_for_ocr(image)
             image_lines = _best_image_ocr(engine, image)
             lines.extend(image_lines)
-            if _needs_party_crops(image_lines):
+            # Hard photos can spend most of their time on extra crop retries
+            # while still producing fields that require manual review. Once the
+            # first pass is very weak, return quickly and let review handle it.
+            if _needs_party_crops(image_lines) and _ocr_quality_score(image_lines) >= 24:
                 lines.extend(_recognize_party_crops(engine, np.asarray(image.convert("RGB"))))
     except Exception:
         return []
     return lines
 
 
+def _prepare_image_for_ocr(image):
+    from PIL import Image
+
+    max_side = 2200
+    width, height = image.size
+    if max(width, height) <= max_side:
+        return image
+    copy = image.copy()
+    resampling = getattr(Image, "Resampling", Image).LANCZOS
+    copy.thumbnail((max_side, max_side), resampling)
+    return copy
+
+
 def _best_image_ocr(engine, image) -> List[OcrLine]:
     import numpy as np
-    from PIL import ImageEnhance, ImageFilter, ImageOps
+    from PIL import ImageEnhance, ImageOps
 
-    candidates = [image]
+    width, height = image.size
+    result, _ = engine(np.asarray(image))
+    best_lines = _lines_from_result(result, width, height)
+    best_score = _ocr_quality_score(best_lines)
+    if _is_good_enough_ocr(best_lines, best_score):
+        return best_lines
+
     enhanced = ImageOps.autocontrast(image)
     enhanced = ImageEnhance.Contrast(enhanced).enhance(1.35)
     enhanced = ImageEnhance.Sharpness(enhanced).enhance(1.25)
-    candidates.append(enhanced)
-    candidates.append(enhanced.filter(ImageFilter.MedianFilter(size=3)))
-
-    best_lines: List[OcrLine] = []
-    best_score = -1
-    for candidate in candidates:
-        width, height = candidate.size
-        result, _ = engine(np.asarray(candidate))
-        lines = _lines_from_result(result, width, height)
-        score = _ocr_quality_score(lines)
-        if score > best_score:
-            best_score = score
-            best_lines = lines
+    width, height = enhanced.size
+    result, _ = engine(np.asarray(enhanced))
+    lines = _lines_from_result(result, width, height)
+    score = _ocr_quality_score(lines)
+    if score > best_score:
+        best_lines = lines
     return best_lines
+
+
+def _is_good_enough_ocr(lines: List[OcrLine], score: int) -> bool:
+    joined = "".join(line.text for line in lines)
+    has_invoice_number = any(char.isdigit() for char in joined) and len(joined) > 80
+    has_party_hint = any(token in joined for token in ("公司", "研究院", "分院", "银行", "商行", "店", "厂"))
+    return score >= 46 or (score >= 36 and has_invoice_number and has_party_hint)
 
 
 def _ocr_quality_score(lines: List[OcrLine]) -> int:

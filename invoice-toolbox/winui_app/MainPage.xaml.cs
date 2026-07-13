@@ -197,7 +197,7 @@ public sealed partial class MainPage : UserControl
             _latestUpdate = manifest;
             _latestVersion = latest;
             _updateAvailable = true;
-            UpdateButton.Content = $"更新 {latest}";
+            UpdateButton.Content = "更新";
             UpdatePanel.Visibility = _leftPanelVisible ? Visibility.Visible : Visibility.Collapsed;
         }
         catch { }
