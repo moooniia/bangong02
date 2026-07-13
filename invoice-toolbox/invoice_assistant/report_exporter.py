@@ -29,6 +29,8 @@ FIELD_COLUMNS = [
     ("archived_name", "新文件名"),
     ("original_path", "原文件链接"),
     ("archived_path", "归档文件链接"),
+    ("status", "审核状态"),
+    ("review_summary", "审核原因"),
 ]
 
 REVIEW_FILL = PatternFill(fill_type="solid", fgColor="FFF2CC")
@@ -232,6 +234,14 @@ def _value_for_field(record: InvoiceRecord, field_name: str, record_dict: dict) 
         return ""
     if field_name == "archived_name":
         return Path(record.archived_path).name if record.archived_path else ""
+    if field_name == "review_summary":
+        if not record.fields_needing_review:
+            return ""
+        parts = []
+        for field in sorted(record.fields_needing_review):
+            reasons = record.review_reasons.get(field, [])
+            parts.append(f"{field}: {'；'.join(reasons) if reasons else '待确认'}")
+        return " | ".join(parts)
     value = record_dict.get(field_name, "")
     if field_name in {"pretax_amount", "tax_amount", "total_amount"} and value not in ("", None):
         try:

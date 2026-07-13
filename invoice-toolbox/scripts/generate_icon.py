@@ -19,19 +19,20 @@ def make_icon(size: int) -> Image.Image:
     image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
 
-    # Background.
+    # Keep generous transparent padding so Windows taskbar selection does not
+    # read as a solid square app icon.
     bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     bg_draw = ImageDraw.Draw(bg)
-    rounded_rectangle(bg_draw, [24 * scale, 24 * scale, 232 * scale, 232 * scale], 48 * scale, (233, 76, 136, 255))
+    rounded_rectangle(bg_draw, [46 * scale, 38 * scale, 210 * scale, 218 * scale], 38 * scale, (233, 76, 136, 255))
     image.alpha_composite(bg)
 
     # Receipt shadow on larger sizes.
     if size >= 48:
         shadow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         shadow_draw = ImageDraw.Draw(shadow)
-        receipt_points = receipt_polygon(scale, offset=(0, 10 * scale))
-        shadow_draw.polygon(receipt_points, fill=(120, 20, 70, 70))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(max(1, int(5 * scale))))
+        receipt_points = receipt_polygon(scale, offset=(0, 7 * scale))
+        shadow_draw.polygon(receipt_points, fill=(120, 20, 70, 52))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(max(1, int(4 * scale))))
         image.alpha_composite(shadow)
         draw = ImageDraw.Draw(image)
 
@@ -55,18 +56,18 @@ def make_icon(size: int) -> Image.Image:
 def receipt_polygon(scale: float, offset=(0, 0)):
     ox, oy = offset
     points = [
-        (83, 59),
-        (173, 59),
-        (191, 77),
-        (191, 198),
-        (172, 187),
-        (156, 198),
-        (140, 187),
-        (124, 198),
-        (108, 187),
-        (91, 198),
-        (75, 188),
-        (75, 77),
+        (91, 69),
+        (165, 69),
+        (181, 85),
+        (181, 190),
+        (166, 181),
+        (153, 190),
+        (140, 181),
+        (127, 190),
+        (114, 181),
+        (101, 190),
+        (87, 182),
+        (87, 85),
     ]
     return [(x * scale + ox, y * scale + oy) for x, y in points]
 

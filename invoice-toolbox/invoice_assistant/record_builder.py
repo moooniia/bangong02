@@ -47,9 +47,102 @@ def scan_invoice_files(
             if progress:
                 progress(completed, len(ordered_files), path, records[index])
     completed_records = [record for record in records if record is not None]
+    _normalize_party_names(completed_records)
+    _enrich_exact_duplicate_fields(completed_records)
     _enrich_consistent_party_fields(completed_records)
+    _enrich_dominant_batch_fields(completed_records)
     _validate_final_records(completed_records)
     return completed_records
+
+
+def _normalize_party_names(records: List[InvoiceRecord]) -> None:
+    for record in records:
+        for field_name in ("buyer_name", "seller_name"):
+            value = getattr(record, field_name).strip()
+            cleaned = _clean_party_name_value(value)
+            if cleaned != value:
+                setattr(record, field_name, cleaned)
+
+
+def _clean_party_name_value(value: str) -> str:
+    value = re.sub(r"\s+", "", value or "")
+    value = re.sub(
+        r"^(?:购买方|购方|销售方|销方)?(?:名称|名|称|桥|社|祢|林|抬头)\s*[：:]+",
+        "",
+        value,
+    )
+    generic_label = re.match(r"^[\u4e00-\u9fff]{1,3}[：:]+(.+)$", value)
+    if generic_label and _looks_like_party_name_after_label(generic_label.group(1)):
+        value = generic_label.group(1)
+    if not re.search(r"[（(]个体工商户[）)]$", value):
+        value = re.sub(r"[（(][^）)]*[）)]$", "", value)
+    return value.strip("：:，,。 ")
+
+
+def _looks_like_party_name_after_label(value: str) -> bool:
+    return bool(
+        re.search(
+            r"(?:有限责任公司|股份有限公司|有限公司|研究院|勘察院|分院|中心|银行|学校|单位|个体工商户|商行|店|厂)$",
+            value.strip(),
+        )
+    )
+
+
+def _enrich_exact_duplicate_fields(records: List[InvoiceRecord]) -> None:
+    grouped = {}
+    for record in records:
+        key = _duplicate_key(record)
+        if key:
+            grouped.setdefault(key, []).append(record)
+
+    fields = (
+        "buyer_name",
+        "buyer_tax",
+        "seller_name",
+        "seller_tax",
+        "invoice_date",
+        "pretax_amount",
+        "tax_amount",
+        "total_amount",
+        "tax_rate",
+        "invoice_type",
+        "invoice_no",
+        "line_items",
+    )
+    for group in grouped.values():
+        if len(group) < 2:
+            continue
+        field_values = {}
+        for field_name in fields:
+            values = [
+                getattr(record, field_name).strip()
+                for record in group
+                if _is_reliable_field_value(record, field_name)
+            ]
+            if not values:
+                continue
+            value, count = Counter(values).most_common(1)[0]
+            if count == len(values):
+                field_values[field_name] = value
+        if not field_values:
+            continue
+        for record in group:
+            for field_name, value in field_values.items():
+                current = getattr(record, field_name).strip()
+                if not current or field_name in record.fields_needing_review:
+                    setattr(record, field_name, value)
+                    _clear_review(record, field_name)
+
+
+def _duplicate_key(record: InvoiceRecord) -> str:
+    invoice_no = record.invoice_no.strip()
+    if not invoice_no:
+        return ""
+    date = record.invoice_date.strip()
+    amount = record.total_amount.strip()
+    if date and amount:
+        return f"{invoice_no}|{date}|{amount}"
+    return invoice_no
 
 
 def _enrich_consistent_party_fields(records: List[InvoiceRecord]) -> None:
@@ -68,12 +161,80 @@ def _enrich_consistent_party_fields(records: List[InvoiceRecord]) -> None:
         for record in records:
             name = getattr(record, name_field).strip()
             tax = getattr(record, tax_field).strip().upper()
-            if name and name in unique_tax and (not tax or not is_valid_uscc(tax)):
+            if name and name in unique_tax and (
+                not tax or not is_valid_uscc(tax) or tax != unique_tax[name]
+            ):
                 setattr(record, tax_field, unique_tax[name])
                 _mark_review_once(record, tax_field, "最终复查：由同批次记录补全税号，请人工核对")
             elif tax and not name and tax in unique_name:
                 setattr(record, name_field, unique_name[tax])
                 _mark_review_once(record, name_field, "最终复查：由同批次记录补全名称，请人工核对")
+
+
+def _enrich_dominant_batch_fields(records: List[InvoiceRecord]) -> None:
+    buyer_pair = _dominant_buyer_pair(records)
+    if buyer_pair:
+        buyer_name, buyer_tax = buyer_pair
+        for record in records:
+            if not record.buyer_name.strip() or "buyer_name" in record.fields_needing_review:
+                record.buyer_name = buyer_name
+                _clear_review(record, "buyer_name")
+            if not record.buyer_tax.strip() or "buyer_tax" in record.fields_needing_review:
+                record.buyer_tax = buyer_tax
+                _clear_review(record, "buyer_tax")
+
+    seller_pairs_by_context = _dominant_seller_pairs_by_context(records)
+    for record in records:
+        key = _seller_context_key(record)
+        pair = seller_pairs_by_context.get(key)
+        if not pair:
+            continue
+        seller_name, seller_tax = pair
+        if not record.seller_name.strip() or "seller_name" in record.fields_needing_review:
+            record.seller_name = seller_name
+            _clear_review(record, "seller_name")
+        if not record.seller_tax.strip() or "seller_tax" in record.fields_needing_review:
+            record.seller_tax = seller_tax
+            _clear_review(record, "seller_tax")
+
+
+def _dominant_buyer_pair(records: List[InvoiceRecord]) -> tuple[str, str] | None:
+    pairs = Counter()
+    for record in records:
+        name = record.buyer_name.strip()
+        tax = record.buyer_tax.strip().upper()
+        if name and tax and not _is_suspicious_party_name(name) and (tax == "个人无税号" or is_valid_uscc(tax)):
+            pairs[(name, tax)] += 1
+    if not pairs:
+        return None
+    pair, count = pairs.most_common(1)[0]
+    if count >= 3 and count / max(sum(pairs.values()), 1) >= 0.5:
+        return pair
+    return None
+
+
+def _dominant_seller_pairs_by_context(records: List[InvoiceRecord]) -> dict[tuple[str, str, str], tuple[str, str]]:
+    grouped: dict[tuple[str, str, str], Counter] = {}
+    for record in records:
+        key = _seller_context_key(record)
+        if not all(key):
+            continue
+        name = record.seller_name.strip()
+        tax = record.seller_tax.strip().upper()
+        if name and tax and not _is_suspicious_party_name(name) and is_valid_uscc(tax):
+            grouped.setdefault(key, Counter())[(name, tax)] += 1
+    result = {}
+    for key, counts in grouped.items():
+        pair, count = counts.most_common(1)[0]
+        total = sum(counts.values())
+        if count >= 3 and count / max(total, 1) >= 0.85:
+            result[key] = pair
+    return result
+
+
+def _seller_context_key(record: InvoiceRecord) -> tuple[str, str, str]:
+    buyer = record.buyer_tax.strip().upper() or record.buyer_name.strip()
+    return (buyer, record.invoice_type.strip(), record.tax_rate.strip())
 
 
 def _validate_final_records(records: List[InvoiceRecord]) -> None:
@@ -92,9 +253,11 @@ def _validate_final_records(records: List[InvoiceRecord]) -> None:
     dominant_buyer_name = _dominant_value(records, "buyer_name")
     dominant_buyer_tax = _dominant_value(records, "buyer_tax")
     for record in records:
+        _normalize_party_names([record])
         for field_name, reason in required.items():
             if not getattr(record, field_name).strip() and field_name not in record.fields_needing_review:
                 record.add_review(field_name, reason)
+        _clear_stale_reviews_for_valid_values(record)
         _validate_party_quality(record)
         _validate_party_position(record, dominant_buyer_name, dominant_buyer_tax)
         record.status = "需人工确认" if record.fields_needing_review else "已确认"
@@ -112,6 +275,44 @@ def _mark_review_once(record: InvoiceRecord, field_name: str, reason: str) -> No
             reasons.append(reason)
         return
     record.add_review(field_name, reason)
+
+
+def _clear_stale_reviews_for_valid_values(record: InvoiceRecord) -> None:
+    for field_name in list(record.fields_needing_review):
+        if not _is_reliable_field_value(record, field_name):
+            continue
+        reasons = record.review_reasons.get(field_name, [])
+        if reasons and all(_is_stale_review_reason(reason) for reason in reasons):
+            _clear_review(record, field_name)
+
+
+def _is_stale_review_reason(reason: str) -> bool:
+    return any(
+        token in reason
+        for token in (
+            "未能明确识别",
+            "为空",
+            "由同批次记录补全",
+            "疑似误填",
+            "未通过校验",
+        )
+    )
+
+
+def _is_reliable_field_value(record: InvoiceRecord, field_name: str) -> bool:
+    value = getattr(record, field_name, "")
+    if value is None:
+        return False
+    value = str(value).strip()
+    if not value or value == "待确认":
+        return False
+    if field_name in {"buyer_name", "seller_name"}:
+        return not _is_suspicious_party_name(value)
+    if field_name in {"buyer_tax", "seller_tax"}:
+        return value == "个人无税号" or is_valid_uscc(value.upper())
+    if field_name == "tax_rate":
+        return value == "免税" or bool(re.fullmatch(r"\d{1,2}%", value))
+    return True
 
 
 def _dominant_value(records: List[InvoiceRecord], field_name: str) -> str:

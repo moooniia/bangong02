@@ -129,6 +129,23 @@ class FieldParserTest(unittest.TestCase):
         self.assertNotIn("林：", record.buyer_name)
         self.assertNotIn("桥：", record.seller_name)
 
+    def test_strips_unknown_short_label_prefix_when_rest_is_company_like(self):
+        record = build_record_from_ocr_lines(
+            1,
+            Path("label.jpg"),
+            [
+                OcrLine("林京：江西省勘察设计研究院有限公司", 0.095, 0.736, 0.24, 0.023),
+                OcrLine("统一社会信用代码/纳税人识别号：91360000158286715E", 0.055, 0.653, 0.38, 0.034),
+                OcrLine("名称：上海测试科技有限公司", 0.571, 0.736, 0.22, 0.023),
+                OcrLine("统一社会信用代码/纳税人识别号：91310115MA7654321X", 0.733, 0.653, 0.22, 0.034),
+                OcrLine("开票日期：2026年01月12日", 0.736, 0.854, 0.18, 0.023),
+                OcrLine("（小写）￥190.00", 0.68, 0.274, 0.18, 0.03),
+            ],
+        )
+
+        self.assertEqual(record.buyer_name, "江西省勘察设计研究院有限公司")
+        self.assertNotIn("林京：", record.buyer_name)
+
     def test_identifies_ordinary_vat_invoice_type(self):
         record = build_record_from_ocr_lines(
             1,

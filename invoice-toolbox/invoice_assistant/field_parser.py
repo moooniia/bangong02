@@ -366,9 +366,22 @@ def _clean_name(value: str) -> str:
         "",
         value,
     )
+    generic_label = re.match(r"^[\u4e00-\u9fff]{1,3}[：:]+(.+)$", value)
+    if generic_label and _looks_like_party_name_after_label(generic_label.group(1)):
+        value = generic_label.group(1)
     if not re.search(r"[（(]个体工商户[）)]$", value):
         value = re.sub(r"[（(][^）)]*[）)]$", "", value)
     return value.strip("：:，,。 ")
+
+
+def _looks_like_party_name_after_label(value: str) -> bool:
+    value = value.strip()
+    return bool(
+        re.search(
+            r"(?:有限责任公司|股份有限公司|有限公司|研究院|勘察院|分院|中心|银行|学校|单位|个体工商户|商行|店|厂)$",
+            value,
+        )
+    )
 
 
 def _is_company_like(value: Optional[str]) -> bool:

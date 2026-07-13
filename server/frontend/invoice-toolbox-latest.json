@@ -1,10 +1,12 @@
-﻿{
+{
   "product": "发票工具箱",
   "appId": "Paz.InvoiceToolbox",
-  "version": "1.0.0.50",
+  "version": "1.0.0.51",
   "releaseDate": "2026-07-13",
-  "build": "2026.07.13.6",
+  "build": "2026.07.13.7",
   "downloadUrl": "/downloads/InvoiceToolbox.WinUI_latest.msix",
+  "size": 213460553,
+  "sha256": "4f4eed288f2e791121c2a99bdbb7ab780cd61ad8d26cb9e3ce912eaa7903a042",
   "appInstallerUrl": "",
   "mandatory": false,
   "notes": [
