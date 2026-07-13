@@ -52,6 +52,7 @@ public sealed partial class MainPage : UserControl
     private JsonObject? _latestUpdate;
     private string _latestVersion = "";
     private bool _updateAvailable;
+    private bool _ignoreUpdateThisSession;
 
     public MainPage()
     {
@@ -120,7 +121,7 @@ public sealed partial class MainPage : UserControl
         TableHeaderGrid.MinWidth = _columnWidths.Sum();
     }
 
-    private async void OnThemeClick(object sender, RoutedEventArgs e) { RootLayout.RequestedTheme = RootLayout.RequestedTheme == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark; var dark = RootLayout.RequestedTheme == ElementTheme.Dark; SunThemeIcon.Opacity = dark ? 0.35 : 1; MoonThemeIcon.Opacity = dark ? 1 : 0.35; await Task.Delay(60); RenderRows(_pendingOnly); }
+    private void OnThemeClick(object sender, RoutedEventArgs e) { RootLayout.RequestedTheme = RootLayout.RequestedTheme == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark; var dark = RootLayout.RequestedTheme == ElementTheme.Dark; SunThemeIcon.Opacity = dark ? 0.35 : 1; MoonThemeIcon.Opacity = dark ? 1 : 0.35; BuildTableHeader(); RenderRows(_pendingOnly, false); }
 
     private void OnInteractiveEnter(object sender, PointerRoutedEventArgs e)
     {
@@ -191,7 +192,8 @@ public sealed partial class MainPage : UserControl
             if (JsonNode.Parse(json) is not JsonObject manifest) return;
             var latest = manifest["version"]?.GetValue<string>() ?? "";
             if (string.IsNullOrWhiteSpace(latest) || !IsNewerVersion(latest, CurrentAppVersion())) return;
-            if (ApplicationData.Current.LocalSettings.Values["IgnoredUpdateVersion"] as string == latest) return;
+            ApplicationData.Current.LocalSettings.Values.Remove("IgnoredUpdateVersion");
+            if (_ignoreUpdateThisSession) return;
             _latestUpdate = manifest;
             _latestVersion = latest;
             _updateAvailable = true;
@@ -221,7 +223,7 @@ public sealed partial class MainPage : UserControl
 
     private void OnIgnoreUpdate(object sender, RoutedEventArgs e)
     {
-        if (!string.IsNullOrWhiteSpace(_latestVersion)) ApplicationData.Current.LocalSettings.Values["IgnoredUpdateVersion"] = _latestVersion;
+        _ignoreUpdateThisSession = true;
         _updateAvailable = false;
         UpdatePanel.Visibility = Visibility.Collapsed;
     }
@@ -322,9 +324,9 @@ public sealed partial class MainPage : UserControl
                 ScanProgress.IsIndeterminate = false; var done = item["done"]!.GetValue<int>(); var total = item["total"]!.GetValue<int>();
                 var percent = total == 0 ? 0 : done * 100.0 / total; ScanProgress.Value = percent; ProgressText.Text = $"正在识别 {done} / {total}  ·  {percent:0}%";
                 if (item["record"] is JsonObject record) _records.Add(record.DeepClone());
-                if (done == total || done - lastRendered >= 8 || renderClock.ElapsedMilliseconds >= 250) { RenderRows(); lastRendered = done; renderClock.Restart(); }
+                if (done == total || done - lastRendered >= 3 || renderClock.ElapsedMilliseconds >= 140) { RenderRows(_pendingOnly, true); lastRendered = done; renderClock.Restart(); }
             }
-            else if (type == "complete") { ScanProgress.IsIndeterminate = false; ScanProgress.Value = 100; _records = item["records"]!.AsArray(); RefreshArchiveLookup(); RenderRows(); ProgressText.Text = $"识别完成，共 {_records.Count} 张"; }
+            else if (type == "complete") { ScanProgress.IsIndeterminate = false; ScanProgress.Value = 100; _records = item["records"]!.AsArray(); RefreshArchiveLookup(); RenderRows(_pendingOnly, false); ProgressText.Text = $"识别完成，共 {_records.Count} 张"; }
         }); }
         catch (Exception ex) { ProgressText.Text = $"识别失败：{ex.Message}"; }
         finally { ScanProgress.IsIndeterminate = false; ScanButton.IsEnabled = true; CancelButton.Visibility = Visibility.Collapsed; }
@@ -423,7 +425,7 @@ public sealed partial class MainPage : UserControl
         finally { if (ReferenceEquals(_worker, process)) _worker = null; }
     }
 
-    private async void RenderRows(bool pendingOnly = false)
+    private async void RenderRows(bool pendingOnly = false, bool allowYield = true)
     {
         var generation = ++_renderGeneration;
         RecordRows.Children.Clear(); _renderedRowGrids.Clear(); var review = 0; var shown = 0; var duplicates = 0; decimal recognizedUniqueAmountTotal = 0; var identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -446,7 +448,7 @@ public sealed partial class MainPage : UserControl
             var container = new Border { Padding = new Thickness(12, 7, 12, 7), Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(rowColor), BorderBrush = divider, BorderThickness = new Thickness(0, 0, 0, 1), Child = row };
             container.Tag = container.Background; container.PointerEntered += OnInvoiceRowEnter; container.PointerExited += OnInvoiceRowExit;
             container.Tapped += async (_, e) => { if (!IsInsideButton(e.OriginalSource)) await SelectRecordAsync(item); }; RecordRows.Children.Add(container);
-            if (shown % 12 == 0)
+            if (allowYield && shown % 12 == 0)
             {
                 await Task.Yield();
                 if (generation != _renderGeneration) return;

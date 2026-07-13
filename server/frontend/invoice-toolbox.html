@@ -11,29 +11,38 @@
 <script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--mid:#333;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);--shadow-up:0 12px 40px rgba(233,76,136,.15),0 4px 12px rgba(0,0,0,.08)}
+:root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--mid:#333;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);--shadow-up:0 18px 56px rgba(233,76,136,.16),0 4px 18px rgba(0,0,0,.08)}
 body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px;-webkit-font-smoothing:antialiased}
 nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
 .logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none;letter-spacing:-.5px}.logo span{color:var(--pink)}
-.nav-links{display:flex;gap:2px;list-style:none}.nav-links a{text-decoration:none;color:var(--ink3);font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;transition:all .15s}.nav-links a:hover{color:var(--dark);background:var(--light-gray)}
-main{max-width:1040px;margin:0 auto;padding:0 32px 96px}
-.hero{padding:76px 0 58px;border-bottom:1px solid var(--border);margin-bottom:48px;display:grid;grid-template-columns:1.15fr .85fr;gap:42px;align-items:center}
+main{max-width:1120px;margin:0 auto;padding:0 32px 96px}
+.hero{padding:70px 0 58px;border-bottom:1px solid var(--border);margin-bottom:48px;display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;align-items:center}
 .hero-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}.hero-label::before{content:'';width:20px;height:2px;background:var(--pink);border-radius:1px}
-h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:22px}h1 em{font-style:normal;color:var(--pink)}
+h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;line-height:1.08;letter-spacing:-1px;margin-bottom:20px}h1 em{font-style:normal;color:var(--pink)}
 .hero-sub{font-size:15px;color:var(--ink3);line-height:1.85;max-width:560px}
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.primary-btn,.ghost-btn{display:inline-flex;align-items:center;gap:9px;border-radius:28px;padding:13px 24px;font-weight:700;text-decoration:none;transition:all .18s}
-.primary-btn{background:var(--pink);color:white;box-shadow:0 12px 30px rgba(233,76,136,.24)}.primary-btn:hover{background:#d43d79;transform:translateY(-2px)}
-.ghost-btn{color:var(--dark);background:var(--card-bg);border:1px solid var(--border)}.ghost-btn:hover{border-color:var(--pink);color:var(--pink);transform:translateY(-2px)}
-.preview-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-up);padding:18px}
-.preview-top{height:34px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;margin-bottom:16px}.dot{width:8px;height:8px;border-radius:50%;background:var(--pink);opacity:.75}
-.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini-card{background:var(--near-white);border:1px solid var(--border);border-radius:12px;padding:15px}.mini-label{font-size:11px;color:var(--ink3);margin-bottom:8px}.mini-value{font-size:20px;font-weight:900}.mini-wide{grid-column:1/-1}.mini-line{height:8px;border-radius:8px;background:linear-gradient(90deg,var(--pink),rgba(233,76,136,.12));margin-top:12px}
+.primary-btn{display:inline-flex;align-items:center;gap:9px;border-radius:28px;padding:13px 24px;font-weight:700;text-decoration:none;transition:all .18s;background:var(--pink);color:white;box-shadow:0 12px 30px rgba(233,76,136,.24)}
+.primary-btn:hover{background:#d43d79;transform:translateY(-2px)}
+.windows-mark{font-size:18px}
+.showcase{background:var(--card-bg);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-up);overflow:hidden}
+.showcase-stage{padding:18px;background:linear-gradient(180deg,rgba(233,76,136,.05),transparent 38%)}
+.app-frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#f8fafc;min-height:350px;box-shadow:0 12px 36px rgba(15,23,42,.08)}
+.app-top{height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid #e5e7eb;background:white}.app-dot{width:9px;height:9px;border-radius:50%;background:#e94c88}.app-title{font-weight:800;margin-left:4px}.app-version{font-size:11px;color:#9ca3af}
+.mock{display:none;grid-template-columns:170px 1fr 210px;min-height:310px}.mock.active{display:grid}
+.mock-left{padding:14px;border-right:1px solid #e5e7eb;background:#fff}.mock-panel{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}.mock-label{font-size:11px;color:#64748b;margin-bottom:6px}.mock-value{font-size:22px;font-weight:900}.mock-button{height:36px;border-radius:9px;background:#e94c88;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;margin-top:10px}
+.mock-main{padding:14px}.mock-toolbar{height:34px;display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px}.pill{border:1px solid #e5e7eb;border-radius:9px;padding:7px 12px;background:white;font-size:12px}.pill.hot{background:#e94c88;color:white;border-color:#e94c88}
+.mock-table{border-radius:10px;overflow:hidden;border:1px solid #dbe1ea}.mock-head,.mock-row{display:grid;grid-template-columns:1.2fr .9fr 1.3fr .8fr .8fr;align-items:center}.mock-head{height:38px;background:#242936;color:white;font-weight:700;font-size:12px}.mock-cell{padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mock-row{height:34px;font-size:12px;border-top:1px solid #e5e7eb;background:white}.mock-row:nth-child(odd){background:#f6f7f9}.mock-row.pending{background:#fde8f0;color:#d91b5c;font-weight:700}
+.mock-review{border-left:1px solid #e5e7eb;background:white;padding:14px}.review-title{font-size:20px;font-weight:900;margin-bottom:8px}.invoice-preview{height:145px;border:1px solid #e5e7eb;border-radius:10px;background:linear-gradient(180deg,#fff,#f6f7f9);position:relative;margin-bottom:12px;overflow:hidden}.invoice-preview::before{content:'';position:absolute;left:18px;right:18px;top:35px;height:2px;background:#d17b6f}.invoice-preview::after{content:'电子发票';position:absolute;left:42px;top:48px;color:#b45309;font-weight:700;font-size:18px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{height:31px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa}
+.archive-list{display:grid;gap:8px}.archive-item{height:38px;border:1px solid #e5e7eb;border-radius:9px;background:white;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12px}.archive-item strong{color:#e94c88}
+.dark-mock{background:#111827;color:#e5e7eb}.dark-mock .app-top,.dark-mock .mock-left,.dark-mock .mock-review,.dark-mock .mock-row,.dark-mock .mock-panel,.dark-mock .pill,.dark-mock .archive-item{background:#151b26;border-color:#2b3342}.dark-mock .mock-main{background:#0f141c}.dark-mock .mock-head{background:#1f2937}.dark-mock .mock-row:nth-child(odd){background:#111827}.dark-mock .mock-row.pending{background:#3a1f2c;color:#ff8db6}
+.showcase-copy{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;border-top:1px solid var(--border);background:var(--card-bg)}.show-title{font-size:17px;font-weight:900}.show-desc{font-size:12.5px;color:var(--ink3);margin-top:4px}.dots{display:flex;gap:8px}.dot-btn{width:9px;height:9px;border-radius:50%;border:none;background:#d6d6d6;cursor:pointer}.dot-btn.active{background:var(--pink)}
 .section{margin-bottom:44px}.section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}.section-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.3px}.section-count{font-size:12px;color:var(--ink4)}
 .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.feature-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}.feature-card i{font-size:24px;color:var(--pink);display:block;margin-bottom:12px}.feature-title{font-weight:700;margin-bottom:6px}.feature-desc{font-size:12.5px;color:var(--ink3);line-height:1.7}
 .release-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);display:grid;grid-template-columns:220px 1fr;gap:24px}.version{font-size:28px;font-weight:900;color:var(--pink);margin-bottom:6px}.release-date{font-size:12px;color:var(--ink3)}.notes{display:flex;flex-direction:column;gap:8px}.note{display:flex;gap:9px;color:var(--mid);line-height:1.7}.note i{color:var(--pink);margin-top:4px}
 footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);font-size:12px}
-@media(max-width:860px){nav{padding:0 20px}.nav-links{display:none}.hero{grid-template-columns:1fr;padding-top:48px}h1{font-size:38px}.feature-grid{grid-template-columns:1fr 1fr}.release-card{grid-template-columns:1fr}}
-@media(max-width:560px){main{padding-left:20px;padding-right:20px}.feature-grid{grid-template-columns:1fr}.hero-actions{flex-direction:column}.primary-btn,.ghost-btn{justify-content:center}}
+@media(max-width:980px){nav{padding:0 20px}.hero{grid-template-columns:1fr;padding-top:48px}h1{font-size:38px}.feature-grid{grid-template-columns:1fr 1fr}.release-card{grid-template-columns:1fr}.mock{grid-template-columns:150px 1fr}.mock-review{display:none}}
+@media(max-width:560px){main{padding-left:20px;padding-right:20px}.feature-grid{grid-template-columns:1fr}.hero-actions{flex-direction:column}.primary-btn{justify-content:center}.mock-left{display:none}.mock{grid-template-columns:1fr}}
 </style>
 <script src="/assets/analytics.js" defer></script>
 <script src="/assets/theme-toggle.js" defer></script>
@@ -41,40 +50,54 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
 <body>
 <nav>
   <a class="logo" href="/">办公<span>工具箱</span></a>
-  <ul class="nav-links">
-    <li><a href="/#pdf">PDF处理</a></li>
-    <li><a href="/#translate">翻译</a></li>
-    <li><a href="/#desktop">桌面软件</a></li>
-  </ul>
 </nav>
 <main>
   <div class="hero">
     <div>
       <div class="hero-label">Windows 桌面软件</div>
       <h1>发票<em>工具箱</em></h1>
-      <p class="hero-sub">为财务和行政整理发票而做：批量识别发票文件夹，快速核对关键字段，按规则导出报表并自动归档。</p>
+      <p class="hero-sub">为财务、行政和项目资料整理而做：批量识别发票文件夹，自动标出需要人工核对的字段，按可拖拽的规则导出报表并归档。</p>
       <div class="hero-actions">
-        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_latest.msix"><i class="ti ti-download"></i>下载发票工具箱</a>
-        <a class="ghost-btn" href="/invoice-toolbox-latest.json"><i class="ti ti-versions"></i>查看版本信息</a>
+        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_latest.msix"><i class="ti ti-brand-windows windows-mark"></i>下载发票工具箱</a>
       </div>
     </div>
-    <div class="preview-card">
-      <div class="preview-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-      <div class="preview-grid">
-        <div class="mini-card"><div class="mini-label">批量识别</div><div class="mini-value">160</div></div>
-        <div class="mini-card"><div class="mini-label">待核对</div><div class="mini-value">1</div></div>
-        <div class="mini-card mini-wide"><div class="mini-label">价税合计</div><div class="mini-value">¥46,255.37</div><div class="mini-line"></div></div>
+    <div class="showcase">
+      <div class="showcase-stage">
+        <div class="app-frame" id="showcaseFrame">
+          <div class="app-top"><span class="app-dot"></span><span class="app-title">发票工具箱</span><span class="app-version">1.0.0.47</span></div>
+          <div class="mock active" data-title="批量识别" data-desc="读取项目文件夹和子文件夹，进度、重复与待核对数量同步变化。">
+            <div class="mock-left"><div class="mock-panel"><div class="mock-label">总文件</div><div class="mock-value">160</div></div><div class="mock-panel"><div class="mock-label">待确认</div><div class="mock-value" style="color:#e94c88">6</div></div><div class="mock-button">开始识别</div></div>
+            <div class="mock-main"><div class="mock-toolbar"><span class="pill">仅看待确认</span><span class="pill hot">导出</span></div><div class="mock-table"><div class="mock-head"><div class="mock-cell">公司抬头</div><div class="mock-cell">开票日期</div><div class="mock-cell">销售方</div><div class="mock-cell">金额</div><div class="mock-cell">状态</div></div><div class="mock-row"><div class="mock-cell">江西省勘察设计研究院...</div><div class="mock-cell">2026-03-04</div><div class="mock-cell">江苏京东信息技术有限公司</div><div class="mock-cell">61.00</div><div class="mock-cell">已确认</div></div><div class="mock-row pending"><div class="mock-cell">个人</div><div class="mock-cell">2026-01-08</div><div class="mock-cell">昆山东广...</div><div class="mock-cell">446.20</div><div class="mock-cell">待确认</div></div></div></div>
+            <div class="mock-review"><div class="review-title">人工核对</div><div class="invoice-preview"></div><div class="field-grid"><div class="field"></div><div class="field"></div><div class="field"></div><div class="field"></div></div></div>
+          </div>
+          <div class="mock" data-title="人工核对" data-desc="原件可滚轮缩放、拖拽查看，缺字段整行高亮，不再藏在表格深处。">
+            <div class="mock-left"><div class="mock-panel"><div class="mock-label">待确认</div><div class="mock-value" style="color:#e94c88">2</div></div><div class="mock-panel"><div class="mock-label">重复跳过</div><div class="mock-value">13</div></div></div>
+            <div class="mock-main"><div class="mock-table"><div class="mock-head"><div class="mock-cell">公司抬头</div><div class="mock-cell">税号</div><div class="mock-cell">销售方</div><div class="mock-cell">税率</div><div class="mock-cell">状态</div></div><div class="mock-row pending"><div class="mock-cell">江西省勘察设计研究院...</div><div class="mock-cell">9136...</div><div class="mock-cell"></div><div class="mock-cell"></div><div class="mock-cell">待确认</div></div><div class="mock-row"><div class="mock-cell">上海洪君基础工程中心</div><div class="mock-cell">9131...</div><div class="mock-cell">中国石化销售...</div><div class="mock-cell">13%</div><div class="mock-cell">已确认</div></div></div></div>
+            <div class="mock-review"><div class="review-title">人工核对</div><div class="invoice-preview" style="height:170px"></div><div class="field-grid"><div class="field"></div><div class="field"></div><div class="field"></div><div class="field"></div><div class="field"></div><div class="field"></div></div></div>
+          </div>
+          <div class="mock" data-title="导出归档" data-desc="命名规则和 Excel 列顺序都可勾选、拖拽排序，重复发票单独放入重复文件夹。">
+            <div class="mock-left"><div class="mock-panel"><div class="mock-label">已确认</div><div class="mock-value">159</div></div><div class="mock-button">导出</div></div>
+            <div class="mock-main"><div class="archive-list"><div class="archive-item"><span>购买方抬头</span><strong>拖拽排序</strong></div><div class="archive-item"><span>开票日期</span><strong>已勾选</strong></div><div class="archive-item"><span>价税合计</span><strong>已勾选</strong></div><div class="archive-item"><span>重复发票</span><strong>单独归档</strong></div></div></div>
+            <div class="mock-review"><div class="review-title">导出完成</div><div class="mock-panel"><div class="mock-label">报表</div><div class="mock-value" style="font-size:17px">发票整理报表.xlsx</div></div><div class="mock-panel"><div class="mock-label">归档</div><div class="mock-value" style="font-size:17px">2026-03 / 重复</div></div></div>
+          </div>
+          <div class="mock dark-mock" data-title="深色模式" data-desc="同一套数据统计，深浅主题立即同步切换，适合长时间核对。">
+            <div class="mock-left"><div class="mock-panel"><div class="mock-label">已识别金额</div><div class="mock-value">¥46,255</div></div><div class="mock-panel"><div class="mock-label">待确认</div><div class="mock-value" style="color:#ff8db6">1</div></div></div>
+            <div class="mock-main"><div class="mock-table"><div class="mock-head"><div class="mock-cell">公司抬头</div><div class="mock-cell">日期</div><div class="mock-cell">销售方</div><div class="mock-cell">金额</div><div class="mock-cell">状态</div></div><div class="mock-row"><div class="mock-cell">江西省勘察设计研究院...</div><div class="mock-cell">2026-03-02</div><div class="mock-cell">上海三快智送科技</div><div class="mock-cell">11.00</div><div class="mock-cell">已确认</div></div><div class="mock-row pending"><div class="mock-cell">上海市普陀区...</div><div class="mock-cell">2026-04-17</div><div class="mock-cell"></div><div class="mock-cell">26.60</div><div class="mock-cell">待确认</div></div></div></div>
+            <div class="mock-review"><div class="review-title">人工核对</div><div class="invoice-preview"></div><div class="field-grid"><div class="field"></div><div class="field"></div><div class="field"></div><div class="field"></div></div></div>
+          </div>
+        </div>
       </div>
+      <div class="showcase-copy"><div><div class="show-title" id="showTitle">批量识别</div><div class="show-desc" id="showDesc">读取项目文件夹和子文件夹，进度、重复与待核对数量同步变化。</div></div><div class="dots" id="showDots"></div></div>
     </div>
   </div>
 
   <div class="section">
     <div class="section-header"><span class="section-name">核心能力</span><span class="section-count">4 个工作环节</span></div>
     <div class="feature-grid">
-      <div class="feature-card"><i class="ti ti-folder-search"></i><div class="feature-title">批量识别</div><div class="feature-desc">读取项目文件夹及子文件夹，自动提取发票字段。</div></div>
-      <div class="feature-card"><i class="ti ti-zoom-check"></i><div class="feature-title">人工核对</div><div class="feature-desc">右侧预览原件，缺失或异常字段高亮提醒。</div></div>
-      <div class="feature-card"><i class="ti ti-table-export"></i><div class="feature-title">报表导出</div><div class="feature-desc">按用户选择的字段顺序导出 Excel 报表。</div></div>
-      <div class="feature-card"><i class="ti ti-archive"></i><div class="feature-title">自动归档</div><div class="feature-desc">按命名规则建立文件夹，重复发票单独归档。</div></div>
+      <div class="feature-card"><i class="ti ti-folder-search"></i><div class="feature-title">递归识别</div><div class="feature-desc">读取项目文件夹下所有子文件夹，自动排除归档目录副本。</div></div>
+      <div class="feature-card"><i class="ti ti-zoom-check"></i><div class="feature-title">人工核对</div><div class="feature-desc">缺失、可疑、补全字段都会高亮，避免漏看。</div></div>
+      <div class="feature-card"><i class="ti ti-table-export"></i><div class="feature-title">可控导出</div><div class="feature-desc">命名字段和 Excel 列可勾选并拖拽排序。</div></div>
+      <div class="feature-card"><i class="ti ti-refresh-dot"></i><div class="feature-title">轻提醒更新</div><div class="feature-desc">有新版本时只显示更新入口，不强制、不打扰。</div></div>
     </div>
   </div>
 
@@ -82,19 +105,26 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
     <div class="section-header"><span class="section-name">当前版本</span><span class="section-count">用于软件自动检查更新</span></div>
     <div class="release-card">
       <div>
-        <div class="version">v1.0.0.46</div>
+        <div class="version">v1.0.0.47</div>
         <div class="release-date">发布日期：2026-07-13</div>
       </div>
       <div class="notes">
-        <div class="note"><i class="ti ti-check"></i><span>优化批量识别、人工核对和报表归档工作流。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>新增静默检查更新入口，发现新版本时只在界面显示更新和忽略。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>统一发票工具箱标题字体，并将导出按钮调整为粉色主操作。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>不强制更新，不影响离线使用。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>增强待确认判定：同批次补全、可疑公司名、税号异常、购销方疑似反写都会继续提示核对。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>优化主题切换同步、更新忽略逻辑、按钮高度和 Windows 图标资源。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>保留离线可用能力；发现新版本时只在界面显示更新按钮。</span></div>
       </div>
     </div>
   </div>
 
   <footer>© 2026 办公工具箱 · 发票工具箱是办公工具箱的 Windows 桌面软件。</footer>
 </main>
+<script>
+const slides=[...document.querySelectorAll('.mock')];
+const dots=document.getElementById('showDots');
+const title=document.getElementById('showTitle');
+const desc=document.getElementById('showDesc');
+function showSlide(index){slides.forEach((slide,i)=>slide.classList.toggle('active',i===index));[...dots.children].forEach((dot,i)=>dot.classList.toggle('active',i===index));title.textContent=slides[index].dataset.title;desc.textContent=slides[index].dataset.desc}
+slides.forEach((_,i)=>{const dot=document.createElement('button');dot.className='dot-btn'+(i===0?' active':'');dot.type='button';dot.addEventListener('click',()=>showSlide(i));dots.appendChild(dot)});
+</script>
 </body>
 </html>
