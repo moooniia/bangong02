@@ -29,6 +29,7 @@ public sealed partial class MainPage : UserControl
     public UIElement TitleBarElement => AppTitleBar;
     private JsonArray _records = new();
     private JsonObject? _selected;
+    private string _selectedRecordKey = "";
     private Process? _worker;
     private double _zoom = 1;
     private bool _dragging;
@@ -53,6 +54,8 @@ public sealed partial class MainPage : UserControl
     private string _latestVersion = "";
     private bool _updateAvailable;
     private bool _ignoreUpdateThisSession;
+
+    private sealed record RowVisualState(string RecordKey, Microsoft.UI.Xaml.Media.Brush NormalBrush, bool IsSelected);
 
     public MainPage()
     {
@@ -151,10 +154,12 @@ public sealed partial class MainPage : UserControl
     private void OnToggleLeftPanel(object sender, RoutedEventArgs e)
     {
         _leftPanelVisible = !_leftPanelVisible;
-        LeftPanelColumn.Width = new GridLength(_leftPanelVisible ? 228 : 52);
+        LeftPanelColumn.Width = new GridLength(_leftPanelVisible ? 228 : 64);
+        LeftPanelInner.Padding = _leftPanelVisible ? new Thickness(14) : new Thickness(8, 14, 8, 14);
         LeftPanelScroll.Visibility = _leftPanelVisible ? Visibility.Visible : Visibility.Collapsed;
         LeftPanelActions.Visibility = _leftPanelVisible ? Visibility.Visible : Visibility.Collapsed;
         LeftPanelToggleButton.HorizontalAlignment = _leftPanelVisible ? HorizontalAlignment.Left : HorizontalAlignment.Center;
+        Grid.SetColumnSpan(LeftPanelToggleButton, _leftPanelVisible ? 1 : 2);
         UpdatePanel.Visibility = _leftPanelVisible && _updateAvailable ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -310,7 +315,7 @@ public sealed partial class MainPage : UserControl
         var request = JsonSerializer.Serialize(new { command = "scan", folder = InputPathText.Text, exclude_folder = excludeFolder });
         var lastRendered = 0;
         var renderClock = Stopwatch.StartNew();
-        try { await RunWarmWorkerCommandAsync(request, "complete", item =>
+        try { await RunWorkerAsync(request, item =>
         {
             var type = item["event"]?.GetValue<string>();
             if (type == "scan_started")
@@ -340,7 +345,7 @@ public sealed partial class MainPage : UserControl
 
     private void OnReset(object sender, RoutedEventArgs e)
     {
-        OnCancelScan(sender, e); StopPreviewWorker(); _records = new JsonArray(); _selected = null; _pendingOnly = false; _previewCache.Clear(); RecordRows.Children.Clear(); PreviewImage.Source = null; InputPathText.Text = "未选择"; ArchivePathText.Text = "未选择"; ScanProgress.Value = 0; TotalCountText.Text = "0"; ReviewCountText.Text = "0"; ConfirmedCountText.Text = "0"; DuplicateCountText.Text = "0"; TotalAmountSummaryText.Text = "¥0.00"; ReviewToggleButton.Content = "打开核对  0"; PendingOnlyButton.Content = "仅看待确认  0"; ReviewMetaText.Text = "请从表格中选择一张发票"; SummaryText.Text = "选择发票文件夹后开始识别"; ProgressText.Text = "已重新开始";
+        OnCancelScan(sender, e); StopPreviewWorker(); _records = new JsonArray(); _selected = null; _selectedRecordKey = ""; _pendingOnly = false; _previewCache.Clear(); RecordRows.Children.Clear(); PreviewImage.Source = null; InputPathText.Text = "未选择"; ArchivePathText.Text = "未选择"; ScanProgress.Value = 0; TotalCountText.Text = "0"; ReviewCountText.Text = "0"; ConfirmedCountText.Text = "0"; DuplicateCountText.Text = "0"; TotalAmountSummaryText.Text = "¥0.00"; ReviewToggleButton.Content = "打开核对  0"; PendingOnlyButton.Content = "仅看待确认  0"; ReviewMetaText.Text = "请从表格中选择一张发票"; SummaryText.Text = "选择发票文件夹后开始识别"; ProgressText.Text = "已重新开始";
     }
 
     private static string WorkerPath => Path.Combine(AppContext.BaseDirectory, "Backend", "InvoiceToolbox.Worker.exe");
@@ -379,7 +384,7 @@ public sealed partial class MainPage : UserControl
                 var line = await process.StandardOutput.ReadLineAsync();
                 if (line == null) throw new OperationCanceledException("识别已取消");
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                if (JsonNode.Parse(line) is not JsonObject message) continue;
+                if (!TryParseWorkerMessage(line, out var message)) continue;
                 if (message["ok"]?.GetValue<bool>() == false) throw new InvalidOperationException(message["error"]?.GetValue<string>() ?? "预览失败");
                 onMessage?.Invoke(message);
                 if (message["event"]?.GetValue<string>() == "progress") await Task.Delay(16);
@@ -408,21 +413,38 @@ public sealed partial class MainPage : UserControl
         _worker = process;
         try
         {
-            process.Start(); await process.StandardInput.WriteLineAsync(request); process.StandardInput.Close();
+            process.Start(); var errorTask = process.StandardError.ReadToEndAsync(); await process.StandardInput.WriteLineAsync(request); process.StandardInput.Close();
             while (!process.StandardOutput.EndOfStream)
             {
                 var line = await process.StandardOutput.ReadLineAsync(); if (string.IsNullOrWhiteSpace(line)) continue;
-                if (JsonNode.Parse(line) is not JsonObject item) continue;
+                if (!TryParseWorkerMessage(line, out var item)) continue;
                 if (item["ok"]?.GetValue<bool>() == false)
                     throw new InvalidOperationException(item["error"]?.GetValue<string>() ?? "本地识别组件运行失败");
                 onMessage(item);
                 if (item["event"]?.GetValue<string>() == "progress") await Task.Delay(12);
             }
-            var error = await process.StandardError.ReadToEndAsync();
+            var error = await errorTask;
             await process.WaitForExitAsync();
             if (process.ExitCode != 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? $"本地识别组件异常退出（{process.ExitCode}）" : error.Trim());
         }
         finally { if (ReferenceEquals(_worker, process)) _worker = null; }
+    }
+
+    private static bool TryParseWorkerMessage(string line, out JsonObject message)
+    {
+        message = new JsonObject();
+        var trimmed = line.TrimStart();
+        if (!trimmed.StartsWith("{")) return false;
+        try
+        {
+            if (JsonNode.Parse(trimmed) is JsonObject parsed)
+            {
+                message = parsed;
+                return true;
+            }
+        }
+        catch (JsonException) { }
+        return false;
     }
 
     private async void RenderRows(bool pendingOnly = false, bool allowYield = true)
@@ -439,14 +461,18 @@ public sealed partial class MainPage : UserControl
             for (var i = 0; i < _columnWidths.Length; i++) row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(_columnWidths[i]) });
             var dark = RootLayout.RequestedTheme == ElementTheme.Dark; var divider = new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 52, 57, 66) : Windows.UI.Color.FromArgb(255, 225, 228, 234));
             var pendingBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 255, 150, 170) : Windows.UI.Color.FromArgb(255, 190, 24, 72));
-            for (var i = 0; i < values.Length; i++) { var cell = new TextBlock { Text = values[i], TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, Foreground = pending ? pendingBrush : FieldBrush(i, dark), FontWeight = pending ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal }; var frame = new Border { BorderBrush = divider, BorderThickness = new Thickness(0, 0, 1, 0), Child = cell }; Grid.SetColumn(frame, i); row.Children.Add(frame); }
+            var duplicateBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 255, 100, 125) : Windows.UI.Color.FromArgb(255, 210, 32, 64));
+            for (var i = 0; i < values.Length; i++) { var cell = new TextBlock { Text = values[i], TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, Foreground = isDuplicate ? duplicateBrush : pending ? pendingBrush : FieldBrush(i, dark), FontWeight = (pending || isDuplicate) ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal }; var frame = new Border { BorderBrush = divider, BorderThickness = new Thickness(0, 0, 1, 0), Child = cell }; Grid.SetColumn(frame, i); row.Children.Add(frame); }
             var sourcePath = Text(item,"original_path"); var archivePath = Text(item,"archived_path"); if (string.IsNullOrWhiteSpace(archivePath) && _archiveLookup.TryGetValue(Text(item,"invoice_no"), out var foundArchive)) { archivePath = foundArchive; item["archived_path"] = archivePath; }
-            var sourceButton = new Button { Content = "打开源文件", Width = 94, Padding = new Thickness(6, 3, 6, 3), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center }; sourceButton.Click += (_, _) => OpenLocalPath(sourcePath); Grid.SetColumn(sourceButton, 13); row.Children.Add(sourceButton);
-            var archiveButton = new Button { Content = "打开归档", Width = 94, Padding = new Thickness(6, 3, 6, 3), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsEnabled = File.Exists(archivePath) }; archiveButton.Click += (_, _) => OpenLocalPath(archivePath); Grid.SetColumn(archiveButton, 14); row.Children.Add(archiveButton);
-            var status = new TextBlock { Text = pending ? "待确认" : "已确认", HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = pending ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 213, 138, 24)) : new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 36, 168, 107)) }; Grid.SetColumn(status, 15); row.Children.Add(status);
+            var sourceButton = new Button { Content = "打开源文件", Width = 94, Padding = new Thickness(6, 3, 6, 3), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = isDuplicate ? duplicateBrush : null }; sourceButton.Click += (_, _) => OpenLocalPath(sourcePath); Grid.SetColumn(sourceButton, 13); row.Children.Add(sourceButton);
+            var archiveButton = new Button { Content = "打开归档", Width = 94, Padding = new Thickness(6, 3, 6, 3), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = isDuplicate ? duplicateBrush : null, IsEnabled = File.Exists(archivePath) }; archiveButton.Click += (_, _) => OpenLocalPath(archivePath); Grid.SetColumn(archiveButton, 14); row.Children.Add(archiveButton);
+            var status = new TextBlock { Text = isDuplicate ? "重复" : pending ? "待确认" : "已确认", HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = isDuplicate ? duplicateBrush : pending ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 213, 138, 24)) : new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 36, 168, 107)), FontWeight = isDuplicate ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal }; Grid.SetColumn(status, 15); row.Children.Add(status);
             var rowColor = pending ? (dark ? Windows.UI.Color.FromArgb(255, 67, 28, 42) : Windows.UI.Color.FromArgb(255, 255, 235, 241)) : dark ? (shown % 2 == 0 ? Windows.UI.Color.FromArgb(255, 22, 26, 32) : Windows.UI.Color.FromArgb(255, 16, 20, 26)) : (shown % 2 == 0 ? Windows.UI.Color.FromArgb(255, 248, 249, 251) : Windows.UI.Color.FromArgb(255, 255, 255, 255));
-            var container = new Border { Padding = new Thickness(12, 7, 12, 7), Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(rowColor), BorderBrush = divider, BorderThickness = new Thickness(0, 0, 0, 1), Child = row };
-            container.Tag = container.Background; container.PointerEntered += OnInvoiceRowEnter; container.PointerExited += OnInvoiceRowExit;
+            var recordKey = RecordKey(item);
+            var isSelected = !string.IsNullOrWhiteSpace(_selectedRecordKey) && string.Equals(recordKey, _selectedRecordKey, StringComparison.Ordinal);
+            var normalBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(rowColor);
+            var container = new Border { Padding = new Thickness(isSelected ? 9 : 12, 7, 12, 7), Background = isSelected ? SelectedRowBrush(dark) : normalBrush, BorderBrush = isSelected ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 37, 99, 235)) : divider, BorderThickness = isSelected ? new Thickness(3, 0, 0, 1) : new Thickness(0, 0, 0, 1), Child = row };
+            container.Tag = new RowVisualState(recordKey, normalBrush, isSelected); container.PointerEntered += OnInvoiceRowEnter; container.PointerExited += OnInvoiceRowExit;
             container.Tapped += async (_, e) => { if (!IsInsideButton(e.OriginalSource)) await SelectRecordAsync(item); }; RecordRows.Children.Add(container);
             if (allowYield && shown % 12 == 0)
             {
@@ -473,20 +499,38 @@ public sealed partial class MainPage : UserControl
         return new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, Convert.ToByte(hex.Substring(1, 2), 16), Convert.ToByte(hex.Substring(3, 2), 16), Convert.ToByte(hex.Substring(5, 2), 16)));
     }
 
-    private void OnInvoiceRowEnter(object sender, PointerRoutedEventArgs e)
+    private static Microsoft.UI.Xaml.Media.Brush SelectedRowBrush(bool dark) =>
+        new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 25, 48, 72) : Windows.UI.Color.FromArgb(255, 230, 241, 255));
+
+    private static Microsoft.UI.Xaml.Media.Brush SelectedRowHoverBrush(bool dark) =>
+        new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 31, 60, 92) : Windows.UI.Color.FromArgb(255, 218, 234, 255));
+
+    private static string RecordKey(JsonObject item)
     {
-        if (sender is Border row) row.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(RootLayout.RequestedTheme == ElementTheme.Dark ? Windows.UI.Color.FromArgb(255, 40, 37, 45) : Windows.UI.Color.FromArgb(255, 255, 239, 246));
+        var source = Text(item, "original_path");
+        if (!string.IsNullOrWhiteSpace(source)) return source;
+        var rowId = Text(item, "row_id");
+        if (!string.IsNullOrWhiteSpace(rowId)) return rowId;
+        return $"{Text(item, "invoice_no")}|{Text(item, "seller_tax")}|{Text(item, "invoice_date")}|{Text(item, "total_amount")}";
     }
 
-    private static void OnInvoiceRowExit(object sender, PointerRoutedEventArgs e)
+    private void OnInvoiceRowEnter(object sender, PointerRoutedEventArgs e)
     {
-        if (sender is Border { Tag: Microsoft.UI.Xaml.Media.Brush original } row) row.Background = original;
+        if (sender is not Border row) return;
+        var dark = RootLayout.RequestedTheme == ElementTheme.Dark;
+        row.Background = row.Tag is RowVisualState { IsSelected: true } ? SelectedRowHoverBrush(dark) : new Microsoft.UI.Xaml.Media.SolidColorBrush(dark ? Windows.UI.Color.FromArgb(255, 40, 37, 45) : Windows.UI.Color.FromArgb(255, 255, 239, 246));
+    }
+
+    private void OnInvoiceRowExit(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not Border row || row.Tag is not RowVisualState state) return;
+        row.Background = state.IsSelected ? SelectedRowBrush(RootLayout.RequestedTheme == ElementTheme.Dark) : state.NormalBrush;
     }
 
     private async Task SelectRecordAsync(JsonObject item)
     {
         if (!_reviewPanelVisible) OnToggleReviewPanel(this, new RoutedEventArgs());
-        _selected = item; InvoiceNoInput.Text = Text(item,"invoice_no"); BuyerTaxInput.Text = Text(item,"buyer_tax"); InvoiceDateInput.Text = Text(item,"invoice_date"); TotalAmountInput.Text = Text(item,"total_amount"); SellerNameInput.Text = Text(item,"seller_name"); SellerTaxInput.Text = Text(item,"seller_tax"); BuyerNameInput.Text = Text(item,"buyer_name"); TaxAmountInput.Text = Text(item,"tax_amount"); InvoiceTypeInput.Text = Text(item,"invoice_type"); CategoryInput.Text = Text(item,"category");
+        _selected = item; _selectedRecordKey = RecordKey(item); RenderRows(_pendingOnly, false); InvoiceNoInput.Text = Text(item,"invoice_no"); BuyerTaxInput.Text = Text(item,"buyer_tax"); InvoiceDateInput.Text = Text(item,"invoice_date"); TotalAmountInput.Text = Text(item,"total_amount"); SellerNameInput.Text = Text(item,"seller_name"); SellerTaxInput.Text = Text(item,"seller_tax"); BuyerNameInput.Text = Text(item,"buyer_name"); TaxAmountInput.Text = Text(item,"tax_amount"); InvoiceTypeInput.Text = Text(item,"invoice_type"); CategoryInput.Text = Text(item,"category");
         ReviewMetaText.Text = $"发票号码：{Text(item,"invoice_no")}    开票日期：{Text(item,"invoice_date")}";
         var source = Text(item,"original_path"); var requestId = ++_previewRequestId;
         PreviewLoadingRing.Visibility = Visibility.Visible; PreviewLoadingRing.IsActive = true;

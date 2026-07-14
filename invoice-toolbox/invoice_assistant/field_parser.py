@@ -169,6 +169,12 @@ def _fill_basic_fields(record: InvoiceRecord, lines: List[OcrLine]) -> None:
     if rate:
         record.tax_rate = f"{rate.group(1)}%"
 
+    if Path(record.original_path).suffix.lower() == ".pdf":
+        pdf_amounts = _amounts_from_pdf_table(lines)
+        for field_name, value in pdf_amounts.items():
+            if value:
+                setattr(record, field_name, value)
+
     record.total_amount = _amount_near_keyword(lines, "小写") or _amount_near_keyword(lines, "价税合计")
     amounts = _all_amounts(lines)
     if amounts:
@@ -182,6 +188,11 @@ def _fill_basic_fields(record: InvoiceRecord, lines: List[OcrLine]) -> None:
                 record.pretax_amount = f"{float(record.total_amount) - float(record.tax_amount):.2f}"
             except ValueError:
                 pass
+
+    if Path(record.original_path).suffix.lower() == ".pdf":
+        for field_name, value in pdf_amounts.items():
+            if value:
+                setattr(record, field_name, value)
 
     exact_stars = sum(1 for line in lines if line.text.strip() == "*")
     if not record.tax_rate and exact_stars >= 2 and record.total_amount:
@@ -200,6 +211,96 @@ def _fill_basic_fields(record: InvoiceRecord, lines: List[OcrLine]) -> None:
     item = _guess_line_item(lines)
     if item:
         record.line_items = item
+
+
+def _amounts_from_pdf_table(lines: List[OcrLine]) -> dict[str, str]:
+    """Prefer PDF word coordinates over global number guessing for amounts."""
+    result = {"pretax_amount": "", "tax_amount": "", "total_amount": "", "tax_rate": ""}
+    numeric = []
+    rates = []
+    for line in lines:
+        text = str(line.text or "").strip()
+        if not text:
+            continue
+        center_x = line.x + line.width / 2
+        center_y = line.y + line.height / 2
+        amount = _amount_from_text(text)
+        if amount is not None:
+            numeric.append((center_x, center_y, amount))
+        rate = _rate_from_text(text)
+        if rate:
+            rates.append((center_x, center_y, rate))
+
+    def pick_amount(x_min: float, x_max: float, y_min: float, y_max: float) -> str:
+        target_x = (x_min + x_max) / 2
+        target_y = (y_min + y_max) / 2
+        candidates = [
+            (abs(x - target_x) + abs(y - target_y), value)
+            for x, y, value in numeric
+            if x_min <= x <= x_max and y_min <= y <= y_max
+        ]
+        return f"{min(candidates, key=lambda item: item[0])[1]:.2f}" if candidates else ""
+
+    def pick_rate(x_min: float, x_max: float, y_min: float, y_max: float) -> str:
+        target_x = (x_min + x_max) / 2
+        target_y = (y_min + y_max) / 2
+        candidates = [
+            (abs(x - target_x) + abs(y - target_y), value)
+            for x, y, value in rates
+            if x_min <= x <= x_max and y_min <= y <= y_max
+        ]
+        return min(candidates, key=lambda item: item[0])[1] if candidates else ""
+
+    classic = (
+        pick_amount(0.66, 0.80, 0.30, 0.36),
+        pick_amount(0.86, 0.98, 0.30, 0.36),
+        pick_amount(0.72, 0.88, 0.23, 0.31),
+    )
+    compact = (
+        pick_amount(0.62, 0.74, 0.43, 0.50),
+        pick_amount(0.90, 0.99, 0.43, 0.50),
+        pick_amount(0.62, 0.78, 0.18, 0.24),
+    )
+    low_summary = (
+        pick_amount(0.62, 0.76, 0.15, 0.22),
+        pick_amount(0.88, 0.99, 0.15, 0.22),
+        pick_amount(0.70, 0.84, 0.10, 0.16),
+    )
+    detail = (
+        pick_amount(0.68, 0.80, 0.48, 0.64),
+        pick_amount(0.88, 0.98, 0.48, 0.64),
+        "",
+    )
+    for pretax, tax, total in (classic, compact, low_summary, detail):
+        if not (pretax or tax):
+            continue
+        if not result["pretax_amount"] and pretax:
+            result["pretax_amount"] = pretax
+        if not result["tax_amount"] and tax:
+            result["tax_amount"] = tax
+        if not result["total_amount"] and total:
+            result["total_amount"] = total
+        if result["pretax_amount"] and result["tax_amount"] and result["total_amount"]:
+            break
+    result["tax_rate"] = pick_rate(0.76, 0.86, 0.48, 0.64) or pick_rate(0.70, 0.90, 0.42, 0.70)
+    return result
+
+
+def _amount_from_text(text: str) -> Optional[float]:
+    match = re.search(r"(?:¥|￥)?\s*(-?\d{1,8}(?:,\d{3})*(?:\.\d{2}))", text)
+    if not match:
+        return None
+    try:
+        return float(match.group(1).replace(",", ""))
+    except ValueError:
+        return None
+
+
+def _rate_from_text(text: str) -> str:
+    match = re.search(r"(?<!\d)(\d{1,2})\s*%", text)
+    if not match:
+        return ""
+    return f"{int(match.group(1))}%"
 
 
 def _mark_missing_key_fields(record: InvoiceRecord) -> None:

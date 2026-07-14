@@ -2,6 +2,7 @@ build/
 dist/
 outputs/
 __pycache__/
+.venv-build/
 *.pyc
 *.pfx
 *.cer

@@ -21,8 +21,8 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <Image Width="28" Height="28" Source="ms-appx:///Assets/invoice-toolbox-icon-256.png" />
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" MinWidth="150">
+                    <Image Width="28" Height="28" Source="ms-appx:///Assets/invoice-toolbox-icon-256.png" Stretch="Uniform" />
                     <StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Center"><TextBlock Text="发票" FontFamily="Noto Serif SC" FontSize="20" FontWeight="Bold" /><TextBlock Text="工具箱" FontFamily="Noto Serif SC" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></StackPanel>
                 </StackPanel>
             </Grid>
@@ -36,7 +36,7 @@
             </Grid.ColumnDefinitions>
 
             <Border x:Name="LeftPanel" Grid.Column="0" Background="{ThemeResource SurfaceBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,1,0">
-                <Grid Padding="14">
+                <Grid x:Name="LeftPanelInner" Padding="14">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -131,7 +131,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled" HorizontalScrollBarVisibility="Disabled">
                 <Grid Padding="18,16" MinHeight="760">
                     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" MinHeight="300" MaxHeight="380" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                    <Grid><TextBlock Text="人工核对" Style="{StaticResource PageTitleStyle}" /><Button Content="×" HorizontalAlignment="Right" Background="Transparent" FontSize="20" Click="OnToggleReviewPanel" /></Grid>
+                    <Grid><TextBlock Text="人工核对" Style="{StaticResource PageTitleStyle}" /><Button Width="38" Height="38" CornerRadius="8" Padding="0" HorizontalAlignment="Right" Background="Transparent" ToolTipService.ToolTip="关闭核对栏" Click="OnToggleReviewPanel"><FontIcon Glyph="&#xE711;" FontSize="14" /></Button></Grid>
                     <TextBlock x:Name="ReviewMetaText" Grid.Row="1" Text="请从表格中选择一张发票" Style="{StaticResource MutedTextStyle}" Margin="0,8,0,12" />
                     <Border x:Name="PreviewViewport" Grid.Row="2" Background="{ThemeResource PreviewBrush}" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="1" CornerRadius="9" PointerWheelChanged="OnPreviewWheel" PointerPressed="OnPreviewPressed" PointerMoved="OnPreviewMoved" PointerReleased="OnPreviewReleased">
                         <Grid><Grid.RowDefinitions><RowDefinition Height="48" /><RowDefinition Height="*" /></Grid.RowDefinitions>
@@ -172,7 +172,7 @@
                             <Image Width="64" Height="64" Source="ms-appx:///Assets/invoice-toolbox-icon-256.png" />
                             <StackPanel VerticalAlignment="Center" Spacing="5"><StackPanel Orientation="Horizontal"><TextBlock Text="发票" FontFamily="Noto Serif SC" FontSize="27" FontWeight="Bold" /><TextBlock Text="工具箱" FontFamily="Noto Serif SC" FontSize="27" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></StackPanel><TextBlock Text="办公工具箱出品" Foreground="{ThemeResource MutedTextBrush}" FontSize="14" /></StackPanel>
                         </StackPanel>
-                        <StackPanel Grid.Row="1" Spacing="8"><TextBlock Text="让发票整理回到清晰、可靠的工作流" FontSize="17" FontWeight="SemiBold" /><TextBlock Text="批量识别、人工核对、智能归档与报表导出，所有数据均在本机处理。" Foreground="{ThemeResource MutedTextBrush}" TextWrapping="Wrap" LineHeight="22" /><StackPanel Orientation="Horizontal" Spacing="18"><TextBlock Text="版本  1.0.0.52" FontWeight="SemiBold" /><TextBlock Text="版本日期  2026-07-14" Foreground="{ThemeResource MutedTextBrush}" /></StackPanel></StackPanel>
+                        <StackPanel Grid.Row="1" Spacing="8"><TextBlock Text="让发票整理回到清晰、可靠的工作流" FontSize="17" FontWeight="SemiBold" /><TextBlock Text="批量识别、人工核对、智能归档与报表导出，所有数据均在本机处理。" Foreground="{ThemeResource MutedTextBrush}" TextWrapping="Wrap" LineHeight="22" /><StackPanel Orientation="Horizontal" Spacing="18"><TextBlock Text="版本  1.0.0.60" FontWeight="SemiBold" /><TextBlock Text="版本日期  2026-07-14" Foreground="{ThemeResource MutedTextBrush}" /></StackPanel></StackPanel>
                         <Border Grid.Row="2" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,1,0,1" Padding="0,14"><StackPanel Spacing="6"><TextBlock Text="新版本请前往办公工具箱网站下载更新" Foreground="{ThemeResource MutedTextBrush}" /><HyperlinkButton Content="前往办公工具箱网站  →" NavigateUri="https://www.bangong02.com/" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Left" Padding="0" FontWeight="SemiBold" /></StackPanel></Border>
                         <TextBlock Grid.Row="3" Text="Copyright © 2026 办公工具箱. All rights reserved." Foreground="{ThemeResource MutedTextBrush}" FontSize="12" />
                 </Grid>

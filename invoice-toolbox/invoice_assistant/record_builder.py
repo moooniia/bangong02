@@ -245,6 +245,8 @@ def _validate_final_records(records: List[InvoiceRecord]) -> None:
         "seller_name": "最终复查：销售方名称为空",
         "seller_tax": "最终复查：销售方税号为空",
         "invoice_date": "最终复查：开票日期为空",
+        "pretax_amount": "最终复查：不含税金额为空",
+        "tax_amount": "最终复查：税额为空",
         "total_amount": "最终复查：价税合计为空",
         "invoice_type": "最终复查：发票类型为空",
         "invoice_no": "最终复查：发票号码为空",
@@ -254,11 +256,14 @@ def _validate_final_records(records: List[InvoiceRecord]) -> None:
     dominant_buyer_tax = _dominant_value(records, "buyer_tax")
     for record in records:
         _normalize_party_names([record])
+        if record.buyer_name.strip() == "个人" and not record.buyer_tax.strip():
+            record.buyer_tax = "个人无税号"
         for field_name, reason in required.items():
             if not getattr(record, field_name).strip() and field_name not in record.fields_needing_review:
                 record.add_review(field_name, reason)
         _clear_stale_reviews_for_valid_values(record)
         _validate_party_quality(record)
+        _validate_amount_quality(record)
         _validate_party_position(record, dominant_buyer_name, dominant_buyer_tax)
         record.status = "需人工确认" if record.fields_needing_review else "已确认"
 
@@ -312,6 +317,8 @@ def _is_reliable_field_value(record: InvoiceRecord, field_name: str) -> bool:
         return value == "个人无税号" or is_valid_uscc(value.upper())
     if field_name == "tax_rate":
         return value == "免税" or bool(re.fullmatch(r"\d{1,2}%", value))
+    if field_name in {"pretax_amount", "tax_amount", "total_amount"}:
+        return _parse_amount(value) is not None
     return True
 
 
@@ -350,6 +357,94 @@ def _validate_party_quality(record: InvoiceRecord) -> None:
     if record.buyer_name and record.seller_name and record.buyer_name.strip() == record.seller_name.strip():
         _mark_review_once(record, "buyer_name", "最终复查：购销方名称相同，请核对")
         _mark_review_once(record, "seller_name", "最终复查：购销方名称相同，请核对")
+
+
+COMMON_TAX_RATES = {0, 1, 3, 5, 6, 9, 13}
+MONEY_TOLERANCE = 0.05
+
+
+def _validate_amount_quality(record: InvoiceRecord) -> None:
+    pretax = _parse_amount(record.pretax_amount)
+    tax = _parse_amount(record.tax_amount)
+    total = _parse_amount(record.total_amount)
+    rate = _parse_tax_rate(record.tax_rate)
+
+    for field_name, value in (
+        ("pretax_amount", pretax),
+        ("tax_amount", tax),
+        ("total_amount", total),
+    ):
+        if getattr(record, field_name).strip() and value is None:
+            _mark_review_once(record, field_name, "最终复查：金额格式无法解析")
+        elif value is not None and value < 0:
+            _mark_review_once(record, field_name, "最终复查：金额不能为负数")
+
+    if record.tax_rate.strip() and rate is None:
+        _mark_review_once(record, "tax_rate", "最终复查：税率格式无法解析")
+    elif rate is not None and rate not in COMMON_TAX_RATES:
+        _mark_review_once(record, "tax_rate", "最终复查：非常见税率，请人工核对")
+
+    amount_conflict = False
+    additive_ok = False
+
+    if pretax is not None and tax is not None and total is not None:
+        if abs((pretax + tax) - total) > MONEY_TOLERANCE:
+            amount_conflict = True
+            reason = "最终复查：不含税金额 + 税额 与价税合计不一致"
+            _mark_review_once(record, "pretax_amount", reason)
+            _mark_review_once(record, "tax_amount", reason)
+            _mark_review_once(record, "total_amount", reason)
+        else:
+            additive_ok = True
+
+    strict_rate_check = Path(record.original_path).suffix.lower() != ".pdf" or not additive_ok
+    if strict_rate_check and pretax is not None and tax is not None and total is not None and rate is not None:
+        rate_ratio = rate / 100
+        if abs((pretax * rate_ratio) - tax) > MONEY_TOLERANCE:
+            amount_conflict = True
+            reason = "最终复查：不含税金额 × 税率 与税额不一致"
+            _mark_review_once(record, "pretax_amount", reason)
+            _mark_review_once(record, "tax_amount", reason)
+            _mark_review_once(record, "tax_rate", reason)
+        if abs((total / (1 + rate_ratio)) - pretax) > MONEY_TOLERANCE:
+            amount_conflict = True
+            reason = "最终复查：价税合计 / (1 + 税率) 与不含税金额不一致"
+            _mark_review_once(record, "pretax_amount", reason)
+            _mark_review_once(record, "total_amount", reason)
+            _mark_review_once(record, "tax_rate", reason)
+
+    if amount_conflict:
+        _blank_unreliable_amount_fields(record)
+
+
+def _blank_unreliable_amount_fields(record: InvoiceRecord) -> None:
+    reason = '最终复查：金额公式不一致，疑似数字识别或字段取值错误，已留空等待人工核对'
+    for field_name in ("pretax_amount", "tax_amount", "total_amount", "tax_rate"):
+        setattr(record, field_name, "")
+        _mark_review_once(record, field_name, reason)
+
+
+def _parse_amount(value: str) -> float | None:
+    compact = str(value or "").strip().replace(",", "").replace("￥", "").replace("¥", "").replace("元", "")
+    if not compact:
+        return None
+    try:
+        return float(compact)
+    except ValueError:
+        return None
+
+
+def _parse_tax_rate(value: str) -> float | None:
+    compact = str(value or "").strip()
+    if compact in {"免税", "不征税", "0%"}:
+        return 0.0
+    match = re.fullmatch(r"(\d{1,2}(?:\.\d+)?)%", compact)
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
 
 
 def _is_suspicious_party_name(value: str) -> bool:

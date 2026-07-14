@@ -67,13 +67,8 @@ def _recognize_with_rapidocr(path: Path) -> List[OcrLine]:
         else:
             image = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
             image = _prepare_image_for_ocr(image)
-            image_lines = _best_image_ocr(engine, image)
+            image_lines = _quick_image_ocr(engine, image)
             lines.extend(image_lines)
-            # Hard photos can spend most of their time on extra crop retries
-            # while still producing fields that require manual review. Once the
-            # first pass is very weak, return quickly and let review handle it.
-            if _needs_party_crops(image_lines) and _ocr_quality_score(image_lines) >= 24:
-                lines.extend(_recognize_party_crops(engine, np.asarray(image.convert("RGB"))))
     except Exception:
         return []
     return lines
@@ -82,7 +77,7 @@ def _recognize_with_rapidocr(path: Path) -> List[OcrLine]:
 def _prepare_image_for_ocr(image):
     from PIL import Image
 
-    max_side = 2200
+    max_side = 1600
     width, height = image.size
     if max(width, height) <= max_side:
         return image
@@ -113,6 +108,14 @@ def _best_image_ocr(engine, image) -> List[OcrLine]:
     if score > best_score:
         best_lines = lines
     return best_lines
+
+
+def _quick_image_ocr(engine, image) -> List[OcrLine]:
+    import numpy as np
+
+    width, height = image.size
+    result, _ = engine(np.asarray(image))
+    return _lines_from_result(result, width, height)
 
 
 def _is_good_enough_ocr(lines: List[OcrLine], score: int) -> bool:
