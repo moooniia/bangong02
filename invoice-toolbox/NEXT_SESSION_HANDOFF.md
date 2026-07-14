@@ -142,6 +142,19 @@
 8. 发布必须闭环。
    不要只说“本地包好了”。要确认：本地包、安装脚本、网站版本清单、下载包、版本号、交接文档都同步。
 
+   发票工具箱发布必须执行“发布四件套门禁”，缺一项都不能说已经发布完成：
+
+   1. 软件版本：`Package.appxmanifest`、软件关于页、MSIX 文件名、安装包目录版本号一致。
+   2. 更新清单：`server/frontend/invoice-toolbox-latest.json` 的 `version`、`build`、`size`、`sha256`、`notes` 与最新 MSIX 一致。
+   3. 官网页面：`server/frontend/invoice-toolbox.html` 的“当前版本”、更新说明、下载按钮说明必须同步显示最新版本，不能继续写旧版本号。
+   4. 下载包：同时准备清晰版和 latest 版，至少保证 `server/frontend/downloads/InvoiceToolbox.WinUI_latest.msix` 是最新包；建议另存一份带版本号的 `InvoiceToolbox.WinUI_版本号_x64.msix`，便于用户和维护者确认。
+
+   发布后必须验证三条线上证据：
+
+   - `https://www.bangong02.com/invoice-toolbox-latest.json` 返回最新版本。
+   - `https://www.bangong02.com/invoice-toolbox.html` 页面肉眼可见最新版本。
+   - `https://www.bangong02.com/downloads/InvoiceToolbox.WinUI_latest.msix` 的 `Content-Length` 和服务器 `sha256sum` 与 JSON 一致。
+
 9. 不要长时间停下等用户。
    用户明确说过：只要还能自行完成，就继续实现、测试、修复和打包。只有必须用户选择方向、提供文件/权限、或遇到外部阻塞才停。
 
@@ -410,7 +423,61 @@ PowerShell 直接 `Get-Content` 有时会把中文 JSON 显示成乱码。
 - 不弹强制弹窗，不打扰。
 - 忽略只在本次启动隐藏。
 
-必须完成：
+发布顺序必须固定，不要跳步：
+
+1. 先定版本号，例如 `1.0.0.60`。
+2. 更新软件内版本：
+   - `winui_app/Package.appxmanifest`
+   - `winui_app/MainPage.xaml` 关于页版本号
+   - 生成 MSIX 的目录名和文件名
+3. 重新测试、编译、签名、安装验证：
+   - Python 单元测试通过
+   - WinUI Release 编译通过
+   - `signtool verify /pa /v` 通过
+   - 本机 `Get-AppxPackage -Name Paz.InvoiceToolbox` 显示新版本
+4. 同步本地网站下载包：
+   - `server/frontend/downloads/InvoiceToolbox.WinUI_latest.msix`
+   - 建议同时保留带版本号的包：`server/frontend/downloads/InvoiceToolbox.WinUI_版本号_x64.msix`
+5. 更新网站 JSON：
+   - `server/frontend/invoice-toolbox-latest.json`
+   - `version`、`build`、`size`、`sha256`、`notes` 必须对应最新 MSIX
+6. 更新官网展示页：
+   - `server/frontend/invoice-toolbox.html`
+   - 当前版本号不能写死旧版本
+   - 下载区域要让用户看得出正在下载哪个版本
+   - 更新说明要和 JSON 版本说明一致或至少不冲突
+7. 更新交接文档：
+   - `invoice-toolbox/NEXT_SESSION_HANDOFF.md`
+   - `C:\Users\paz\Desktop\办公工具箱\交接文档\工作交接文档_vXX_增量.md`
+8. Git 提交并 push。
+9. 部署服务器：
+   - 运行 `python deploy_frontend.py`
+   - 该脚本会上传 `*.html`、`*.json`、`assets/*`、`downloads/*`
+10. 线上验证后才能说发布完成。
+
+发布完成验收清单：
+
+- [ ] 本机安装版本是最新版本。
+- [ ] 桌面安装包目录存在，文件名带最新版本号。
+- [ ] `server/frontend/downloads/InvoiceToolbox.WinUI_latest.msix` 是最新包。
+- [ ] `server/frontend/invoice-toolbox-latest.json` 是最新版本。
+- [ ] `server/frontend/invoice-toolbox.html` 页面显示最新版本。
+- [ ] GitHub `master` 已推送到最新提交。
+- [ ] 服务器 `/home/toolbox/frontend/invoice-toolbox-latest.json` 是最新版本。
+- [ ] 服务器 `/home/toolbox/frontend/downloads/InvoiceToolbox.WinUI_latest.msix` hash 与 JSON 一致。
+- [ ] 线上 `https://www.bangong02.com/invoice-toolbox-latest.json` 是最新版本。
+- [ ] 线上 `https://www.bangong02.com/invoice-toolbox.html` 肉眼可见最新版本。
+- [ ] 线上下载包 `Content-Length` 与 JSON size 一致。
+
+特别注意：
+
+- `invoice-toolbox-latest.json` 只供软件自动更新读取；它不会自动修改官网页面。
+- `invoice-toolbox.html` 是静态 HTML，版本号如果写死，必须手动同步或改成前端读取 JSON。
+- `InvoiceToolbox.WinUI_latest.msix` 虽然是最新包，但用户看不出版本；页面上必须写清楚版本，最好同时提供带版本号的包。
+- `server/frontend/downloads/*.msix` 被 `.gitignore` 排除，不会进入 Git。MSIX 必须通过部署脚本或手动上传服务器。
+- 不要只更新 JSON 就说网页更新了；不要只上传 latest 包就说用户能确认版本。
+
+必须完成的技术项：
 
 1. 决定 MSIX 托管方式。
    可选：
