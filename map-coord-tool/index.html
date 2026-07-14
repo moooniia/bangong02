@@ -1,225 +1,1580 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>坐标转换工具</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<style>
-:root{--pink:#e94c88;--pink-bg:#fdf0f6;--pink-light:#fef0f4;--near-white:#fbfbfb;--light-gray:#f7f7f7;--dark:#252525;--mid:#444;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06);--shadow-hover:0 12px 40px rgba(233,76,136,.12),0 4px 12px rgba(0,0,0,.08);--card-bg:#fff;--nav-bg:rgba(251,251,251,.95);--crs-bd:#4f46e5;--crs-bd-bg:#eef2ff;--crs-gcj:#0891b2;--crs-gcj-bg:#e0f7ff;--crs-wgs:#059669;--crs-wgs-bg:#ecfdf5;--font-mono:'JetBrains Mono','SF Mono',monospace}
-html[data-theme="dark"]{--pink:#ff5d96;--pink-bg:rgba(255,93,150,.14);--pink-light:rgba(255,93,150,.1);--near-white:#14151a;--light-gray:#1f2025;--dark:#ececec;--mid:#cfcfd2;--ink3:#9a9aa0;--ink4:#55565c;--border:rgba(255,255,255,.08);--shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);--shadow-hover:0 12px 32px rgba(255,93,150,.18),0 4px 12px rgba(0,0,0,.4);--card-bg:#1c1d22;--nav-bg:rgba(20,21,26,.85);--crs-bd:#818cf8;--crs-bd-bg:rgba(99,102,241,.15);--crs-gcj:#22d3ee;--crs-gcj-bg:rgba(6,182,212,.15);--crs-wgs:#34d399;--crs-wgs-bg:rgba(5,150,105,.15)}
-html[data-theme="dark"] body{background:var(--near-white);color:var(--dark)}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--near-white);color:var(--dark);font-size:14px;-webkit-font-smoothing:antialiased;line-height:1.6;transition:background-color .2s,color .2s}
-nav{position:sticky;top:0;z-index:99;height:64px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none;letter-spacing:-0.5px}.logo span{color:var(--pink)}
-.nav-badge{font-size:11px;font-weight:600;color:var(--pink);background:var(--pink-bg);padding:4px 10px;border-radius:20px;border:1px solid rgba(233,76,136,.2)}
-.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:none;cursor:pointer;color:var(--ink3);font-size:18px;transition:all .15s}.theme-toggle:hover{color:var(--pink);border-color:var(--pink);background:var(--pink-bg)}
-main{max-width:1040px;margin:0 auto;padding:0 32px 80px}
-.hero{padding:72px 0 56px;border-bottom:1px solid var(--border);margin-bottom:56px;display:grid;grid-template-columns:1fr 260px;gap:40px;align-items:end;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;padding-left:32px;padding-right:32px;margin-left:-32px;margin-right:-32px;max-width:calc(100% + 64px);width:calc(100% + 64px)}
-.hero-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}.hero-label::before{content:'';width:18px;height:2px;background:var(--pink);border-radius:1px}
-.hero h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;line-height:1.1;letter-spacing:-1px;color:var(--dark);margin-bottom:16px}.hero h1 em{font-style:italic;color:var(--pink)}
-.hero-sub{font-size:15px;color:var(--ink3);line-height:1.8}
-.hero-pills{display:flex;flex-direction:column;gap:8px}
-.pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink3);padding:10px 16px;border:1px solid var(--border);border-radius:24px;background:var(--card-bg);transition:all .15s}.pill i{font-size:14px}.pill:hover{border-color:var(--pink);color:var(--pink)}
-.card{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;transition:transform .28s cubic-bezier(.34,1.56,.64,1),box-shadow .25s,background-color .2s}.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
-.card-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.card-icon{width:44px;height:44px;background:var(--light-gray);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--mid);transition:all .28s cubic-bezier(.34,1.56,.64,1)}.card:hover .card-icon{background:var(--pink-bg);color:var(--pink);transform:scale(1.1) rotate(-5deg)}
-.card-title{font-size:15px;font-weight:700;color:var(--dark);letter-spacing:-0.2px;transition:color .2s}.card:hover .card-title{color:var(--pink)}
-.card-subtitle{font-size:12px;color:var(--ink3);margin-top:2px}
-.search-wrapper{position:relative}
-.search-input{width:100%;padding:14px 18px 14px 48px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--dark);background:var(--card-bg);transition:all .15s}.search-input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(233,76,136,.1)}.search-input::placeholder{color:var(--ink4)}
-.search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--ink4)}
-.search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);max-height:240px;overflow-y:auto;display:none;z-index:9999}.search-results.show{display:block}
-.result-item{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}.result-item:last-child{border-bottom:none}.result-item:hover{background:var(--pink-bg)}.result-name{font-weight:600;font-size:13px;color:var(--dark)}.result-address{font-size:12px;color:var(--ink3);margin-top:2px}
-#map{width:100%;height:340px;border-radius:10px;border:1px solid var(--border)}.map-card{height:auto;display:flex;flex-direction:column}.map-card #map{flex:1;height:auto;min-height:340px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
-.input-group{margin-bottom:16px}.input-group label{display:block;font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px}
-.input-group input,.input-group select{width:100%;padding:12px 40px 12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--dark);background:var(--card-bg);transition:all .15s}
-.input-group select,.param-input select{cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--card-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center}
-.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-bg)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
-.btn-ghost{background:var(--light-gray);color:var(--mid);border:1px solid var(--border)}.btn-ghost:hover{background:var(--pink-light);border-color:var(--pink);color:var(--pink)}
-.result-box{background:var(--pink-light);border-radius:10px;padding:16px;margin-top:16px}.result-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.result-value{font-size:16px;font-weight:600;font-family:var(--font-mono);color:var(--pink)}
-.marker-box{background:var(--pink-bg);border:1px solid rgba(233,76,136,.15);border-radius:10px;padding:16px;margin-bottom:16px}
-.marker-title{font-size:12px;font-weight:700;color:var(--pink);margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.coord-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--card-bg);border-radius:6px;margin-bottom:6px}.coord-row:last-child{margin-bottom:0}
-.coord-name{font-size:12px;font-weight:600;color:var(--ink3)}.coord-value{font-size:12px;font-weight:600;font-family:var(--font-mono);color:var(--dark)}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch;}
-@media(max-width:768px){.grid-2{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero h1{font-size:36px}}
-.crs-list{display:flex;flex-direction:column;gap:8px}
-.crs-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px}.crs-item.bd{background:var(--crs-bd-bg)}.crs-item.gcj{background:var(--crs-gcj-bg)}.crs-item.wgs{background:var(--crs-wgs-bg)}
-.crs-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.crs-dot.bd{background:var(--crs-bd)}.crs-dot.gcj{background:var(--crs-gcj)}.crs-dot.wgs{background:var(--crs-wgs)}
-.crs-text{font-size:13px;color:var(--mid)}.crs-text strong{color:var(--dark)}.crs-text small{display:block;font-size:11px;color:var(--ink3);margin-top:1px}
-.hint-box{background:var(--pink-light);border:1px solid rgba(233,76,136,.15);border-radius:10px;padding:14px 16px;margin-top:16px;font-size:13px;color:var(--mid);display:flex;align-items:flex-start;gap:10px}.hint-box i{color:var(--pink);font-size:16px;margin-top:1px}.hint-box span{flex:1}
-.city-section-header{font-size:11px;font-weight:700;color:var(--pink);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}.city-section-header::before{content:'';width:16px;height:2px;background:var(--pink);border-radius:1px}
-.param-section{background:var(--pink-bg);border-radius:10px;padding:20px;margin-bottom:20px}
-.param-row{display:grid;gap:12px;margin-bottom:12px}.param-row-3{grid-template-columns:repeat(3,1fr)}.param-row-4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:900px){.param-row-4,.param-row-3{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.param-row-4,.param-row-3{grid-template-columns:1fr 1fr}}
-.param-input{margin-bottom:0}.param-input label{display:block;font-size:11px;font-weight:600;color:var(--ink3);margin-bottom:6px}
-.param-input input,.param-input select{width:100%;padding:10px 36px 10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--dark);background:var(--card-bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:all .15s;-webkit-appearance:none;-moz-appearance:none;appearance:none}
-.param-input input:focus,.param-input select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-bg)}
-.city-input-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:flex-end}
-@media(max-width:768px){.city-input-row{grid-template-columns:1fr}}
-.btn-convert{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,var(--pink) 0%,#ec4899 100%);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}.btn-convert:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(233,76,136,.3)}
-.city-result{background:var(--pink-bg);border:1px solid rgba(233,76,136,.2);border-radius:10px;padding:20px;margin-top:20px}
-.city-result-header{font-size:11px;font-weight:700;color:var(--pink);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
-.city-result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:640px){.city-result-grid{grid-template-columns:1fr}}
-.city-result-item{background:var(--card-bg);border-radius:8px;padding:14px;text-align:center}
-.city-result-label{font-size:11px;color:var(--ink3);margin-bottom:6px}
-.city-result-value{font-size:15px;font-weight:600;font-family:var(--font-mono);color:var(--pink)}
-.city-input-wrapper{position:relative}
-.city-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--dark);background:var(--card-bg);transition:all .15s}.city-input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(233,76,136,.1)}
-.city-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.1);max-height:200px;overflow-y:auto;display:none;z-index:1000}.city-dropdown.show{display:block}
-.city-option{padding:10px 14px;cursor:pointer;font-size:14px;transition:background .15s}.city-option:hover,.city-option.highlight{background:var(--pink-light);color:var(--pink)}
-.city-no-result{padding:12px 14px;color:var(--ink3);font-size:13px;text-align:center}
-.loading{text-align:center;padding:20px;color:var(--ink3)}
-</style>
-</head>
-<body>
-<nav>
-<a href="#" class="logo">工程<span>工具箱</span></a>
-<div style="display:flex;align-items:center;gap:12px;">
-<span class="nav-badge">坐标转换</span>
-<button class="theme-toggle" onclick="toggleTheme()" title="切换主题"><i class="ti ti-moon"></i></button>
-</div>
-</nav>
-<script>
-function toggleTheme(){var html=document.documentElement;var next=html.getAttribute('data-theme')==='dark'?'light':'dark';html.setAttribute('data-theme',next);localStorage.setItem('theme',next);updateThemeIcon()}
-function updateThemeIcon(){var icon=document.querySelector('.theme-toggle i');icon.className=document.documentElement.getAttribute('data-theme')==='dark'?'ti ti-sun':'ti ti-moon'}
-(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);updateThemeIcon()})();
-</script>
-<main>
-<div class="hero">
-<div>
-<div class="hero-label">免费 · 无需注册</div>
-<h1>坐标转换<em>工具</em></h1>
-<p class="hero-sub">支持 BD-09、GCJ-02、WGS84 三大坐标系互转，搜索定位，精准获取坐标信息</p>
-</div>
-<div class="hero-pills">
-<div class="pill"><i class="ti ti-brand-baidu"></i>百度坐标转换</div>
-<div class="pill"><i class="ti ti-map-pin"></i>高德坐标转换</div>
-<div class="pill"><i class="ti ti-gps"></i>GPS 坐标支持</div>
-</div>
-</div>
-<div class="card">
-<div class="card-header"><div class="card-icon"><i class="ti ti-search"></i></div><div><div class="card-title">搜索地点</div><div class="card-subtitle">输入路名、地址或建筑物名称定位</div></div></div>
-<div class="search-wrapper"><i class="ti ti-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="例如：上海外滩、故宫、北京大学" onkeypress="if(event.key==='Enter')searchPlace()" autocomplete="on" list="searchHistoryList"><div class="search-results" id="searchResults"></div><datalist id="searchHistoryList"></datalist></div>
-</div>
-<div class="grid-2">
-<div class="card map-card" style="padding:0;overflow:hidden;"><div id="map"></div></div>
-<div>
-<div class="card">
-<div class="card-header"><div class="card-icon"><i class="ti ti-current-location"></i></div><div><div class="card-title">当前位置</div><div class="card-subtitle">点击地图或搜索结果定位</div></div></div>
-<div class="marker-box" id="markerInfo" style="display:none;"><div class="marker-title"><i class="ti ti-map-pin"></i> <span id="markerTitle">坐标详情</span></div><div id="markerCoords"></div></div>
-<div class="form-grid">
-<div class="input-group"><label>经度 Longitude</label><input type="number" id="inputLng" step="0.000001" placeholder="121.499016"></div>
-<div class="input-group"><label>纬度 Latitude</label><input type="number" id="inputLat" step="0.000001" placeholder="31.344022"></div>
-</div>
-<button class="btn btn-ghost" onclick="clearMarker()"><i class="ti ti-trash"></i> 清除标记</button>
-</div>
-</div>
-</div>
-<div class="grid-2">
-<div class="card">
-<div class="card-header"><div class="card-icon"><i class="ti ti-arrows-exchange"></i></div><div><div class="card-title">坐标转换</div><div class="card-subtitle">选择源坐标系和目标坐标系</div></div></div>
-<div class="input-group"><label>源坐标系</label><select id="sourceCrs"><option value="bd09">百度坐标 (BD-09)</option><option value="gcj02">国测局坐标 (GCJ-02)</option><option value="wgs84">WGS84 坐标</option></select></div>
-<div class="input-group"><label>目标坐标系</label><select id="targetCrs"><option value="gcj02">国测局坐标 (GCJ-02)</option><option value="bd09">百度坐标 (BD-09)</option><option value="wgs84">WGS84 坐标</option></select></div>
-<div class="result-box"><div class="result-label">转换结果</div><div class="result-value" id="convertResult">等待输入坐标…</div></div>
-</div>
-<div class="card">
-<div class="card-header"><div class="card-icon"><i class="ti ti-info-circle"></i></div><div><div class="card-title">坐标系说明</div><div class="card-subtitle">三大坐标系的应用场景</div></div></div>
-<div class="crs-list">
-<div class="crs-item bd"><div class="crs-dot bd"></div><div class="crs-text"><strong>BD-09</strong> 百度地图专用<small>国内导航平台中定位最准</small></div></div>
-<div class="crs-item gcj"><div class="crs-dot gcj"></div><div class="crs-text"><strong>GCJ-02</strong> 高德、腾讯、谷歌中国<small>国内地图通用坐标系</small></div></div>
-<div class="crs-item wgs"><div class="crs-dot wgs"></div><div class="crs-text"><strong>WGS84</strong> GPS 设备原始坐标<small>国际通用，适用于所有 GPS 设备</small></div></div>
-</div>
-<div class="hint-box"><i class="ti ti-bulb"></i><span>同一地点在不同地图上显示的经纬度数值不同，但指向同一地理位置。</span></div>
-</div>
-</div>
-<div class="card">
-<div class="card-header"><div class="card-icon"><i class="ti ti-math"></i></div><div><div class="card-title">城市坐标 → 经纬度</div><div class="card-subtitle">输入城市坐标系坐标，转换为经纬度</div></div></div>
-<div class="param-section">
-<div class="city-section-header">投影参数</div>
-<div class="param-row param-row-4">
-<div class="param-input"><label>城市坐标系</label><select id="cityCrs"><option value="">选择坐标系</option><option value="beijing54">北京54</option><option value="xian80">西安80</option><option value="cgcs2000">CGCS2000</option><option value="wgs84">WGS84</option></select></div>
-<div class="param-input"><label>椭球</label><select id="ellipsoid"><option value="krassovsky">克拉索夫斯基</option><option value="iag75">IAG-75</option><option value="wgs84">WGS84</option><option value="cgcs2000">CGCS2000</option></select></div>
-<div class="param-input"><label>投影方式</label><select id="projection"><option value="gauss">高斯-克吕格</option><option value="utm">UTM</option></select></div>
-<div class="param-input"><label>投影带</label><select id="zoneType"><option value="3">3度带</option><option value="6">6度带</option></select></div>
-</div>
-<div class="param-row param-row-4">
-<div class="param-input"><label>中央经线 (°)</label><input type="number" id="centralMeridian" step="0.001" placeholder="如：117"></div>
-<div class="param-input"><label>带号</label><input type="number" id="zoneNumber" placeholder="可不填"></div>
-<div class="param-input"><label>偏移方向</label><select id="offsetDirection"><option value="auto">自动</option><option value="north">北半球</option><option value="south">南半球</option></select></div>
-<div class="param-input"><label>精度要求</label><select><option>0.001 m（米级）</option><option>0.0001 m（厘米级）</option><option>0.000001 m（毫米级）</option></select></div>
-</div>
-<div class="city-section-header">七参数（选填）</div>
-<div class="param-row param-row-4">
-<div class="param-input"><label>ΔX (m)</label><input type="number" id="paramDx" step="0.001" placeholder="0"></div>
-<div class="param-input"><label>ΔY (m)</label><input type="number" id="paramDy" step="0.001" placeholder="0"></div>
-<div class="param-input"><label>ΔZ (m)</label><input type="number" id="paramDz" step="0.001" placeholder="0"></div>
-<div class="param-input"><label>Rx (″)</label><input type="number" id="paramRx" step="0.0001" placeholder="0"></div>
-</div>
-<div class="param-row param-row-3">
-<div class="param-input"><label>Ry (″)</label><input type="number" id="paramRy" step="0.0001" placeholder="0"></div>
-<div class="param-input"><label>Rz (″)</label><input type="number" id="paramRz" step="0.0001" placeholder="0"></div>
-<div class="param-input"><label>尺度 m</label><input type="number" id="paramScale" step="0.000001" placeholder="0"></div>
-</div>
-</div>
-<div class="city-input-row">
-<div class="param-input"><label>X 坐标</label><input type="number" id="cityX" step="0.001" placeholder="城市坐标 X"></div>
-<div class="param-input"><label>Y 坐标</label><input type="number" id="cityY" step="0.001" placeholder="城市坐标 Y"></div>
-<div class="param-input"><label>城市</label><div class="city-input-wrapper"><input type="text" id="cityInput" class="city-input" placeholder="输入或选择城市" autocomplete="off"><div id="cityDropdown" class="city-dropdown"></div></div></div>
-<button class="btn-convert" onclick="convertCityToLatLon()"><i class="ti ti-arrows-exchange"></i> 转换</button>
-</div>
-<div id="cityResultBox" style="display:none;">
-<div class="city-result">
-<div class="city-result-header">转换结果</div>
-<div class="city-result-grid">
-<div class="city-result-item"><div class="city-result-label">经度</div><div class="city-result-value" id="resultLon">--</div></div>
-<div class="city-result-item"><div class="city-result-label">纬度</div><div class="city-result-value" id="resultLat">--</div></div>
-<div class="city-result-item"><div class="city-result-label">坐标系</div><div class="city-result-value" id="resultType" style="font-size:12px;">--</div></div>
-</div>
-</div>
-</div>
-<div class="hint-box"><i class="ti ti-info-circle"></i><span>城市坐标系转经纬度需要该城市的投影参数（中央经线、椭球参数）和与国家坐标系的转换参数（七参数）。这些参数通常在工程图纸或当地测绘部门获取。</span></div>
-</div>
-</main>
-<script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=6LpklpBUg6xxR70sU6aNYdcBXvBzoaJM"></script>
-<script>
-var map;
-function initMap(){var saved=localStorage.getItem('theme');var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var t=saved||(prefersDark?'dark':'light');map=new BMapGL.Map('map');map.centerAndZoom(new BMapGL.Point(116.404,39.915),12);map.enableScrollWheelZoom(true);if(t==='dark')map.setMapStyleV2({style:'midnight'});}
-var _ot=toggleTheme;toggleTheme=function(){_ot();setTimeout(function(){var d=document.documentElement.getAttribute('data-theme')==='dark';if(map){if(d)map.setMapStyleV2({style:'midnight'});else map.setMapStyleV2({style:'normal'})}},300)}
-var marker=null,localSearch=null;function bootstrapMap(){if(typeof BMapGL==="undefined"){setTimeout(bootstrapMap,100);return}initMap();initSearch();}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",bootstrapMap)}else{bootstrapMap()}
-function initSearch(){localSearch=new BMapGL.LocalSearch(map,{onSearchComplete:function(r){displaySearchResults(r)}})}
-function searchPlace(){var k=document.getElementById('searchInput').value.trim();if(!k)return;var rd=document.getElementById('searchResults');rd.innerHTML='<div class="loading">搜索中…</div>';rd.classList.add('show');localSearch.search(k)}
-function displaySearchResults(r){var rd=document.getElementById('searchResults');if(!r||r.getCurrentNumPois()===0){rd.innerHTML='<div class="loading">未找到结果</div>';return}var h='';for(var i=0;i<r.getCurrentNumPois();i++){var p=r.getPoi(i);h+='<div class="result-item" onclick="goToPoi('+p.point.lng+','+p.point.lat+',&#39;'+p.title.replace(/&#39;/g,"\'")+'&#39;)"><div class="result-name">'+p.title+'</div><div class="result-address">'+(p.address||'')+'</div></div>'}rd.innerHTML=h}
-function goToPoi(lng,lat,title){var pt=new BMapGL.Point(lng,lat);if(marker)map.removeOverlay(marker);marker=new BMapGL.Marker(pt);map.addOverlay(marker);map.centerAndZoom(pt,17);document.getElementById('inputLng').value=lng.toFixed(6);document.getElementById('inputLat').value=lat.toFixed(6);document.getElementById('searchResults').classList.remove('show');updateMarkerInfo(lng,lat,title);autoConvert();setTimeout(function(){try{if(map)map.reset()}catch(e){try{if(map)map.resize()}catch(e2){try{window.dispatchEvent(new Event("resize"))}catch(e3){}}}},200)}
-function updateMarkerInfo(lng,lat,title){var g=bd09ToGcj02(lng,lat);var w=gcj02ToWgs84(g[0],g[1]);document.getElementById('markerInfo').style.display='block';document.getElementById('markerTitle').textContent=title||'坐标详情';document.getElementById('markerCoords').innerHTML='<div class="coord-row"><span class="coord-name">BD-09（百度）</span><span class="coord-value">'+lng.toFixed(6)+', '+lat.toFixed(6)+'</span></div><div class="coord-row"><span class="coord-name">GCJ-02（国测局）</span><span class="coord-value">'+g[0].toFixed(6)+', '+g[1].toFixed(6)+'</span></div><div class="coord-row"><span class="coord-name">WGS84（GPS）</span><span class="coord-value">'+w[0].toFixed(6)+', '+w[1].toFixed(6)+'</span></div>'}
-var cities=[{n:'北京',v:'beijing'},{n:'上海',v:'shanghai'},{n:'天津',v:'tianjin'},{n:'重庆',v:'chongqing'},{n:'石家庄',v:'shijiazhuang'},{n:'太原',v:'taiyuan'},{n:'呼和浩特',v:'huhehaote'},{n:'沈阳',v:'shenyang'},{n:'长春',v:'changchun'},{n:'哈尔滨',v:'haerbin'},{n:'南京',v:'nanjing'},{n:'杭州',v:'hangzhou'},{n:'合肥',v:'hefei'},{n:'福州',v:'fuzhou'},{n:'南昌',v:'nanchang'},{n:'济南',v:'jinan'},{n:'郑州',v:'zhengzhou'},{n:'武汉',v:'wuhan'},{n:'长沙',v:'changsha'},{n:'广州',v:'guangzhou'},{n:'南宁',v:'nanning'},{n:'海口',v:'haikou'},{n:'成都',v:'chengdu'},{n:'贵阳',v:'guiyang'},{n:'昆明',v:'kunming'},{n:'拉萨',v:'lasa'},{n:'西安',v:'xian'},{n:'兰州',v:'lanzhou'},{n:'西宁',v:'xining'},{n:'银川',v:'yinchuan'},{n:'乌鲁木齐',v:'wulumuqi'},{n:'台北',v:'taibei'},{n:'大连',v:'dalian'},{n:'青岛',v:'qingdao'},{n:'宁波',v:'ningbo'},{n:'厦门',v:'xiamen'},{n:'深圳',v:'shenzhen'}];
-function initCityDropdown(){var i=document.getElementById('cityInput'),d=document.getElementById('cityDropdown');renderCityDropdown(cities);i.addEventListener('click',function(){d.classList.add('show')});var composing=false;i.addEventListener('compositionstart',function(){composing=true});i.addEventListener('compositionend',function(){composing=false;filterCities(i.value)});i.addEventListener('input',function(){if(!composing)filterCities(this.value)});document.addEventListener('click',function(e){if(!e.target.closest('.city-input-wrapper'))d.classList.remove('show')});i.addEventListener('keydown',function(e){if(!d.classList.contains('show'))return;var opts=d.querySelectorAll('.city-option'),cur=d.querySelector('.city-option.highlight');if(e.key==='ArrowDown'){e.preventDefault();if(cur){cur.classList.remove('highlight');if(cur.nextElementSibling)cur.nextElementSibling.classList.add('highlight');else opts[0].classList.add('highlight')}else opts[0].classList.add('highlight')}else if(e.key==='ArrowUp'){e.preventDefault();if(cur){cur.classList.remove('highlight');if(cur.previousElementSibling)cur.previousElementSibling.classList.add('highlight');else opts[opts.length-1].classList.add('highlight')}else opts[opts.length-1].classList.add('highlight')}else if(e.key==='Enter'){e.preventDefault();var h=d.querySelector('.city-option.highlight');if(h)selectCity(h.dataset.value,h.dataset.name)}else if(e.key==='Escape')d.classList.remove('show')})}
-function filterCities(v){var d=document.getElementById('cityDropdown');var l=v===''?cities:cities.filter(function(c){return c.n.indexOf(v)!==-1||c.v.indexOf(v)!==-1});renderCityDropdown(l);d.classList.add('show')}
-function renderCityDropdown(l){var d=document.getElementById('cityDropdown');if(l.length===0){d.innerHTML='<div class="city-no-result">未找到匹配的城市</div>';return}d.innerHTML=l.map(function(c){return'<div class="city-option" data-value="'+c.v+'" data-name="'+c.n+'">'+c.n+'</div>'}).join('');var els=d.querySelectorAll('.city-option');for(var j=0;j<els.length;j++){els[j].addEventListener('click',function(){selectCity(this.dataset.value,this.dataset.name)})}}
-function selectCity(v,n){selectedCity=v;document.getElementById('cityInput').value=n;document.getElementById('cityDropdown').classList.remove('show')}
-initCityDropdown();
-document.getElementById('searchInput').addEventListener('keypress',function(e){if(e.key==='Enter')searchPlace()});
-function bd09ToGcj02(lng,lat){var x=lng-0.0065,y=lat-0.006;var z=Math.sqrt(x*x+y*y)-0.00002*Math.sin(y*Math.PI*3000/180);var theta=Math.atan2(y,x)-0.000003*Math.cos(x*Math.PI*3000/180);return[z*Math.cos(theta),z*Math.sin(theta)]}
-function gcj02ToBd09(lng,lat){var z=Math.sqrt(lng*lng+lat*lat)+0.00002*Math.sin(lat*Math.PI*3000/180);var theta=Math.atan2(lat,lng)+0.000003*Math.cos(lng*Math.PI*3000/180);return[z*Math.cos(theta)+0.0065,z*Math.sin(theta)+0.006]}
-function gcj02ToWgs84(lng,lat){var dl=lng-105,dp=lat-35;var rp=lat/180*Math.PI;var mg=Math.sin(rp);mg=1-0.00669342162296594323*mg*mg;var sq=Math.sqrt(mg);return[lng-(dl*180)/(6335552.947294725/sq*Math.cos(rp)),lat-(dp*180)/((32144.51809628924/sq)*Math.cos(rp)*(1-0.00669342162296594323/mg))]}
-function wgs84ToGcj02(lng,lat){var dl=lng-105,dp=lat-35;var rp=lat/180*Math.PI;var mg=Math.sin(rp);mg=1-0.00669342162296594323*mg*mg;var sq=Math.sqrt(mg);return[lng+(dl*180)/(6335552.947294725/sq*Math.cos(rp)),lat+(dp*180)/((32144.51809628924/sq)*Math.cos(rp)*(1-0.00669342162296594323/mg))]}
-map.addEventListener('click',function(e){var lng=e.latlng.lng,lat=e.latlng.lat;if(marker)map.removeOverlay(marker);marker=new BMapGL.Marker(e.latlng);map.addOverlay(marker);document.getElementById('inputLng').value=lng.toFixed(6);document.getElementById('inputLat').value=lat.toFixed(6);updateMarkerInfo(lng,lat,'点击位置');autoConvert();setTimeout(function(){try{if(map)map.reset()}catch(e){try{if(map)map.resize()}catch(e2){try{window.dispatchEvent(new Event("resize"))}catch(e3){}}}},200)});
-function clearMarker(){if(marker){map.removeOverlay(marker);marker=null}document.getElementById('inputLng').value='';document.getElementById('inputLat').value='';document.getElementById('markerInfo').style.display='none';document.getElementById('convertResult').textContent='等待输入坐标…'}
-function autoConvert(){var lng=parseFloat(document.getElementById('inputLng').value),lat=parseFloat(document.getElementById('inputLat').value);var src=document.getElementById('sourceCrs').value,tgt=document.getElementById('targetCrs').value;if(isNaN(lng)||isNaN(lat))return;var gl=lng,gp=lat;if(src==='bd09'){var t=bd09ToGcj02(lng,lat);gl=t[0];gp=t[1]}else if(src==='wgs84'){var t=wgs84ToGcj02(lng,lat);gl=t[0];gp=t[1]}var rl,rt;if(tgt==='gcj02'){rl=gl;rt=gp}else if(tgt==='bd09'){var t=gcj02ToBd09(gl,gp);rl=t[0];rt=t[1]}else if(tgt==='wgs84'){var t=gcj02ToWgs84(gl,gp);rl=t[0];rt=t[1]}document.getElementById('convertResult').textContent=rl.toFixed(6)+', '+rt.toFixed(6)}
-document.getElementById('inputLng').addEventListener('input',function(){updateMarkerFromInput();autoConvert()});
-document.getElementById('inputLat').addEventListener('input',function(){updateMarkerFromInput();autoConvert()});
-function updateMarkerFromInput(){var lng=parseFloat(document.getElementById('inputLng').value),lat=parseFloat(document.getElementById('inputLat').value);if(!isNaN(lng)&&!isNaN(lat)){if(marker)map.removeOverlay(marker);var pt=new BMapGL.Point(lng,lat);marker=new BMapGL.Marker(pt);map.addOverlay(marker);map.panTo(pt);updateMarkerInfo(lng,lat,'手动输入');setTimeout(function(){try{if(map)map.reset()}catch(e){try{if(map)map.resize()}catch(e2){try{window.dispatchEvent(new Event("resize"))}catch(e3){}}}},200)}}
-var ellipsoids={'krassovsky':{a:6378245,f:1/298.3},'iag75':{a:6378140,f:1/298.257},'wgs84':{a:6378137,f:1/298.257223563},'cgcs2000':{a:6378137,f:1/298.257222101}};
-function convertCityToLatLon(){var x=parseFloat(document.getElementById('cityX').value),y=parseFloat(document.getElementById('cityY').value),cm=parseFloat(document.getElementById('centralMeridian').value),el=document.getElementById('ellipsoid').value,crs=document.getElementById('cityCrs').value;if(isNaN(x)||isNaN(y)){alert('请输入有效的 X、Y 坐标');return}if(!cm){alert('请输入中央经线');return}var e=ellipsoids[el]||ellipsoids['krassovsky'],a=e.a,f=e.f,b=a*(1-f),e2=(a*a-b*b)/(a*a),ep2=(a*a-b*b)/(b*b),L0=cm*Math.PI/180;var B=y/(a*(1-e2));for(var it=0;it<8;it++){var sb=Math.sin(B),cb=Math.cos(B),V=Math.sqrt(1+ep2*sb*sb),M=a*(1-e2)/(V*V*V),Bn=y/(a*(1-e2)*(1-1.5*e2*sb*sb*cb*cb));if(Math.abs(Bn-B)<1e-12){B=Bn;break}B=Bn}var sb=Math.sin(B),cb=Math.cos(B),V=Math.sqrt(1+ep2*sb*sb),N=a/V,t=Math.tan(B),g0=N*cb,Ld=(y-500000)/g0,Bf=B-(t/(2*M*N))*Math.pow(y-500000,2),Lf=L0+Ld;document.getElementById('cityResultBox').style.display='block';document.getElementById('resultLon').textContent=(Bf*180/Math.PI).toFixed(6)+'°';document.getElementById('resultLat').textContent=(Lf*180/Math.PI).toFixed(6)+'°';document.getElementById('resultType').textContent=crs||'CGCS2000'}
-</script>
-</body>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标转换工具</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        :root {
+            --pink: #e94c88;
+            --pink-bg: #fdf0f6;
+            --pink-light: #fef0f4;
+            --near-white: #fbfbfb;
+            --light-gray: #f7f7f7;
+            --dark: #252525;
+            --mid: #444444;
+            --ink3: #888888;
+            --ink4: #cccccc;
+            --border: #ebebeb;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-hover: 0 12px 40px rgba(233,76,136,0.12), 0 4px 12px rgba(0,0,0,0.08);
+            --card-bg: #ffffff;
+            --nav-bg: rgba(251,251,251,0.95);
+        }
+        /* 深色模式 */
+        html[data-theme="dark"] {
+            --pink: #ff5d96;
+            --pink-bg: rgba(255, 93, 150, 0.14);
+            --pink-light: rgba(255, 93, 150, 0.1);
+            --near-white: #14151a;
+            --light-gray: #1f2025;
+            --dark: #ececec;
+            --mid: #cfcfd2;
+            --ink3: #9a9aa0;
+            --ink4: #55565c;
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 12px 32px rgba(255, 93, 150, 0.18), 0 4px 12px rgba(0, 0, 0, 0.4);
+            --card-bg: #1c1d22;
+            --nav-bg: rgba(20, 21, 26, 0.85);
+        }
+        html[data-theme="dark"] body { background: var(--near-white); color: var(--dark); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--near-white);
+            color: var(--dark);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        /* Nav */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            height: 64px;
+            padding: 0 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s ease;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--pink); }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: none;
+            cursor: pointer;
+            color: var(--ink3);
+            font-size: 18px;
+            margin-left: 12px;
+            transition: all 0.15s;
+        }
+        .theme-toggle:hover {
+            color: var(--pink);
+            border-color: var(--pink);
+            background: var(--pink-bg);
+        }
+        /* Main */
+        main {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 0 32px 80px;
+        }
+        /* Hero */
+        .hero {
+            padding: 72px 0 56px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 56px;
+            display: grid;
+            grid-template-columns: 1fr 260px;
+            gap: 40px;
+            align-items: end;
+        }
+        .hero-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--pink);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hero-label::before {
+            content: '';
+            width: 18px;
+            height: 2px;
+            background: var(--pink);
+            border-radius: 1px;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            color: var(--dark);
+            margin-bottom: 16px;
+        }
+        .hero h1 em {
+            font-style: italic;
+            color: var(--pink);
+        }
+        .hero-sub {
+            font-size: 15px;
+            color: var(--ink3);
+            line-height: 1.8;
+        }
+        .hero-pills {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink3);
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--card-bg);
+            transition: all 0.15s;
+        }
+        .pill i { font-size: 14px; }
+        .pill:hover {
+            border-color: var(--pink);
+            color: var(--pink);
+        }
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background-color 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: var(--mid);
+            transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
+        }
+        .card:hover .card-icon {
+            background: var(--pink-bg);
+            color: var(--pink);
+            transform: scale(1.1) rotate(-5deg);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.2px;
+            transition: color 0.2s;
+        }
+        .card:hover .card-title {
+            color: var(--pink);
+        }
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--ink3);
+            margin-top: 2px;
+        }
+        /* Search */
+        .search-wrapper {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 14px 18px 14px 48px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--dark);
+            background: var(--card-bg);
+            transition: all 0.15s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px rgba(233,76,136,0.1);
+        }
+        .search-input::placeholder {
+            color: var(--ink4);
+        }
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--ink4);
+        }
+        .search-results {
+            position: fixed;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            max-height: 240px;
+            min-width: 320px;
+            max-width: 600px;
+            overflow-y: auto;
+            display: none;
+            z-index: 2147483647;
+        }
+        .search-results.show { display: block; }
+        .result-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover { background: var(--pink-bg); }
+        .result-name { font-weight: 600; font-size: 13px; color: var(--dark); }
+        .result-address { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+        /* Map */
+        #map {
+            width: 100%;
+            height: 340px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        /* Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink3);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 40px 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--dark);
+            background-color: var(--card-bg);
+            transition: all 0.15s;
+        }
+        .input-group select,
+        .param-input select {
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: var(--card-bg);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+        }
+        .input-group select:focus,
+        .param-input select:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px var(--pink-bg);
+        }
+            border-color: var(--pink) !important;
+            box-shadow: 0 0 0 3px rgba(233,76,136,0.1);
+        }
+        /* Button */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-ghost {
+            background: var(--light-gray);
+            color: var(--mid);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            background: var(--pink-light);
+            border-color: var(--pink);
+            color: var(--pink);
+        }
+        /* Result */
+        .result-box {
+            background: var(--pink-light);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .result-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .result-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            color: var(--pink);
+        }
+        /* Marker */
+        .marker-box {
+            background: var(--pink-bg);
+            border: 1px solid rgba(233,76,136,0.15);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .marker-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--pink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .coord-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .coord-row:last-child { margin-bottom: 0; }
+        .coord-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink3);
+        }
+        .coord-value {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            color: var(--dark);
+        }
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 36px; }
+        }
+        /* Info */
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+        .info-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .info-dot.pink { background: var(--pink); }
+        .info-dot.light-pink { background: var(--pink); opacity: 0.6; }
+        .info-dot.dark-pink { background: var(--pink); opacity: 0.9; }
+        .info-text {
+            font-size: 13px;
+            color: var(--mid);
+        }
+        .info-text strong { color: var(--dark); }
+        /* Hint */
+        .hint-box {
+            background: var(--pink-light);
+            border: 1px solid rgba(233,76,136,0.15);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--mid);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .hint-box i {
+            color: var(--pink);
+            font-size: 16px;
+            margin-top: 1px;
+        }
+        .hint-box span { flex: 1; }
+        /* City Section */
+        .city-section-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--pink);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .city-section-header::before {
+            content: '';
+            width: 16px;
+            height: 2px;
+            background: var(--pink);
+            border-radius: 1px;
+        }
+        .param-section {
+            background: var(--pink-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .param-row {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .param-row-3 { grid-template-columns: repeat(3, 1fr); }
+        .param-row-4 { grid-template-columns: repeat(4, 1fr); }
+        .param-row-7 { grid-template-columns: repeat(7, 1fr); }
+        @media (max-width: 768px) {
+            .param-row-3, .param-row-4, .param-row-7 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .param-input {
+            margin-bottom: 0;
+        }
+        .param-input label,
+        .param-input .param-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--pink);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .param-input input,
+        .param-input select {
+            width: 100%;
+            padding: 10px 36px 10px 12px;
+            border: 1.5px solid rgba(233,76,136,0.25);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--dark);
+            background-color: var(--card-bg);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            transition: all 0.15s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .param-input input:focus,
+        .param-input select:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px var(--pink-bg);
+        }
+        .city-input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        @media (max-width: 768px) {
+            .city-input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .btn-convert {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--pink) 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-convert:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(233,76,136,0.3);
+        }
+        .city-result {
+            background: var(--pink-bg);
+            border: 1px solid rgba(233,76,136,0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .city-result-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--pink);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .city-result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 640px) {
+            .city-result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .city-result-item {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+        .city-result-label {
+            font-size: 11px;
+            color: var(--ink3);
+            margin-bottom: 6px;
+        }
+        .city-result-value {
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            color: var(--pink);
+        }
+        .city-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-top: 20px;
+            transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+        }
+        .city-section:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        .city-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 640px) {
+            .city-grid { grid-template-columns: 1fr; }
+        }
+        .city-input-wrapper {
+            position: relative;
+        }
+        .city-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--dark);
+            background: var(--card-bg);
+            transition: all 0.15s;
+        }
+        .city-input:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px rgba(233,76,136,0.1);
+        }
+        .city-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+        .city-dropdown.show {
+            display: block;
+        }
+        .city-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .city-option:hover,
+        .city-option.highlight {
+            background: var(--pink-light);
+            color: var(--pink);
+        }
+        .city-no-result {
+            padding: 12px 14px;
+            color: var(--ink3);
+            font-size: 13px;
+            text-align: center;
+        }
+        .city-note {
+            background: var(--pink-light);
+            border: 1px solid rgba(233,76,136,0.15);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 13px;
+            color: var(--mid);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .city-note i {
+            color: var(--pink);
+            font-size: 16px;
+            margin-top: 1px;
+        }
+        .city-note div { flex: 1; }
+        .city-note strong { display: block; color: var(--dark); margin-bottom: 4px; }
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--ink3);
+        }
+    
+        #map, #map * { z-index: 0 !important; }
+        .marker-box, .search-results, .result-item { position: relative; z-index: 1; }
+        .search-results { z-index: 2147483647 !important; }
+        .marker-box { z-index: 2147483647 !important; position: relative; }
+</style>
+</head>
+<body>
+    <nav>
+        <a href="#" class="logo">工程<span>工具箱</span></a>
+        <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+            <i class="ti ti-moon"></i>
+        </button>
+    </nav>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+        }
+
+        // 初始化主题
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeIcon();
+        })();
+    </script>
+
+    <main>
+        <div class="hero">
+            <div>
+                <div class="hero-label">Coordinate Transform</div>
+                <h1>坐标转换<em>工具</em></h1>
+                <p class="hero-sub">支持多种坐标系互转，搜索定位，精准获取坐标信息</p>
+            </div>
+            <div class="hero-pills">
+                <div class="pill">
+                    <i class="ti ti-brand-baidu"></i>
+                    百度坐标转换
+                </div>
+                <div class="pill">
+                    <i class="ti ti-map-pin"></i>
+                    高德坐标转换
+                </div>
+                <div class="pill">
+                    <i class="ti ti-gps"></i>
+                    GPS坐标支持
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="ti ti-search"></i>
+                </div>
+                <div>
+                    <div class="card-title">搜索地点</div>
+                    <div class="card-subtitle">输入路名、地址或建筑物名称</div>
+                </div>
+            </div>
+            <div class="search-wrapper">
+                <i class="ti ti-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="例如：上海外滩、北京市政府">
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+
+        <!-- 地图 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="ti ti-map"></i>
+                </div>
+                <div>
+                    <div class="card-title">地图选点</div>
+                    <div class="card-subtitle">点击地图选择位置，自动获取坐标</div>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <!-- 当前位置 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="ti ti-current-location"></i>
+                </div>
+                <div>
+                    <div class="card-title">当前位置</div>
+                    <div class="card-subtitle">当前选中坐标在各坐标系的数值</div>
+                </div>
+            </div>
+
+            <div class="marker-box" id="markerInfo" style="display:none;">
+                <div class="marker-title">
+                    <i class="ti ti-map-pin"></i>
+                    <span id="markerTitle">坐标详情</span>
+                </div>
+                <div id="markerCoords"></div>
+            </div>
+
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>经度 Longitude</label>
+                    <input type="number" id="inputLng" step="0.000001" placeholder="121.499016">
+                </div>
+                <div class="input-group">
+                    <label>纬度 Latitude</label>
+                    <input type="number" id="inputLat" step="0.000001" placeholder="31.344022">
+                </div>
+            </div>
+            <button class="btn btn-ghost" onclick="clearMarker()">
+                <i class="ti ti-trash"></i>
+                清除标记
+            </button>
+        </div>
+
+        <!-- 转换 + 说明 -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="ti ti-arrows-exchange"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">坐标转换</div>
+                        <div class="card-subtitle">选择源坐标系和目标坐标系</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>源坐标系</label>
+                    <select id="sourceCrs">
+                        <option value="bd09">百度坐标 (BD-09)</option>
+                        <option value="gcj02">国测局坐标 (GCJ-02)</option>
+                        <option value="wgs84">WGS84 坐标</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>目标坐标系</label>
+                    <select id="targetCrs">
+                        <option value="gcj02">国测局坐标 (GCJ-02)</option>
+                        <option value="bd09">百度坐标 (BD-09)</option>
+                        <option value="wgs84">WGS84 坐标</option>
+                    </select>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">转换结果</div>
+                    <div class="result-value" id="convertResult">等待输入坐标...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="ti ti-info-circle"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">坐标系说明</div>
+                        <div class="card-subtitle">各坐标系的用途</div>
+                    </div>
+                </div>
+
+                <div class="info-list">
+                    <div class="info-item">
+                        <div class="info-dot pink"></div>
+                        <div class="info-text"><strong>BD-09</strong> — 百度地图专用坐标系</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-dot light-pink"></div>
+                        <div class="info-text"><strong>GCJ-02</strong> — 高德、腾讯、谷歌中国使用</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-dot dark-pink"></div>
+                        <div class="info-text"><strong>WGS84</strong> — GPS设备原始坐标</div>
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <i class="ti ti-bulb"></i>
+                    <span>同一地点在不同地图上显示的经纬度数值不同，但指向同一位置。</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 城市坐标转经纬度 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="ti ti-math"></i>
+                </div>
+                <div>
+                    <div class="card-title">城市坐标 → 经纬度</div>
+                    <div class="card-subtitle">输入城市坐标系坐标，转换为经纬度</div>
+                </div>
+            </div>
+
+            <!-- 参数设置区域 -->
+            <div class="param-section">
+                <div class="city-section-header">参数设置</div>
+
+                <div class="param-row param-row-3">
+                    <div class="param-input">
+                        <label>城市坐标系</label>
+                        <select id="cityCrs">
+                            <option value="">选择坐标系</option>
+                            <option value="beijing54">北京54</option>
+                            <option value="xian80">西安80</option>
+                            <option value="cgcs2000">CGCS2000</option>
+                            <option value="wgs84">WGS84</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>椭球</label>
+                        <select id="ellipsoid">
+                            <option value="krassovsky">克拉索夫斯基</option>
+                            <option value="iag75">IAG-75</option>
+                            <option value="wgs84">WGS84</option>
+                            <option value="cgcs2000">CGCS2000</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>投影方式</label>
+                        <select id="projection">
+                            <option value="gauss">高斯-克吕格</option>
+                            <option value="utm">UTM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="param-row param-row-4">
+                    <div class="param-input">
+                        <label>中央经线 (°)</label>
+                        <input type="number" id="centralMeridian" step="0.001" placeholder="如：117">
+                    </div>
+                    <div class="param-input">
+                        <label>投影带</label>
+                        <select id="zoneType">
+                            <option value="3">3度带</option>
+                            <option value="6">6度带</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>带号</label>
+                        <input type="number" id="zoneNumber" placeholder="可不填">
+                    </div>
+                    <div class="param-input">
+                        <label>偏移方向</label>
+                        <select id="offsetDirection">
+                            <option value="auto">自动</option>
+                            <option value="north">北半球</option>
+                            <option value="south">南半球</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="city-section-header" style="margin-top: 20px;">七参数（选填）</div>
+                <div class="param-row param-row-7">
+                    <div class="param-input">
+                        <label>ΔX (m)</label>
+                        <input type="number" id="paramDx" step="0.001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>ΔY (m)</label>
+                        <input type="number" id="paramDy" step="0.001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>ΔZ (m)</label>
+                        <input type="number" id="paramDz" step="0.001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>Rx (")</label>
+                        <input type="number" id="paramRx" step="0.0001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>Ry (")</label>
+                        <input type="number" id="paramRy" step="0.0001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>Rz (")</label>
+                        <input type="number" id="paramRz" step="0.0001" placeholder="0">
+                    </div>
+                    <div class="param-input">
+                        <label>尺度 m</label>
+                        <input type="number" id="paramScale" step="0.000001" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 坐标输入 -->
+            <div class="city-input-row">
+                <div class="param-input">
+                    <label>X 坐标</label>
+                    <input type="number" id="cityX" step="0.001" placeholder="城市坐标 X">
+                </div>
+                <div class="param-input">
+                    <label>Y 坐标</label>
+                    <input type="number" id="cityY" step="0.001" placeholder="城市坐标 Y">
+                </div>
+                <div class="param-input">
+                    <label>城市</label>
+                    <div class="city-input-wrapper">
+                        <input type="text" id="cityInput" class="city-input" placeholder="输入或选择城市" autocomplete="off">
+                        <div id="cityDropdown" class="city-dropdown"></div>
+                    </div>
+                </div>
+                <button class="btn-convert" onclick="convertCityToLatLon()">
+                    <i class="ti ti-arrows-exchange"></i>
+                    转换
+                </button>
+            </div>
+
+            <!-- 转换结果 -->
+            <div id="cityResultBox" style="display: none;">
+                <div class="city-result">
+                    <div class="city-result-header">转换结果</div>
+                    <div class="city-result-grid">
+                        <div class="city-result-item">
+                            <div class="city-result-label">经度</div>
+                            <div class="city-result-value" id="resultLon">--</div>
+                        </div>
+                        <div class="city-result-item">
+                            <div class="city-result-label">纬度</div>
+                            <div class="city-result-value" id="resultLat">--</div>
+                        </div>
+                        <div class="city-result-item">
+                            <div class="city-result-label">坐标系</div>
+                            <div class="city-result-value" id="resultType" style="font-size: 12px;">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint-box">
+                <i class="ti ti-info-circle"></i>
+                <span>城市坐标系转经纬度需要该城市的投影参数（中央经线、椭球参数）和与国家坐标系的转换参数（七参数）。这些参数通常在工程图纸或当地测绘部门获取。</span>
+            </div>
+        </div>
+    </main>
+
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=6LpklpBUg6xxR70sU6aNYdcBXvBzoaJM"></script>
+    <script>
+        let map;
+
+        function initMap() {
+            const theme = localStorage.getItem('theme') || 'light';
+            map = new BMapGL.Map('map');
+            const centerPoint = new BMapGL.Point(116.404, 39.915);
+            map.centerAndZoom(centerPoint, 12);
+            map.enableScrollWheelZoom(true);
+
+            // 设置地图样式
+            if (theme === 'dark') {
+                map.setMapStyleV2({ style: 'dark' });
+            }
+        }
+
+        // 深色模式切换时更新地图
+        const originalToggleTheme = toggleTheme;
+        toggleTheme = function() {
+            originalToggleTheme();
+            setTimeout(() => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (map) {
+                    if (isDark) {
+                        // 使用自定义深色样式
+                        map.setMapStyleV2({
+                            style: {
+                                version: '1.0.0',
+                                ext: '',
+                                ings: [
+                                    { type: 'BACKGROUND', color: '#1a1a2e' },
+                                    { type: 'ALL', color: '#3a3a5e' }
+                                ]
+                            }
+                        });
+                    } else {
+                        // 浅色模式
+                        map.setMapStyleV2({ style: 'normal' });
+                    }
+                }
+            }, 300);
+        };
+
+        initMap();
+
+        let marker = null;
+        let local = null;
+
+        function initSearch() {
+            local = new BMapGL.LocalSearch(map, {
+                renderOptions: { map: map, panel: null },
+                onSearchComplete: function(results) {
+                    displaySearchResults(results);
+                }
+            });
+        }
+        initSearch();
+
+        function positionResults(){var rd=document.getElementById('searchResults');var inp=document.getElementById('searchInput');if(!rd||!inp)return;var r=inp.getBoundingClientRect();rd.style.top=(r.bottom+8)+'px';rd.style.left=r.left+'px';rd.style.width=r.width+'px'}
+window.addEventListener('scroll',positionResults);window.addEventListener('resize',positionResults);function searchPlace() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) return;
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="loading">搜索中...</div>';
+            resultsDiv.classList.add('show');
+            local.search(keyword);
+        }
+
+        function displaySearchResults(results) {
+            const resultsDiv = document.getElementById('searchResults');
+            if (!results || results.getCurrentNumPois() === 0) {
+                resultsDiv.innerHTML = '<div class="loading">未找到结果</div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < results.getCurrentNumPois(); i++) {
+                const poi = results.getPoi(i);
+                html += `
+                    <div class="result-item" onclick="goToPoi(${poi.point.lng}, ${poi.point.lat}, '${poi.title.replace(/'/g, "\\'")}')">
+                        <div class="result-name">${poi.title}</div>
+                        <div class="result-address">${poi.address || ''}</div>
+                    </div>
+                `;
+            }
+            resultsDiv.innerHTML = html;
+        }
+
+        function goToPoi(lng, lat, title) {
+            const point = new BMapGL.Point(lng, lat);
+            if (marker) map.removeOverlay(marker);
+            marker = new BMapGL.Marker(point);
+            map.addOverlay(marker);
+            map.centerAndZoom(point, 16);
+            document.getElementById('inputLng').value = lng.toFixed(6);
+            document.getElementById('inputLat').value = lat.toFixed(6);
+            document.getElementById('searchResults').classList.remove('show');
+            updateMarkerInfo(lng, lat, title);
+            autoConvert();
+        }
+
+        function updateMarkerInfo(lng, lat, title) {
+            const gcj02 = bd09ToGcj02(lng, lat);
+            const wgs84 = gcj02ToWgs84(...gcj02);
+            document.getElementById('markerInfo').style.display = 'block';
+            document.getElementById('markerTitle').textContent = title || '坐标详情';
+            document.getElementById('markerCoords').innerHTML = `
+                <div class="coord-row">
+                    <span class="coord-name">BD-09 (百度)</span>
+                    <span class="coord-value">${lng.toFixed(6)}, ${lat.toFixed(6)}</span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-name">GCJ-02 (国测局)</span>
+                    <span class="coord-value">${gcj02[0].toFixed(6)}, ${gcj02[1].toFixed(6)}</span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-name">WGS84 (GPS)</span>
+                    <span class="coord-value">${wgs84[0].toFixed(6)}, ${wgs84[1].toFixed(6)}</span>
+                </div>
+            `;
+        }
+
+        const cities = [
+            // 直辖市
+            { name: '北京', value: 'beijing', lon: 116.46, lat: 39.92 },
+            { name: '上海', value: 'shanghai', lon: 121.47, lat: 31.23 },
+            { name: '天津', value: 'tianjin', lon: 117.20, lat: 39.13 },
+            { name: '重庆', value: 'chongqing', lon: 106.55, lat: 29.56 },
+            // 省会城市
+            { name: '石家庄', value: 'shijiazhuang', lon: 114.48, lat: 38.03 },
+            { name: '太原', value: 'taiyuan', lon: 112.53, lat: 37.87 },
+            { name: '呼和浩特', value: 'huhehaote', lon: 111.67, lat: 40.82 },
+            { name: '沈阳', value: 'shenyang', lon: 123.43, lat: 41.80 },
+            { name: '长春', value: 'changchun', lon: 125.32, lat: 43.82 },
+            { name: '哈尔滨', value: 'haerbin', lon: 126.53, lat: 45.80 },
+            { name: '南京', value: 'nanjing', lon: 118.78, lat: 32.06 },
+            { name: '杭州', value: 'hangzhou', lon: 120.19, lat: 30.26 },
+            { name: '合肥', value: 'hefei', lon: 117.28, lat: 31.86 },
+            { name: '福州', value: 'fuzhou', lon: 119.30, lat: 26.08 },
+            { name: '南昌', value: 'nanchang', lon: 115.89, lat: 28.68 },
+            { name: '济南', value: 'jinan', lon: 116.99, lat: 36.67 },
+            { name: '郑州', value: 'zhengzhou', lon: 113.65, lat: 34.76 },
+            { name: '武汉', value: 'wuhan', lon: 114.31, lat: 30.52 },
+            { name: '长沙', value: 'changsha', lon: 112.98, lat: 28.21 },
+            { name: '广州', value: 'guangzhou', lon: 113.26, lat: 23.13 },
+            { name: '南宁', value: 'nanning', lon: 108.33, lat: 22.84 },
+            { name: '海口', value: 'haikou', lon: 110.35, lat: 20.02 },
+            { name: '成都', value: 'chengdu', lon: 104.07, lat: 30.67 },
+            { name: '贵阳', value: 'guiyang', lon: 106.71, lat: 26.57 },
+            { name: '昆明', value: 'kunming', lon: 102.71, lat: 25.04 },
+            { name: '拉萨', value: 'lasa', lon: 91.11, lat: 29.65 },
+            { name: '西安', value: 'xian', lon: 108.94, lat: 34.34 },
+            { name: '兰州', value: 'lanzhou', lon: 103.82, lat: 36.06 },
+            { name: '西宁', value: 'xining', lon: 101.78, lat: 36.62 },
+            { name: '银川', value: 'yinchuan', lon: 106.27, lat: 38.47 },
+            { name: '乌鲁木齐', value: 'wulumuqi', lon: 87.62, lat: 43.83 },
+            { name: '台北', value: 'taibei', lon: 121.56, lat: 25.03 },
+            // 计划单列市
+            { name: '大连', value: 'dalian', lon: 121.62, lat: 38.91 },
+            { name: '青岛', value: 'qingdao', lon: 120.38, lat: 36.07 },
+            { name: '宁波', value: 'ningbo', lon: 121.55, lat: 29.87 },
+            { name: '厦门', value: 'xiamen', lon: 118.09, lat: 24.48 },
+            { name: '深圳', value: 'shenzhen', lon: 114.07, lat: 22.55 }
+        ];
+        let selectedCity = '';
+
+        function initCityDropdown() {
+            const input = document.getElementById('cityInput');
+            const dropdown = document.getElementById('cityDropdown');
+
+            // 初始显示全部城市
+            renderCityDropdown(cities);
+
+            // 点击输入框显示下拉
+            input.addEventListener('click', function() {
+                dropdown.classList.add('show');
+            });
+
+            // 输入时过滤（使用 compositionend 确保中文输入完成后再过滤）
+            let isComposing = false;
+
+            input.addEventListener('compositionstart', function() {
+                isComposing = true;
+            });
+
+            input.addEventListener('compositionend', function() {
+                isComposing = false;
+                filterCities(this.value);
+            });
+
+            input.addEventListener('input', function() {
+                if (!isComposing) {
+                    filterCities(this.value);
+                }
+            });
+
+            // 点击外部关闭
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.city-input-wrapper')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // 键盘选择
+            input.addEventListener('keydown', function(e) {
+                if (!dropdown.classList.contains('show')) return;
+                const options = dropdown.querySelectorAll('.city-option');
+                const current = dropdown.querySelector('.city-option.highlight');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (current) {
+                        current.classList.remove('highlight');
+                        if (current.nextElementSibling) {
+                            current.nextElementSibling.classList.add('highlight');
+                        } else {
+                            options[0].classList.add('highlight');
+                        }
+                    } else {
+                        options[0].classList.add('highlight');
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (current) {
+                        current.classList.remove('highlight');
+                        if (current.previousElementSibling) {
+                            current.previousElementSibling.classList.add('highlight');
+                        } else {
+                            options[options.length - 1].classList.add('highlight');
+                        }
+                    } else {
+                        options[options.length - 1].classList.add('highlight');
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const highlighted = dropdown.querySelector('.city-option.highlight');
+                    if (highlighted) {
+                        selectCity(highlighted.dataset.value, highlighted.dataset.name);
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
+        function filterCities(val) {
+            const dropdown = document.getElementById('cityDropdown');
+            if (val === '') {
+                renderCityDropdown(cities);
+            } else {
+                const filtered = cities.filter(c =>
+                    c.name.includes(val) || c.value.includes(val)
+                );
+                renderCityDropdown(filtered);
+            }
+            dropdown.classList.add('show');
+        }
+
+        function renderCityDropdown(list) {
+            const dropdown = document.getElementById('cityDropdown');
+            if (list.length === 0) {
+                dropdown.innerHTML = '<div class="city-no-result">未找到匹配的城市</div>';
+                return;
+            }
+            dropdown.innerHTML = list.map(c =>
+                `<div class="city-option" data-value="${c.value}" data-name="${c.name}">${c.name}</div>`
+            ).join('');
+
+            dropdown.querySelectorAll('.city-option').forEach(opt => {
+                opt.addEventListener('click', function() {
+                    selectCity(this.dataset.value, this.dataset.name);
+                });
+            });
+        }
+
+        function selectCity(value, name) {
+            selectedCity = value;
+            document.getElementById('cityInput').value = name;
+            document.getElementById('cityDropdown').classList.remove('show');
+        }
+
+        initCityDropdown();
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchPlace();
+        });
+
+        function bd09ToGcj02(lng, lat) {
+            const x = lng - 0.0065;
+            const y = lat - 0.006;
+            const z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * Math.PI * 3000.0 / 180.0);
+            const theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * Math.PI * 3000.0 / 180.0);
+            return [z * Math.cos(theta), z * Math.sin(theta)];
+        }
+
+        function gcj02ToBd09(lng, lat) {
+            const z = Math.sqrt(lng * lng + lat * lat) + 0.00002 * Math.sin(lat * Math.PI * 3000.0 / 180.0);
+            const theta = Math.atan2(lat, lng) + 0.000003 * Math.cos(lng * Math.PI * 3000.0 / 180.0);
+            return [z * Math.cos(theta) + 0.0065, z * Math.sin(theta) + 0.006];
+        }
+
+        function gcj02ToWgs84(lng, lat) {
+            const dLng = lng - 105.0;
+            const dLat = lat - 35.0;
+            const radLat = lat / 180.0 * Math.PI;
+            let magic = Math.sin(radLat);
+            magic = 1 - 0.00669342162296594323 * magic * magic;
+            const sqrtMagic = Math.sqrt(magic);
+            dLng = (dLng * 180.0) / (6335552.947294725 / sqrtMagic * Math.cos(radLat));
+            dLat = (dLat * 180.0) / ((32144.51809628924 / sqrtMagic) * Math.cos(radLat) * (1 - 0.00669342162296594323 / magic));
+            return [lng - dLng, lat - dLat];
+        }
+
+        function wgs84ToGcj02(lng, lat) {
+            const dLng = lng - 105.0;
+            const dLat = lat - 35.0;
+            const radLat = lat / 180.0 * Math.PI;
+            let magic = Math.sin(radLat);
+            magic = 1 - 0.00669342162296594323 * magic * magic;
+            const sqrtMagic = Math.sqrt(magic);
+            dLng = (dLng * 180.0) / (6335552.947294725 / sqrtMagic * Math.cos(radLat));
+            dLat = (dLat * 180.0) / ((32144.51809628924 / sqrtMagic) * Math.cos(radLat) * (1 - 0.00669342162296594323 / magic));
+            return [lng + dLng, lat + dLat];
+        }
+
+        map.addEventListener('click', function(e) {
+            const lng = e.latlng.lng;
+            const lat = e.latlng.lat;
+            if (marker) map.removeOverlay(marker);
+            marker = new BMapGL.Marker(e.latlng);
+            map.addOverlay(marker);
+            document.getElementById('inputLng').value = lng.toFixed(6);
+            document.getElementById('inputLat').value = lat.toFixed(6);
+            updateMarkerInfo(lng, lat, '点击位置');
+            autoConvert();
+        });
+
+        function clearMarker() {
+            if (marker) {
+                map.removeOverlay(marker);
+                marker = null;
+            }
+            document.getElementById('inputLng').value = '';
+            document.getElementById('inputLat').value = '';
+            document.getElementById('markerInfo').style.display = 'none';
+            document.getElementById('convertResult').textContent = '等待输入坐标...';
+        }
+
+        function autoConvert() {
+            const lng = parseFloat(document.getElementById('inputLng').value);
+            const lat = parseFloat(document.getElementById('inputLat').value);
+            const sourceCrs = document.getElementById('sourceCrs').value;
+            const targetCrs = document.getElementById('targetCrs').value;
+            if (isNaN(lng) || isNaN(lat)) return;
+
+            let gcjLng = lng, gcjLat = lat;
+            if (sourceCrs === 'bd09') {
+                [gcjLng, gcjLat] = bd09ToGcj02(lng, lat);
+            } else if (sourceCrs === 'wgs84') {
+                [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat);
+            }
+
+            let resultLng, resultLat;
+            if (targetCrs === 'gcj02') {
+                [resultLng, resultLat] = [gcjLng, gcjLat];
+            } else if (targetCrs === 'bd09') {
+                [resultLng, resultLat] = gcj02ToBd09(gcjLng, gcjLat);
+            } else if (targetCrs === 'wgs84') {
+                [resultLng, resultLat] = gcj02ToWgs84(gcjLng, gcjLat);
+            }
+
+            document.getElementById('convertResult').textContent = `${resultLng.toFixed(6)}, ${resultLat.toFixed(6)}`;
+        }
+
+        document.getElementById('inputLng').addEventListener('input', function() {
+            updateMarkerFromInput();
+            autoConvert();
+        });
+        document.getElementById('inputLat').addEventListener('input', function() {
+            updateMarkerFromInput();
+            autoConvert();
+        });
+
+        function updateMarkerFromInput() {
+            const lng = parseFloat(document.getElementById('inputLng').value);
+            const lat = parseFloat(document.getElementById('inputLat').value);
+            if (!isNaN(lng) && !isNaN(lat)) {
+                if (marker) map.removeOverlay(marker);
+                const point = new BMapGL.Point(lng, lat);
+                marker = new BMapGL.Marker(point);
+                map.addOverlay(marker);
+                map.panTo(point);
+                updateMarkerInfo(lng, lat, '手动输入');
+            }
+        }
+
+        // ========== 城市坐标转经纬度 ==========
+
+        // 椭球参数
+        const ellipsoids = {
+            'krassovsky': { a: 6378245, f: 1/298.3 },
+            'iag75': { a: 6378140, f: 1/298.257 },
+            'wgs84': { a: 6378137, f: 1/298.257223563 },
+            'cgcs2000': { a: 6378137, f: 1/298.257222101 }
+        };
+
+        function convertCityToLatLon() {
+            const x = parseFloat(document.getElementById('cityX').value);
+            const y = parseFloat(document.getElementById('cityY').value);
+            const centralMeridian = parseFloat(document.getElementById('centralMeridian').value);
+            const ellipsoid = document.getElementById('ellipsoid').value;
+            const cityCrs = document.getElementById('cityCrs').value;
+
+            if (isNaN(x) || isNaN(y)) {
+                alert('请输入有效的 X、Y 坐标');
+                return;
+            }
+
+            if (!centralMeridian) {
+                alert('请输入中央经线');
+                return;
+            }
+
+            // 获取椭球参数
+            const ell = ellipsoids[ellipsoid] || ellipsoids['krassovsky'];
+            const a = ell.a;
+            const f = ell.f;
+            const b = a * (1 - f);
+            const e2 = (a*a - b*b) / (a*a);
+            const e_prime2 = (a*a - b*b) / (b*b);
+
+            // 高斯投影反算（平面坐标转经纬度）
+            // L0 = 中央经线经度
+            const L0 = centralMeridian * Math.PI / 180;
+
+            // 高斯投影反算公式
+            const l = (y) / (a * (1 - e2) * (1 - e2 * Math.sin(1) * Math.sin(1)));
+
+            // 迭代计算 B (纬度)
+            let B = y / (a * (1 - e2));
+
+            // 迭代
+            for (let i = 0; i < 8; i++) {
+                const sinB = Math.sin(B);
+                const cosB = Math.cos(B);
+                const V = Math.sqrt(1 + e_prime2 * sinB * sinB);
+                const M = a * (1 - e2) / (V * V * V);
+                const N = a / V;
+
+                // 计算子午线收敛角
+                const t = Math.tan(B);
+                const eta2 = e_prime2 * cosB * cosB;
+
+                const B_new = y / (a * (1 - e2) * (1 - 1.5 * e2 * Math.sin(B) * Math.sin(B) * Math.cos(B) * Math.cos(B)));
+
+                if (Math.abs(B_new - B) < 1e-12) {
+                    B = B_new;
+                    break;
+                }
+                B = B_new;
+            }
+
+            // 重新计算精确的 B
+            const sinB = Math.sin(B);
+            const cosB = Math.cos(B);
+            const V = Math.sqrt(1 + e_prime2 * sinB * sinB);
+            const N = a / V;
+            const t = Math.tan(B);
+            const eta2 = e_prime2 * cosB * cosB;
+
+            // 子午线收敛角系数
+            const g0 = N * cosB;
+
+            // 经度差
+            const L_diff = (y - 500000) / g0;
+
+            // 计算纬度 B
+            const B_approx = B - (t / (2 * M * N)) * Math.pow(y - 500000, 2);
+
+            // 精确计算
+            const B_final = B_approx;
+            const L_final = L0 + L_diff;
+
+            // 转换为度
+            const latDeg = B_final * 180 / Math.PI;
+            const lonDeg = L_final * 180 / Math.PI;
+
+            // 显示结果
+            document.getElementById('cityResultBox').style.display = 'block';
+            document.getElementById('resultLon').textContent = lonDeg.toFixed(6) + '°';
+            document.getElementById('resultLat').textContent = latDeg.toFixed(6) + '°';
+            document.getElementById('resultType').textContent = cityCrs || 'CGCS2000';
+        }
+    </script>
+</body>
 </html>
