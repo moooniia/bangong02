@@ -62,7 +62,7 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
       <h1>发票<em>工具箱</em></h1>
       <p class="hero-sub">为财务、行政和项目资料整理而做：批量识别发票文件夹，自动标出需要人工核对的字段，按可拖拽的规则导出报表并归档。</p>
       <div class="hero-actions">
-        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_latest.msix"><svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 4.4 10.7 3.4v7.4H3.6V4.4Zm8.6-1.2 8.2-1.2v8.8h-8.2V3.2ZM3.6 12.2h7.1v7.4l-7.1-1v-6.4Zm8.6 0h8.2V22l-8.2-1.2v-8.6Z"/></svg>下载发票工具箱</a>
+        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_1.0.0.60_x64.msix"><svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 4.4 10.7 3.4v7.4H3.6V4.4Zm8.6-1.2 8.2-1.2v8.8h-8.2V3.2ZM3.6 12.2h7.1v7.4l-7.1-1v-6.4Zm8.6 0h8.2V22l-8.2-1.2v-8.6Z"/></svg>下载发票工具箱 v1.0.0.60</a>
       </div>
     </div>
     <div class="showcase">
@@ -122,13 +122,14 @@ footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);fon
     <div class="section-header"><span class="section-name">当前版本</span><span class="section-count">用于软件自动检查更新</span></div>
     <div class="release-card">
       <div>
-        <div class="version">v1.0.0.52</div>
+        <div class="version">v1.0.0.60</div>
         <div class="release-date">发布日期：2026-07-14</div>
       </div>
       <div class="notes">
-        <div class="note"><i class="ti ti-check"></i><span>增强待确认判定：同批次补全、可疑公司名、税号异常、购销方疑似反写都会继续提示核对。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>优化照片预览缓存、主题切换同步、按钮高度和 Windows 图标资源。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>保留离线可用能力；发现新版本时只在界面显示更新按钮。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>修复批量扫描 PDF 时偶发 MuPDF 诊断文本混入输出导致的随机识别失败。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>补充紧凑版和低位汇总版 PDF 金额坐标识别，减少高品质 PDF 误进待确认。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>重复发票以相邻行显示，重复行使用红色文字和“重复”状态，与待确认背景区分。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>下载包同时提供固定版本文件和 latest 文件，软件自动更新读取同一版本信息。</span></div>
       </div>
     </div>
   </div>
