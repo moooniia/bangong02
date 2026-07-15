@@ -111,8 +111,6 @@ h1 em{font-style:normal;color:var(--pink)}
   transition:transform .2s var(--ease),border-color .2s,color .2s;
 }
 .ghost-btn:hover{transform:translateY(-3px);border-color:var(--pink);color:var(--pink)}
-
-
 /* ===== Showcase gallery ===== */
 .gallery-stage{
   position:relative;border-radius:26px;overflow:hidden;

@@ -95,6 +95,8 @@
   - `1.0.0.60` 桌面安装包：`C:\Users\paz\Desktop\invoice-toolbox-1.0.0.60-installer\InvoiceToolbox.WinUI_1.0.0.60_x64.msix`
   - `1.0.0.60` 桌面安装包 sha256：`B66F701E1393D3EF32F4A65F55CFA20C2E5DA006DD95A09F919FC2AE4E6F5DC9`
   - `1.0.0.60` 验证：46 项 Python 单元测试通过；WinUI Release 编译通过；MSIX 签名校验通过；本机安装成功；应用启动后 `InvoiceToolbox.WinUI` 和 `InvoiceToolbox.Worker` 进程均出现。
+  - 2026-07-15 发现官网直接下载裸 MSIX 时，安装后不会自动创建桌面图标，普通用户会不知道软件在哪里。官网已改为下载单文件安装器 `InvoiceToolboxInstaller-1.0.0.60.exe`；安装器内嵌 MSIX、证书和 `InvoiceToolbox.ico`，会申请管理员权限、信任证书、安装 MSIX，并在公共桌面创建带发票工具箱图标的快捷方式。官网 slogan 改为“让每一张发票，都归到该去的地方。”，不再显示额外安装提示。
+  - 源码 `MainWindow.xaml.cs` 也增加桌面快捷方式自愈逻辑：应用启动时复制包内 `Assets\InvoiceToolbox.ico` 到本机稳定位置，并创建/刷新当前用户桌面 `发票工具箱.lnk`。
 - WinUI 3 软件已经成型，但仍有 UI、图标、OCR 可靠性、更新发布链路问题。
 - 本地源码版本已升到 `1.0.0.60`，本机已安装 `1.0.0.60`；线上 latest 仍停在 `1.0.0.52`。
 - 本地网站清单 `C:\Users\paz\toolbox-work\server\frontend\invoice-toolbox-latest.json` 写的是 `1.0.0.52`。

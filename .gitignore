@@ -50,4 +50,7 @@ invoice-toolbox/tools/vision_ocr_bin
 
 # 网站发布下载包（部署用，不进源码）
 server/frontend/downloads/*.msix
+server/frontend/downloads/*.zip
+server/frontend/downloads/*.exe
 server/frontend/downloads/*.appinstaller
+server/frontend/downloads/*-installer/
