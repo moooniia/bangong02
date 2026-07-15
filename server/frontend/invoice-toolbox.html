@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
@@ -7,144 +7,141 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="/assets/common.css">
+<link rel="stylesheet" href="/assets/invoice-toolbox.css">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--mid:#333;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);--shadow-up:0 18px 56px rgba(233,76,136,.16),0 4px 18px rgba(0,0,0,.08)}
-body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px;-webkit-font-smoothing:antialiased}
-nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none;letter-spacing:-.5px}.logo span{color:var(--pink)}
-main{max-width:1260px;margin:0 auto;padding:0 32px 96px}
-.hero{padding:70px 0 42px;margin-bottom:28px;display:grid;grid-template-columns:1fr;gap:30px;align-items:center}
-.hero-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}.hero-label::before{content:'';width:20px;height:2px;background:var(--pink);border-radius:1px}
-h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;line-height:1.08;letter-spacing:-1px;margin-bottom:20px}h1 em{font-style:normal;color:var(--pink)}
-.hero-sub{font-size:15px;color:var(--ink3);line-height:1.85;max-width:560px}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.primary-btn{display:inline-flex;align-items:center;gap:9px;border-radius:28px;padding:13px 24px;font-weight:700;text-decoration:none;transition:all .18s;background:var(--pink);color:white;box-shadow:0 12px 30px rgba(233,76,136,.24)}
-.primary-btn:hover{background:#d43d79;transform:translateY(-2px)}
-.win11-logo{width:18px;height:18px;display:block}
-.showcase{background:var(--card-bg);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow-up);overflow:hidden}
-.showcase-stage{position:relative;min-height:690px;padding:30px;background:radial-gradient(circle at 13% 8%,rgba(233,76,136,.16),transparent 30%),radial-gradient(circle at 95% 20%,rgba(28,38,64,.10),transparent 28%),linear-gradient(180deg,rgba(255,255,255,.94),rgba(247,248,251,.74))}
-.showcase-shot{position:absolute;inset:30px;z-index:5;width:calc(100% - 60px);height:calc(100% - 60px);object-fit:cover;object-position:center;border:1px solid rgba(15,23,42,.09);border-radius:24px;box-shadow:0 26px 90px rgba(15,23,42,.18);background:#fff}
-.real-slide{position:absolute;inset:30px;display:grid;grid-template-columns:210px minmax(520px,1fr) 340px;overflow:hidden;border:1px solid rgba(15,23,42,.09);border-radius:24px;background:#f6f8fb;box-shadow:0 26px 90px rgba(15,23,42,.16);opacity:0;filter:blur(8px);transform:translate3d(46px,18px,0) scale(.982);pointer-events:none;transition:opacity .56s cubic-bezier(.22,1,.36,1),transform .56s cubic-bezier(.22,1,.36,1),filter .56s cubic-bezier(.22,1,.36,1)}
-.real-slide.active{opacity:1;filter:none;transform:translate3d(0,0,0) scale(1);pointer-events:auto}
-.real-slide.leaving{transform:translate3d(-34px,-10px,0) scale(.986)}
-.real-rail{display:flex;flex-direction:column;gap:12px;padding:20px;background:#fff;border-right:1px solid #e8edf3}
-.real-brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-weight:900}.real-logo{width:32px;height:32px;border-radius:10px;background:#e94c88;color:#fff;display:flex;align-items:center;justify-content:center}
-.real-card{border:1px solid #e5eaf1;border-radius:13px;background:#fff;padding:14px;box-shadow:0 2px 10px rgba(15,23,42,.035)}.real-card h4{font-size:13px;margin-bottom:8px}.folder-line{font-size:11px;color:#6b7280;line-height:1.55}.stat-list{display:grid;gap:8px}.stat-row{display:flex;justify-content:space-between;color:#64748b;font-size:12px}.stat-row strong{font-size:14px;color:#111827}.stat-row.hot strong{color:#e94c88}.scan-button{height:43px;border-radius:12px;background:#e94c88;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;margin-top:auto}
-.real-main{display:flex;flex-direction:column;padding:20px 18px 18px;min-width:0}.real-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.real-heading{display:flex;align-items:baseline;gap:10px}.real-heading h3{font-size:21px}.real-heading span{font-size:12px;color:#7b8494}.real-actions{display:flex;gap:8px}.real-pill{height:34px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;padding:0 13px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#263244}.real-pill.hot{background:#e94c88;border-color:#e94c88;color:#fff}
-.real-table{overflow:hidden;border-radius:14px;border:1px solid #dce3eb;background:#fff}.real-head,.real-row{display:grid;grid-template-columns:1.4fr 1fr 1.55fr 1.2fr .85fr .78fr .85fr .8fr 1.18fr 1fr;align-items:center}.real-head{height:44px;background:#242936;color:#fff;font-size:12px;font-weight:800}.real-head .real-cell{border-right:1px solid rgba(255,255,255,.13)}.real-row{height:39px;border-top:1px solid #e7ebf0;font-size:12.5px}.real-row:nth-child(odd){background:#f7f8fa}.real-row.pending{background:#fde8f0;color:#d91b5c;font-weight:800}.real-row.ok .amount{color:#008b6f}.real-cell{padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;border-right:1px solid #e1e6ed}.real-cell.name{text-align:left;color:#00796b}.real-cell.seller{color:#005be8}.real-cell.tax{color:#aa5a00}.real-progress{height:9px;background:#f2d7e4;border-radius:99px;overflow:hidden;margin-top:12px}.real-progress span{display:block;height:100%;width:72%;background:linear-gradient(90deg,#e94c88,#ff79ad);box-shadow:0 0 18px rgba(233,76,136,.45)}
-.real-review{display:flex;flex-direction:column;padding:20px;background:#fff;border-left:1px solid #e8edf3}.review-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.review-title{font-size:24px;font-weight:900}.review-tag{font-size:11px;color:#e94c88;background:#fdf0f6;border-radius:999px;padding:5px 9px;font-weight:800}.preview-tools{display:flex;gap:7px;margin-bottom:8px}.tool-chip{height:28px;min-width:32px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#263244}
-.invoice-preview{height:235px;border:1px solid #dfe5ed;border-radius:14px;background:#111827;padding:18px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}.paper{height:100%;background:#fff;border-radius:3px;position:relative;filter:blur(1.35px);opacity:.78;transform:rotate(-.4deg)}.paper::before{content:'电子发票（普通发票）';position:absolute;left:70px;right:30px;top:18px;text-align:center;color:#ad3f32;font-size:19px;font-weight:800;border-bottom:2px solid #d28b7d;padding-bottom:10px}.paper::after{content:'';position:absolute;left:24px;right:24px;top:82px;height:92px;border:1px solid #d9a093;background:linear-gradient(#fff 31px,transparent 31px),linear-gradient(90deg,transparent 32%,#d9a093 32%,#d9a093 33%,transparent 33%,transparent 66%,#d9a093 66%,#d9a093 67%,transparent 67%);background-size:100% 32px,100% 100%}
-.qr{position:absolute;left:25px;top:20px;width:44px;height:44px;background:repeating-linear-gradient(45deg,#111 0 3px,#fff 3px 6px)}.stamp{position:absolute;right:45px;top:26px;width:86px;height:44px;border:5px solid #e02e2e;border-radius:50%;opacity:.78}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.field{height:34px;border:1px solid #e3e8ef;border-radius:9px;background:#fafafa;position:relative}.field::before{content:attr(data-label);position:absolute;left:9px;top:-16px;font-size:10px;color:#7b8494}.field.wide{grid-column:1/-1}
-.export-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sort-card{border:1px solid #dfe5ed;border-radius:13px;background:#fff;padding:13px}.sort-card h4{font-size:13px;margin-bottom:10px}.sort-item{height:32px;display:flex;align-items:center;gap:8px;border-top:1px solid #eef2f6;font-size:12px}.sort-item i{color:#e94c88}
-.dark-slide{background:#0f141c;color:#e5e7eb;border-color:#2a3340}.dark-slide .real-rail,.dark-slide .real-review,.dark-slide .real-card,.dark-slide .real-pill,.dark-slide .sort-card{background:#151b26;border-color:#2b3342}.dark-slide .real-main{background:#0f141c}.dark-slide .real-table{background:#111827;border-color:#2b3342}.dark-slide .real-row{background:#111827;border-color:#2b3342}.dark-slide .real-row:nth-child(odd){background:#151b26}.dark-slide .real-row.pending{background:#3a1f2c;color:#ff8db6}.dark-slide .real-cell{border-color:#2b3342}.dark-slide .real-heading span,.dark-slide .folder-line,.dark-slide .stat-row,.dark-slide .field::before{color:#9ca3af}.dark-slide .field{background:#111827;border-color:#2b3342}
-.showcase-copy{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;border-top:1px solid var(--border);background:var(--card-bg)}.show-title{font-size:17px;font-weight:900}.show-desc{font-size:12.5px;color:var(--ink3);margin-top:4px}.dots{display:flex;gap:8px}.dot-btn{width:9px;height:9px;border-radius:50%;border:none;background:#d6d6d6;cursor:pointer;transition:all .2s}.dot-btn.active{width:25px;background:var(--pink)}
-.section{margin-bottom:44px}.section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}.section-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.3px}.section-count{font-size:12px;color:var(--ink4)}
-.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.feature-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}.feature-card i{font-size:24px;color:var(--pink);display:block;margin-bottom:12px}.feature-title{font-weight:700;margin-bottom:6px}.feature-desc{font-size:12.5px;color:var(--ink3);line-height:1.7}
-.release-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);display:grid;grid-template-columns:220px 1fr;gap:24px}.version{font-size:28px;font-weight:900;color:var(--pink);margin-bottom:6px}.release-date{font-size:12px;color:var(--ink3)}.notes{display:flex;flex-direction:column;gap:8px}.note{display:flex;gap:9px;color:var(--mid);line-height:1.7}.note i{color:var(--pink);margin-top:4px}
-footer{border-top:1px solid var(--border);padding:26px 0 0;color:var(--ink3);font-size:12px}
-@media(max-width:980px){nav{padding:0 20px}.hero{padding-top:48px}h1{font-size:38px}.feature-grid{grid-template-columns:1fr 1fr}.release-card{grid-template-columns:1fr}.showcase-stage{min-height:560px;padding:18px}.real-slide{inset:18px;grid-template-columns:170px 1fr}.real-review{display:none}.real-head,.real-row{grid-template-columns:1.4fr 1fr 1.55fr .8fr .85fr}.real-cell:nth-child(n+6){display:none}}
-@media(max-width:560px){main{padding-left:20px;padding-right:20px}.feature-grid{grid-template-columns:1fr}.hero-actions{flex-direction:column}.primary-btn{justify-content:center}.showcase-stage{min-height:480px}.real-slide{grid-template-columns:1fr}.real-rail{display:none}}
-</style>
-<script src="/assets/analytics.js" defer></script>
-<script src="/assets/theme-toggle.js" defer></script>
 </head>
 <body>
-<nav>
+<nav class="nav">
   <a class="logo" href="/">办公<span>工具箱</span></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换主题">
+    <i class="ti ti-moon"></i>
+  </button>
 </nav>
+
 <main>
-  <div class="hero">
-    <div>
-      <div class="hero-label">Windows 桌面软件</div>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="hero-label"><span></span>Windows 桌面软件</div>
       <h1>发票<em>工具箱</em></h1>
       <p class="hero-sub">为财务、行政和项目资料整理而做：批量识别发票文件夹，自动标出需要人工核对的字段，按可拖拽的规则导出报表并归档。</p>
       <div class="hero-actions">
-        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_1.0.0.60_x64.msix"><svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 4.4 10.7 3.4v7.4H3.6V4.4Zm8.6-1.2 8.2-1.2v8.8h-8.2V3.2ZM3.6 12.2h7.1v7.4l-7.1-1v-6.4Zm8.6 0h8.2V22l-8.2-1.2v-8.6Z"/></svg>下载发票工具箱 v1.0.0.60</a>
+        <a class="primary-btn" href="/downloads/InvoiceToolbox.WinUI_1.0.0.60_x64.msix">
+          <svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 4.4 10.7 3.4v7.4H3.6V4.4Zm8.6-1.2 8.2-1.2v8.8h-8.2V3.2ZM3.6 12.2h7.1v7.4l-7.1-1v-6.4Zm8.6 0h8.2V22l-8.2-1.2v-8.6Z"/></svg>
+          下载发票工具箱 v1.0.0.60
+        </a>
+        <a class="ghost-btn" href="#showcase">查看功能 <i class="ti ti-arrow-down"></i></a>
       </div>
     </div>
-    <div class="showcase">
-      <div class="showcase-stage">
-        <img class="showcase-shot" src="/assets/invoice-toolbox/invoice-toolbox-showcase.jpg" alt="发票工具箱工作界面展示">
-        <div class="real-slide active" data-title="批量识别" data-desc="项目文件夹、子文件夹、重复发票和待核对字段会随进度同步刷新。">
-          <aside class="real-rail">
-            <div class="real-brand"><span class="real-logo"><i class="ti ti-receipt"></i></span><span>发票工具箱</span></div>
-            <div class="real-card"><h4>项目文件夹</h4><div class="folder-line">C:\Users\Admin\Desktop\发票项目</div><div class="folder-line">归档到：发票项目\归档</div></div>
-            <div class="real-card"><h4>统计信息</h4><div class="stat-list"><div class="stat-row"><span>总文件</span><strong>160</strong></div><div class="stat-row hot"><span>待确认</span><strong>3</strong></div><div class="stat-row"><span>重复跳过</span><strong>13</strong></div><div class="stat-row"><span>价税合计</span><strong>¥46,255.37</strong></div></div></div>
-            <div class="scan-button"><i class="ti ti-player-play-filled"></i>&nbsp; 正在识别</div>
-          </aside>
-          <section class="real-main">
-            <div class="real-toolbar"><div class="real-heading"><h3>发票列表</h3><span>共 160 张发票，3 张需要人工核对</span></div><div class="real-actions"><span class="real-pill">仅看待确认 3</span><span class="real-pill hot"><i class="ti ti-download"></i>导出</span></div></div>
-            <div class="real-table">
-              <div class="real-head"><div class="real-cell">公司抬头</div><div class="real-cell">购买方税号</div><div class="real-cell">销售方</div><div class="real-cell">销售方税号</div><div class="real-cell">开票日期</div><div class="real-cell">不含税额</div><div class="real-cell">税额</div><div class="real-cell">税率</div><div class="real-cell">发票类型</div><div class="real-cell">审核状态</div></div>
-              <div class="real-row ok"><div class="real-cell name">上海普陀区明澈科技有限公司</div><div class="real-cell">91310109...</div><div class="real-cell seller">上海浦东华海加油站有限公司</div><div class="real-cell tax">91310115...</div><div class="real-cell">2026-03-04</div><div class="real-cell amount">49.05</div><div class="real-cell tax">11.95</div><div class="real-cell">6%</div><div class="real-cell">增值税普通发票</div><div class="real-cell">已确认</div></div>
-              <div class="real-row pending"><div class="real-cell name">江西省勘察设计研究院有限公司</div><div class="real-cell">91360000...</div><div class="real-cell seller"></div><div class="real-cell tax"></div><div class="real-cell">2026-04-17</div><div class="real-cell">26.12</div><div class="real-cell">0.48</div><div class="real-cell">1%</div><div class="real-cell">增值税普通发票</div><div class="real-cell">待确认</div></div>
-              <div class="real-row ok"><div class="real-cell name">上海洪君基础工程中心</div><div class="real-cell">91310230...</div><div class="real-cell seller">中国石化销售股份有限公司上海石油分公司</div><div class="real-cell tax">91310008...</div><div class="real-cell">2026-03-07</div><div class="real-cell amount">186.34</div><div class="real-cell tax">30.84</div><div class="real-cell">13%</div><div class="real-cell">增值税专用发票</div><div class="real-cell">已确认</div></div>
-              <div class="real-row ok"><div class="real-cell name">上海普陀区明澈科技有限公司</div><div class="real-cell">91310109...</div><div class="real-cell seller">昆山东广臻贸易有限公司</div><div class="real-cell tax">91320583...</div><div class="real-cell">2026-01-08</div><div class="real-cell amount">364.79</div><div class="real-cell tax">81.41</div><div class="real-cell">13%</div><div class="real-cell">增值税普通发票</div><div class="real-cell">已确认</div></div>
-            </div>
-            <div class="real-progress"><span></span></div>
-          </section>
-          <aside class="real-review">
-            <div class="review-bar"><div class="review-title">人工核对</div><span class="review-tag">实时预览</span></div>
-            <div class="preview-tools"><span class="tool-chip">-</span><span class="tool-chip">+</span><span class="tool-chip">原大小</span><span class="tool-chip">适应窗口</span><span class="tool-chip"><i class="ti ti-rotate-clockwise"></i></span></div>
-            <div class="invoice-preview"><div class="paper"><span class="qr"></span><span class="stamp"></span></div></div>
-            <div class="field-grid"><div class="field" data-label="发票号码"></div><div class="field" data-label="购买方税号"></div><div class="field" data-label="开票日期"></div><div class="field" data-label="价税合计"></div><div class="field wide" data-label="销售方名称"></div></div>
-          </aside>
-        </div>
-        <div class="real-slide" data-title="人工核对" data-desc="缺字段整行高亮，右侧原件可缩放拖动，编辑字段和表格数据保持一致。">
-          <aside class="real-rail"><div class="real-brand"><span class="real-logo"><i class="ti ti-receipt"></i></span><span>发票工具箱</span></div><div class="real-card"><h4>统计信息</h4><div class="stat-list"><div class="stat-row"><span>总文件</span><strong>160</strong></div><div class="stat-row hot"><span>待确认</span><strong>1</strong></div><div class="stat-row"><span>已确认</span><strong>159</strong></div><div class="stat-row"><span>重复跳过</span><strong>13</strong></div></div></div><div class="scan-button">保存修改</div></aside>
-          <section class="real-main"><div class="real-toolbar"><div class="real-heading"><h3>发票列表</h3><span>正在核对：263140000000174462</span></div><div class="real-actions"><span class="real-pill">打开核对 1</span><span class="real-pill hot">导出</span></div></div><div class="real-table"><div class="real-head"><div class="real-cell">公司抬头</div><div class="real-cell">购买方税号</div><div class="real-cell">销售方</div><div class="real-cell">销售方税号</div><div class="real-cell">开票日期</div><div class="real-cell">不含税额</div><div class="real-cell">税额</div><div class="real-cell">税率</div><div class="real-cell">发票类型</div><div class="real-cell">审核状态</div></div><div class="real-row ok"><div class="real-cell name">江西省勘察设计研究院上海分院</div><div class="real-cell">91310109...</div><div class="real-cell seller">上海三快智送科技有限公司</div><div class="real-cell tax">91310000...</div><div class="real-cell">2026-03-02</div><div class="real-cell amount">10.38</div><div class="real-cell tax">0.62</div><div class="real-cell">6%</div><div class="real-cell">增值税普通发票</div><div class="real-cell">已确认</div></div><div class="real-row pending"><div class="real-cell name">上海市普陀区中昧到餐饮服务部</div><div class="real-cell">91360000...</div><div class="real-cell seller"></div><div class="real-cell tax">92310107...</div><div class="real-cell">2026-04-17</div><div class="real-cell">-109.12</div><div class="real-cell tax">212.72</div><div class="real-cell"></div><div class="real-cell">增值税电子发票</div><div class="real-cell">待确认</div></div><div class="real-row ok"><div class="real-cell name">上海普陀区明澈科技有限公司</div><div class="real-cell">91310109...</div><div class="real-cell seller">上海郑禹餐饮服务有限公司</div><div class="real-cell tax">92310107...</div><div class="real-cell">2026-03-06</div><div class="real-cell amount">39.91</div><div class="real-cell tax">0.40</div><div class="real-cell">1%</div><div class="real-cell">增值税普通发票</div><div class="real-cell">已确认</div></div></div></section>
-          <aside class="real-review"><div class="review-bar"><div class="review-title">人工核对</div><span class="review-tag">需人工审核</span></div><div class="preview-tools"><span class="tool-chip">-</span><span class="tool-chip">+</span><span class="tool-chip">100%</span><span class="tool-chip">适应窗口</span><span class="tool-chip"><i class="ti ti-rotate-clockwise"></i></span></div><div class="invoice-preview"><div class="paper"><span class="qr"></span><span class="stamp"></span></div></div><div class="field-grid"><div class="field" data-label="发票号码"></div><div class="field" data-label="购买方税号"></div><div class="field" data-label="开票日期"></div><div class="field" data-label="价税合计"></div><div class="field wide" data-label="业务分类"></div></div></aside>
-        </div>
-        <div class="real-slide dark-slide" data-title="导出归档" data-desc="导出时选择命名规则和 Excel 列顺序，重复发票单独进入重复文件夹。">
-          <aside class="real-rail"><div class="real-brand"><span class="real-logo"><i class="ti ti-receipt"></i></span><span>发票工具箱</span></div><div class="real-card"><h4>归档完成</h4><div class="stat-list"><div class="stat-row"><span>报表</span><strong>1</strong></div><div class="stat-row"><span>已归档</span><strong>146</strong></div><div class="stat-row hot"><span>重复文件</span><strong>13</strong></div></div></div><div class="scan-button">打开已归档文件</div></aside>
-          <section class="real-main"><div class="real-toolbar"><div class="real-heading"><h3>高级导出与归档设置</h3><span>勾选字段，并拖拽决定先后顺序</span></div><div class="real-actions"><span class="real-pill">Cancel</span><span class="real-pill hot">OK</span></div></div><div class="export-panel"><div class="sort-card"><h4>文件重命名规则</h4><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>购买方抬头</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>开票日期</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>价税合计</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>业务分类</span></div></div><div class="sort-card"><h4>Excel 导出列顺序</h4><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>发票号码</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>商品/服务</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>源文件链接</span></div><div class="sort-item"><i class="ti ti-grip-vertical"></i><span>归档文件链接</span></div></div></div></section>
-          <aside class="real-review"><div class="review-bar"><div class="review-title">导出完成</div><span class="review-tag">本地处理</span></div><div class="real-card"><h4>发票整理报表.xlsx</h4><div class="folder-line">按规则生成文件夹、报表和重复发票目录。</div></div><div class="invoice-preview"><div class="paper"><span class="qr"></span><span class="stamp"></span></div></div></aside>
-        </div>
-      </div>
-      <div class="showcase-copy"><div><div class="show-title" id="showTitle">批量识别</div><div class="show-desc" id="showDesc">项目文件夹、子文件夹、重复发票和待核对字段会随进度同步刷新。</div></div><div class="dots" id="showDots"></div></div>
-    </div>
-  </div>
+  </header>
 
-  <div class="section">
-    <div class="section-header"><span class="section-name">核心能力</span><span class="section-count">4 个工作环节</span></div>
+  <!-- SHOWCASE -->
+  <section class="showcase" id="showcase">
+    <div class="section-head">
+      <h2 class="section-name">功能一览</h2>
+      <span class="section-count">真实界面 · 可交互预览</span>
+    </div>
+
+    <div class="gallery" id="gallery">
+      <div class="gallery-stage">
+        <div class="gallery-track" id="track">
+          <figure class="shot is-active">
+            <img src="/assets/showcase/1.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">01</span>
+              <span class="cap-text">
+                <strong data-title>批量识别</strong>
+                <em data-desc>递归扫描项目文件夹，自动标出重复与待核对发票，进度同步刷新。</em>
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/assets/showcase/2.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">02</span>
+              <span class="cap-text">
+                <strong data-title>人工核对</strong>
+                <em data-desc>缺失、可疑字段整行高亮，右侧原件实时预览，编辑与表格保持一致。</em>
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/assets/showcase/3.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">03</span>
+              <span class="cap-text">
+                <strong data-title>导出归档</strong>
+                <em data-desc>拖拽决定命名规则与导出列顺序，一键生成报表并归档。</em>
+              </span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <button class="nav-arrow prev" id="prev" type="button" aria-label="上一张"><i class="ti ti-chevron-left"></i></button>
+        <button class="nav-arrow next" id="next" type="button" aria-label="下一张"><i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <div class="gallery-foot">
+        <div class="dots" id="dots"></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-head">
+      <h2 class="section-name">核心能力</h2>
+      <span class="section-count">4 个工作环节</span>
+    </div>
     <div class="feature-grid">
-      <div class="feature-card"><i class="ti ti-folder-search"></i><div class="feature-title">递归识别</div><div class="feature-desc">读取项目文件夹下所有子文件夹，自动排除归档目录副本。</div></div>
-      <div class="feature-card"><i class="ti ti-zoom-check"></i><div class="feature-title">人工核对</div><div class="feature-desc">缺失、可疑、补全字段都会高亮，避免漏看。</div></div>
-      <div class="feature-card"><i class="ti ti-table-export"></i><div class="feature-title">可控导出</div><div class="feature-desc">命名字段和 Excel 列可勾选并拖拽排序。</div></div>
-      <div class="feature-card"><i class="ti ti-refresh-dot"></i><div class="feature-title">轻提醒更新</div><div class="feature-desc">有新版本时只显示更新入口，不强制、不打扰。</div></div>
+      <article class="feature-card">
+        <i class="ti ti-folder-search"></i>
+        <h3 class="feature-title">递归识别</h3>
+        <p class="feature-desc">读取项目文件夹下所有子文件夹，自动排除归档目录副本。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-zoom-check"></i>
+        <h3 class="feature-title">人工核对</h3>
+        <p class="feature-desc">缺失、可疑、补全字段都会高亮，避免漏看。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-table-export"></i>
+        <h3 class="feature-title">可控导出</h3>
+        <p class="feature-desc">命名字段和 Excel 列可勾选并拖拽排序。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-refresh-dot"></i>
+        <h3 class="feature-title">轻提醒更新</h3>
+        <p class="feature-desc">有新版本时只显示更新入口，不强制、不打扰。</p>
+      </article>
     </div>
-  </div>
+  </section>
 
-  <div class="section">
-    <div class="section-header"><span class="section-name">当前版本</span><span class="section-count">用于软件自动检查更新</span></div>
+  <!-- VERSION -->
+  <section class="version">
+    <div class="section-head">
+      <h2 class="section-name">当前版本</h2>
+      <span class="section-count">用于软件自动检查更新</span>
+    </div>
     <div class="release-card">
-      <div>
-        <div class="version">v1.0.0.60</div>
+      <div class="release-meta">
+        <div class="version-num">v1.0.0.60</div>
         <div class="release-date">发布日期：2026-07-14</div>
       </div>
       <div class="notes">
         <div class="note"><i class="ti ti-check"></i><span>修复批量扫描 PDF 时偶发 MuPDF 诊断文本混入输出导致的随机识别失败。</span></div>
         <div class="note"><i class="ti ti-check"></i><span>补充紧凑版和低位汇总版 PDF 金额坐标识别，减少高品质 PDF 误进待确认。</span></div>
-        <div class="note"><i class="ti ti-check"></i><span>重复发票以相邻行显示，重复行使用红色文字和“重复”状态，与待确认背景区分。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>重复发票以相邻行显示，重复行使用红色文字和"重复"状态，与待确认背景区分。</span></div>
         <div class="note"><i class="ti ti-check"></i><span>下载包同时提供固定版本文件和 latest 文件，软件自动更新读取同一版本信息。</span></div>
       </div>
     </div>
-  </div>
-
-  <footer>© 2026 办公工具箱 · 发票工具箱是办公工具箱的 Windows 桌面软件。</footer>
+  </section>
 </main>
-<script>
-const slides=[...document.querySelectorAll('.real-slide')];
-const dots=document.getElementById('showDots');
-const title=document.getElementById('showTitle');
-const desc=document.getElementById('showDesc');
-function showSlide(index){slides.forEach((slide,i)=>{slide.classList.toggle('active',i===index);slide.classList.toggle('leaving',i!==index && slide.classList.contains('active'))});[...dots.children].forEach((dot,i)=>dot.classList.toggle('active',i===index));title.textContent=slides[index].dataset.title;desc.textContent=slides[index].dataset.desc}
-slides.forEach((_,i)=>{const dot=document.createElement('button');dot.className='dot-btn'+(i===0?' active':'');dot.type='button';dot.addEventListener('click',()=>showSlide(i));dots.appendChild(dot)});
-let showIndex=0;setInterval(()=>{showIndex=(showIndex+1)%slides.length;showSlide(showIndex)},5200);
-</script>
+
+<footer class="footer">© 2026 办公工具箱 · 发票工具箱是办公工具箱的 Windows 桌面软件。</footer>
+
+<script src="/assets/invoice-toolbox.js" defer></script>
 </body>
 </html>
-
