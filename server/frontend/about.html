@@ -42,16 +42,12 @@ section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px;tex
 .category-icon{width:38px;height:38px;background:var(--pink-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--pink);font-size:18px}
 .category-name{font-size:14px;font-weight:700;margin-bottom:2px}
 .category-desc{font-size:12.5px;color:var(--ink3)}
-.version-card{background:var(--card-bg);border:1px solid var(--border);border-top:3px solid var(--pink);border-radius:var(--radius);padding:32px 36px;box-shadow:var(--shadow);display:flex;justify-content:center;gap:56px;text-align:center}
-.version-item{display:flex;flex-direction:column;align-items:center;gap:10px}
-.version-item i{width:42px;height:42px;background:var(--pink-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--pink);font-size:20px}
-.version-label{font-size:12px;color:var(--ink3);letter-spacing:.5px}
-.version-value{font-size:18px;font-weight:700;color:var(--dark)}
-.cta{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:var(--shadow)}
-.cta p{margin-bottom:18px}
-.cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:white;font-size:14px;font-weight:700;padding:12px 28px;border-radius:24px;text-decoration:none;transition:all .2s}
-.cta-btn:hover{background:#d43d79;transform:translateY(-2px)}
-@media (max-width:700px){.principle-grid{grid-template-columns:1fr}.version-card{flex-direction:column;gap:24px;padding:28px}}
+.version-simple{margin-top:2px;display:flex;flex-direction:column;gap:9px}
+.version-simple-row{display:flex;align-items:baseline;gap:16px;font-size:13px;line-height:1.5}
+.version-simple-row .vk{color:var(--ink3);min-width:88px;letter-spacing:.5px}
+.version-simple-row .vv{color:#555;font-weight:500}
+.section-plain h2{font-family:'Noto Sans SC',sans-serif;font-size:13px;font-weight:600;color:var(--ink3);letter-spacing:1px;border-bottom:none;padding-bottom:0;margin-bottom:16px}
+@media (max-width:700px){.principle-grid{grid-template-columns:1fr}.version-simple-row{gap:10px}}
 </style>
   <script src="/assets/analytics.js" defer></script>
 <script src="/assets/theme-toggle.js" defer></script>
@@ -123,26 +119,11 @@ section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px;tex
     </div>
   </section>
 
-  <section>
+  <section class="section-plain">
     <h2>版本信息</h2>
-    <div class="version-card">
-      <div class="version-item">
-        <i class="ti ti-rocket"></i>
-        <div class="version-label">当前网站版本</div>
-        <div class="version-value">v0.12.32</div>
-      </div>
-      <div class="version-item">
-        <i class="ti ti-calendar"></i>
-        <div class="version-label">版本日期</div>
-        <div class="version-value">2026-07-03</div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="cta">
-      <p>有用得上的场景，直接打开用就好。</p>
-      <a class="cta-btn" href="/"><i class="ti ti-arrow-left"></i>回到首页</a>
+    <div class="version-simple">
+      <div class="version-simple-row"><span class="vk">当前网站版本</span><span class="vv">v0.12.32</span></div>
+      <div class="version-simple-row"><span class="vk">版本日期</span><span class="vv">2026-07-03</span></div>
     </div>
   </section>
 </main>
