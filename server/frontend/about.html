@@ -42,7 +42,7 @@ section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px;tex
 .category-icon{width:38px;height:38px;background:var(--pink-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--pink);font-size:18px}
 .category-name{font-size:14px;font-weight:700;margin-bottom:2px}
 .category-desc{font-size:12.5px;color:var(--ink3)}
-.version-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.version-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:480px}
 .version-item{border-left:2px solid var(--pink);padding-left:12px}
 .version-label{font-size:11px;color:var(--ink3);margin-bottom:5px}
 .version-value{font-size:14px;font-weight:700;color:var(--dark)}
@@ -50,7 +50,7 @@ section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px;tex
 .cta p{margin-bottom:18px}
 .cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:white;font-size:14px;font-weight:700;padding:12px 28px;border-radius:24px;text-decoration:none;transition:all .2s}
 .cta-btn:hover{background:#d43d79;transform:translateY(-2px)}
-@media (max-width:700px){.principle-grid{grid-template-columns:1fr}.version-card{grid-template-columns:1fr}}
+@media (max-width:700px){.principle-grid{grid-template-columns:1fr}.version-card{grid-template-columns:1fr;max-width:100%}}
 </style>
   <script src="/assets/analytics.js" defer></script>
 <script src="/assets/theme-toggle.js" defer></script>
@@ -132,14 +132,6 @@ section p{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:14px;tex
       <div class="version-item">
         <div class="version-label">版本日期</div>
         <div class="version-value">2026-07-03</div>
-      </div>
-      <div class="version-item">
-        <div class="version-label">构建编号</div>
-        <div class="version-value">2026.07.03-1</div>
-      </div>
-      <div class="version-item">
-        <div class="version-label">交接文档</div>
-        <div class="version-value">V9 / v0.12.31</div>
       </div>
     </div>
   </section>
