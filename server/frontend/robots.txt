@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /downloads/
+
+# Sitemap
+Sitemap: https://www.bangong02.com/sitemap.xml
+
+# Baidu bot
+User-agent: Baiduspider
+Allow: /
+Disallow: /downloads/
