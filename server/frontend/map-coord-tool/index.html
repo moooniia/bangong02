@@ -737,6 +737,27 @@
             padding: 20px;
             color: var(--ink3);
         }
+        .seo-content { margin-top: 56px; color: var(--ink); }
+        .seo-intro, .seo-card, .seo-faq, .related-tools { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+        .seo-intro { margin-bottom: 18px; }
+        .seo-content h2, .seo-content h3, .seo-faq summary, .related-tool { font-family: 'DengXian','等线','PingFang SC','Noto Sans SC',sans-serif; font-weight: 500; }
+        .seo-content h2 { font-size: 22px; margin: 0 0 12px; }
+        .seo-content h3 { font-size: 18px; margin: 0 0 12px; }
+        .seo-content p, .seo-content li { color: var(--ink2); line-height: 1.85; }
+        .seo-content ol, .seo-content ul { margin: 0; padding-left: 22px; }
+        .seo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
+        .seo-faq { margin-bottom: 18px; }
+        .seo-faq details { border-top: 1px solid var(--border); padding: 14px 0; }
+        .seo-faq details:last-child { padding-bottom: 0; }
+        .seo-faq summary { cursor: pointer; color: var(--ink); }
+        .seo-faq details p { margin: 10px 0 0; }
+        .related-tools-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .related-tool { display: flex; align-items: center; gap: 9px; padding: 13px 14px; color: var(--ink); text-decoration: none; border: 1px solid var(--border); border-radius: 10px; }
+        .related-tool:hover { border-color: var(--blue); color: var(--blue); }
+        @media (max-width: 720px) {
+            .seo-grid, .related-tools-grid { grid-template-columns: 1fr; }
+            .seo-intro, .seo-card, .seo-faq, .related-tools { padding: 19px; }
+        }
     </style>
 </head>
 <body>
@@ -1086,6 +1107,46 @@
                 <span>城市坐标系转经纬度需要该城市的投影参数（中央经线、椭球参数）和与国家坐标系的转换参数（七参数）。这些参数通常在工程图纸或当地测绘部门获取。</span>
             </div>
         </div>
+
+        <section class="seo-content" aria-labelledby="coord-guide-title">
+            <div class="seo-intro">
+                <h2 id="coord-guide-title">坐标转换工具使用说明</h2>
+                <p>本工具用于在百度坐标（BD-09）、国测局坐标（GCJ-02）和 WGS84 坐标之间转换，也可按城市投影参数将平面坐标换算为经纬度。不同地图使用的坐标体系不同，转换后再定位可以减少位置偏移。</p>
+            </div>
+            <div class="seo-grid">
+                <article class="seo-card">
+                    <h3>基本使用步骤</h3>
+                    <ol>
+                        <li>通过地图定位或手动输入经度、纬度。</li>
+                        <li>选择原始坐标系和需要转换到的目标坐标系。</li>
+                        <li>查看转换结果，并在目标地图中复核位置。</li>
+                        <li>城市平面坐标转换时，按工程资料填写中央经线和相关参数。</li>
+                    </ol>
+                </article>
+                <article class="seo-card">
+                    <h3>使用时请注意</h3>
+                    <ul>
+                        <li>先确认原始数据属于哪一种坐标系，选错会产生明显偏移。</li>
+                        <li>工程测量数据应以项目图纸和当地测绘部门提供的参数为准。</li>
+                        <li>重要点位建议在实际使用的地图平台上再次核对。</li>
+                    </ul>
+                </article>
+            </div>
+            <div class="seo-faq">
+                <h2>常见问题</h2>
+                <details><summary>BD-09、GCJ-02 和 WGS84 有什么区别？</summary><p>BD-09 主要用于百度地图，GCJ-02 常用于高德、腾讯等国内地图，WGS84 通常来自 GPS 设备。相同地点在不同体系中的数值会不同。</p></details>
+                <details><summary>为什么转换后的位置仍有少量偏差？</summary><p>地图底图、原始坐标精度和参数取值都可能带来误差。工程用途应结合控制点及权威参数复核。</p></details>
+                <details><summary>城市平面坐标为什么需要额外参数？</summary><p>平面坐标依赖当地采用的投影带、中央经线、椭球和转换参数，仅凭横纵坐标无法可靠判断真实经纬度。</p></details>
+            </div>
+            <div class="related-tools">
+                <h2>相关工具</h2>
+                <div class="related-tools-grid">
+                    <a class="related-tool" href="/"><i class="ti ti-home"></i><span>返回办公工具箱</span></a>
+                    <a class="related-tool" href="/qrcode.html"><i class="ti ti-qrcode"></i><span>二维码生成工具</span></a>
+                    <a class="related-tool" href="/file-rename.html"><i class="ti ti-tool"></i><span>文件批量改名</span></a>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=6LpklpBUg6xxR70sU6aNYdcBXvBzoaJM"></script>

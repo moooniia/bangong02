@@ -89,10 +89,30 @@ body, nav, footer, .upload-area, .file-list, .file-item, .options, .options-pane
 }
 .upload-btn:hover { background: #d43d79; transform: translateY(-1px); }
 
+/* 工具页说明与站内推荐 */
+.seo-content { margin-top: 64px; border-top: 1px solid var(--border); padding-top: 40px; }
+.seo-content h2 { font-family:'DengXian','等线','PingFang SC','Noto Sans SC',sans-serif; font-size:22px; font-weight:500; letter-spacing:.2px; line-height:1.4; margin-bottom:14px; color:var(--dark); }
+.seo-content h3 { font-family:'DengXian','等线','PingFang SC','Noto Sans SC',sans-serif; font-size:16px; font-weight:500; letter-spacing:.2px; line-height:1.5; margin-bottom:10px; color:var(--dark); }
+.seo-content p, .seo-content li { font-size: 14px; line-height: 1.85; color: var(--ink3); }
+.seo-intro { margin-bottom: 28px; }
+.seo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 36px; }
+.seo-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.seo-card ol, .seo-card ul { padding-left: 20px; }
+.seo-faq { margin-bottom: 36px; }
+.seo-faq details { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-top: 10px; }
+.seo-faq summary { cursor:pointer; font-family:'DengXian','等线','PingFang SC','Noto Sans SC',sans-serif; font-size:14px; font-weight:500; color:var(--dark); }
+.seo-faq details p { padding-top: 10px; }
+.related-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.related-tool { display:flex; align-items:center; gap:10px; min-height:58px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--card-bg); color:var(--dark); text-decoration:none; font-family:'DengXian','等线','PingFang SC','Noto Sans SC',sans-serif; font-size:13px; font-weight:500; transition:border-color .15s,color .15s,transform .15s; }
+.related-tool i { color: var(--pink); font-size: 18px; }
+.related-tool:hover { color: var(--pink); border-color: var(--pink); transform: translateY(-1px); }
+
 @media (max-width: 600px) {
   .nav-links { display: none !important; }
   .hero h1 { font-size: 30px !important; }
   .tool-title-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .footer-main { grid-template-columns: 1fr !important; }
   .option-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .seo-content { margin-top: 48px; padding-top: 32px; }
+  .seo-grid, .related-tools { grid-template-columns: 1fr !important; }
 }
