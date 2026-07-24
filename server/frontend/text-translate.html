@@ -68,7 +68,7 @@ main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
     <p class="tool-desc">输入文本即可翻译，支持中英日韩法德西等多种语言互译，免费使用。</p>
   </div>
   <div class="lang-bar">
-    <select id="fromLang">
+    <select id="fromLang" onchange="ensureDistinctLangs()">
       <option value="auto">自动检测</option>
       <option value="zh-CN">中文</option>
       <option value="en">英语</option>
@@ -79,7 +79,7 @@ main { max-width:900px; margin:0 auto; padding:56px 32px 100px; }
       <option value="es">西班牙语</option>
     </select>
     <button class="swap-btn" onclick="swapLang()" title="互换语言"><i class="ti ti-arrows-exchange"></i></button>
-    <select id="toLang">
+    <select id="toLang" onchange="ensureDistinctLangs()">
       <option value="en">英语</option>
       <option value="zh-CN">中文</option>
       <option value="ja">日语</option>
@@ -129,20 +129,60 @@ function swapLang() {
     document.getElementById('translateBtn').disabled = !tgt.trim();
   }
 }
+function ensureDistinctLangs() {
+  const from = document.getElementById('fromLang');
+  const to = document.getElementById('toLang');
+  if (from.value === to.value) {
+    const next = Array.from(to.options).map(o => o.value).find(v => v !== from.value);
+    if (next) to.value = next;
+  }
+}
+const autoProbeCache = new Map();
+async function detectSourceLanguage(text, targetLanguage) {
+  const sample = text.slice(0, 80);
+  const cacheKey = sample + '|' + targetLanguage;
+  if (autoProbeCache.has(cacheKey)) return autoProbeCache.get(cacheKey);
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: sample, from: 'auto', to: 'zh-CN' })
+    });
+    const data = await response.json();
+    const detected = data && data.detected_language ? data.detected_language : null;
+    autoProbeCache.set(cacheKey, detected);
+    return detected;
+  } catch (error) {
+    autoProbeCache.set(cacheKey, null);
+    return null;
+  }
+}
 async function startTranslate() {
   const text = document.getElementById('sourceText').value.trim();
   if (!text) { alert('请输入要翻译的文本'); return; }
   document.getElementById('errorArea').style.display = 'none';
   document.getElementById('targetText').value = '翻译中...';
   try {
+    let fromValue = document.getElementById('fromLang').value;
+    const toElement = document.getElementById('toLang');
+    let toValue = toElement.value;
+    if (fromValue === 'auto') {
+      const detected = await detectSourceLanguage(text, toValue);
+      if (detected && detected === toValue) {
+        const next = Array.from(toElement.options).map(o => o.value).find(v => v !== detected);
+        if (next) {
+          toElement.value = next;
+          toValue = next;
+          document.getElementById('errorArea').textContent =
+            `自动检测到原文是“${languageLabel(detected)}”，已把目标语言切换为“${languageLabel(next)}”`;
+          document.getElementById('errorArea').style.display = 'block';
+        }
+      }
+    }
     const res = await fetch('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        from: document.getElementById('fromLang').value,
-        to: document.getElementById('toLang').value
-      })
+      body: JSON.stringify({ text, from: fromValue, to: toValue })
     });
     const data = await res.json();
     if (data.success) {
@@ -153,6 +193,13 @@ async function startTranslate() {
     document.getElementById('errorArea').textContent = e.message || '翻译失败';
     document.getElementById('errorArea').style.display = 'block';
   }
+}
+function languageLabel(code) {
+  const labels = {
+    'auto': '自动检测', 'zh-CN': '中文', 'en': '英语', 'ja': '日语',
+    'ko': '韩语', 'fr': '法语', 'de': '德语', 'es': '西班牙语'
+  };
+  return labels[code] || code;
 }
 </script>
 </body>

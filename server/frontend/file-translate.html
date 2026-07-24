@@ -62,8 +62,8 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 <i class="ti ti-cloud-upload upload-icon"></i><div style="font-weight:700">选择文件</div><div style="font-size:13px;color:var(--ink3)">支持 TXT、Word、PDF</div></div>
 <div class="file-list" id="fileList"></div>
 <div class="options">
-<div class="option-row"><span>原文语言</span><select class="option-select" id="fromLang"><option value="auto">自动检测</option><option value="zh-CN">中文</option><option value="en">英语</option><option value="ja">日语</option><option value="ko">韩语</option><option value="fr">法语</option><option value="de">德语</option><option value="es">西班牙语</option></select></div>
-<div class="option-row"><span>译为</span><select class="option-select" id="toLang"><option value="en">英语</option><option value="zh-CN">中文</option><option value="ja">日语</option><option value="ko">韩语</option><option value="fr">法语</option><option value="de">德语</option><option value="es">西班牙语</option></select></div>
+<div class="option-row"><span>原文语言</span><select class="option-select" id="fromLang" onchange="ensureDistinctLangs()"><option value="auto">自动检测</option><option value="zh-CN">中文</option><option value="en">英语</option><option value="ja">日语</option><option value="ko">韩语</option><option value="fr">法语</option><option value="de">德语</option><option value="es">西班牙语</option></select></div>
+<div class="option-row"><span>译为</span><select class="option-select" id="toLang" onchange="ensureDistinctLangs()"><option value="en">英语</option><option value="zh-CN">中文</option><option value="ja">日语</option><option value="ko">韩语</option><option value="fr">法语</option><option value="de">德语</option><option value="es">西班牙语</option></select></div>
 <div class="option-row"><span>输出格式</span><select class="option-select" id="fmtSelect"><option value="txt">TXT 文本</option><option value="docx">Word 文档</option></select></div>
 </div>
 <button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-language"></i>开始翻译</button>
@@ -84,5 +84,15 @@ main{max-width:780px;margin:0 auto;padding:56px 32px 100px}
 </main>
 <script src="/assets/convert-progress.js"></script>
 <script src="/assets/tool-page.js?v=0.12.6"></script>
+<script>
+function ensureDistinctLangs() {
+  const from = document.getElementById('fromLang');
+  const to = document.getElementById('toLang');
+  if (from && to && from.value === to.value) {
+    const next = Array.from(to.options).map(o => o.value).find(v => v !== from.value);
+    if (next) to.value = next;
+  }
+}
+</script>
 <script>initToolPage({api:'/api/translate/file',accept:'.txt,.doc,.docx,.pdf',multiple:false,extraFields:[{id:'fromLang',name:'from'},{id:'toLang',name:'to'},{id:'fmtSelect',name:'format'}],progressTask:'translate',downloadText:'下载译文'});</script>
 </body></html>
