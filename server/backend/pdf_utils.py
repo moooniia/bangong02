@@ -1202,11 +1202,15 @@ def pdf_editor_export(upload_folder, pages_spec, output_path,
                     pw, ph = bh, bw
                 else:
                     pw, ph = bw, bh
-            elif item_rot in (90, 270):
-                pw, ph = sr.height, sr.width
             else:
-
-                pw, ph = sr.width, sr.height
+                # 保持原样：用 insert_pdf 整页拷贝，原样保留源页 /Rotate 元数据，方向零误差。
+                # show_pdf_page 对带 /Rotate 的页面重绘会错位/倒置（尤其 90/270 度工程图/扫描件）。
+                start_at = len(out_doc)
+                out_doc.insert_pdf(src, from_page=idx, to_page=idx, start_at=start_at)
+                if item_rot:
+                    cur = out_doc[start_at]
+                    cur.set_rotation((cur.rotation + item_rot) % 360)
+                continue
             new_pg = out_doc.new_page(width=pw, height=ph)
             # show_pdf_page() 的 rotate 是相对于源页面"原始未旋转内容"算的，
             # 完全不管源页面自带的 /Rotate 元数据；但缩略图/预览(get_pixmap)是会
