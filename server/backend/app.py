@@ -1398,19 +1398,23 @@ def stats():
         today_tools = [{'name': k, 'count': v} for k, v in
                        sorted(latest.get('tools', {}).items(), key=lambda x: -x[1])[:10]]
 
+        # 每日工具调用总数（用于趋势和环比）
+        tools_daily = [sum(history[dt].get('tools', {}).values()) for dt in dates]
+
         summary = history.get(today_key, {'pv': 0, 'uv': 0, 'tools': {}})
         return jsonify({
             'updated': datetime.now().isoformat(timespec='seconds'),
             'days': days,
             'pv': pv,
             'uv': uv,
+            'tools': tools_daily,
             'today': {
                 'pv': summary.get('pv', 0),
                 'uv': summary.get('uv', 0),
                 'tools': sum(summary.get('tools', {}).values()),
             },
             'pages': top_pages,
-            'tools': top_tools,
+            'topTools': top_tools,
             'todayTools': today_tools,
         })
     except Exception as e:

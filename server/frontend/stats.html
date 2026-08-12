@@ -87,7 +87,10 @@ html[data-theme="dark"] .rank-tabs{background:rgba(255,255,255,.04)}
 .rank-no{width:22px;height:22px;border-radius:6px;background:var(--light-gray);color:var(--ink3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Playfair Display',serif}
 .rank-row:nth-child(1) .rank-no{background:var(--pink);color:#fff}
 .rank-row:nth-child(2) .rank-no,.rank-row:nth-child(3) .rank-no{background:var(--pink-bg);color:var(--pink)}
-.rank-name{flex:1;min-width:0;font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{flex:1;min-width:0;font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.rank-name[href]{color:var(--mid)}
+.rank-name[href]:hover{color:var(--pink);text-decoration:underline}
+.rank-name:not([href]){cursor:default}
 .rank-bar{flex:0 0 80px;height:6px;border-radius:3px;background:var(--light-gray);overflow:hidden}
 html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
 .rank-bar span{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--pink),#ff85b3)}
@@ -213,9 +216,42 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
     };
   }
 
+  // ---- 中文名称映射 ----
+  var PAGE_NAMES={
+    '/':'首页','/index.html':'首页',
+    '/pdf-compress.html':'PDF 压缩','/pdf-to-word.html':'PDF 转 Word',
+    '/pdf-to-excel.html':'PDF 转 Excel','/pdf-to-ppt.html':'PDF 转 PPT',
+    '/pdf-to-images.html':'PDF 转图片','/pdf-merge.html':'PDF 合并',
+    '/pdf-split.html':'PDF 拆分','/pdf-rotate.html':'PDF 旋转',
+    '/pdf-editor.html':'PDF 编辑','/pdf-to-grayscale.html':'PDF 转灰度',
+    '/pdf-extract-images.html':'提取 PDF 图片','/pdf-delete-pages.html':'PDF 删页',
+    '/pdf-encrypt.html':'PDF 加密','/pdf-decrypt.html':'PDF 解密',
+    '/image-compress.html':'图片压缩','/image-convert.html':'图片格式转换',
+    '/image-watermark.html':'图片水印','/image-resize.html':'图片调整大小',
+    '/image-rotate.html':'图片旋转','/image-timestamp.html':'图片加时间戳',
+    '/scan-to-text.html':'扫描识别','/ocr-pdf.html':'PDF OCR',
+    '/file-translate.html':'文件翻译','/excel-to-pdf.html':'Excel 转 PDF',
+    '/about.html':'关于我们','/stats.html':'访问统计','/privacy.html':'隐私政策'
+  };
+  var TOOL_NAMES={
+    '/api/health':'健康检查','/api/toolbox-stats':'访问统计接口',
+    '/api/ocr':'文字识别','/api/convert':'文件转换',
+    '/api/translate':'文本翻译','/api/translate/file':'文件翻译',
+    '/api/pdf/compress':'PDF 压缩','/api/pdf/watermark':'PDF 水印',
+    '/api/pdf/to-images':'PDF 转图片','/api/pdf/merge':'PDF 合并',
+    '/api/pdf/split':'PDF 拆分','/api/pdf/rotate':'PDF 旋转',
+    '/api/pdf/delete-pages':'PDF 删页','/api/pdf/encrypt':'PDF 加密',
+    '/api/pdf/decrypt':'PDF 解密','/api/pdf/grayscale':'PDF 转灰度',
+    '/api/pdf/extract-images':'提取 PDF 图片',
+    '/api/image/compress':'图片压缩','/api/image/convert':'图片格式转换',
+    '/api/image/watermark':'图片水印','/api/image/resize':'图片调整大小',
+    '/api/image/rotate':'图片旋转','/api/image/timestamp':'图片加时间戳',
+    '/api/batch/images':'图片批量处理','/api/send':'发送通知','/api/mcp':'MCP 服务'
+  };
+
   // ---- 样例兜底数据（本地预览用，部署后会被 /api/toolbox-stats 覆盖）----
   function buildSample(){
-    var days=[], pv=[], uv=[];
+    var days=[], pv=[], uv=[], toolsDaily=[];
     var base=new Date('2026-08-12T00:00:00');
     for(var i=11;i>=0;i--){
       var d=new Date(base); d.setDate(d.getDate()-i);
@@ -223,6 +259,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
       days.push(key.slice(5));
       var v=40+Math.round(Math.random()*55);
       pv.push(v); uv.push(Math.max(8,Math.round(v*(0.3+Math.random()*0.2))));
+      toolsDaily.push(Math.round(v*(0.2+Math.random()*0.25)));
     }
     var pages=[
       {name:'/',count:312},{name:'/pdf-compress.html',count:188},
@@ -231,7 +268,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
       {name:'/pdf-editor.html',count:84},{name:'/excel-to-pdf.html',count:73},
       {name:'/pdf-to-word.html',count:61},{name:'/about.html',count:44}
     ];
-    var tools=[
+    var topTools=[
       {name:'/api/ocr',count:142},{name:'/api/translate/file',count:96},
       {name:'/api/pdf/compress',count:88},{name:'/api/convert',count:71},
       {name:'/api/translate',count:54},{name:'/api/image/compress',count:42},
@@ -239,12 +276,12 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
       {name:'/api/pdf/to-images',count:19},{name:'/api/pdf/split',count:14}
     ];
     return {
-      days:days, pv:pv, uv:uv, pages:pages, tools:tools,
-      todayTools:tools.slice(0,10),
-      today:{pv:pv[pv.length-1], uv:uv[uv.length-1], tools:sum(tools)}
+      days:days, pv:pv, uv:uv, tools:toolsDaily,
+      pages:pages, topTools:topTools,
+      todayTools:topTools.slice(0,10),
+      today:{pv:pv[pv.length-1], uv:uv[uv.length-1], tools:toolsDaily[toolsDaily.length-1]}
     };
   }
-  function sum(arr){return arr.reduce(function(s,x){return s+x.count;},0);}
 
   // ---- 拉取数据 ----
   function loadData(){
@@ -262,7 +299,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
   function setKpi(elId,val){ document.getElementById(elId).textContent=fmt(val); }
   function setDelta(elId,cur,prev){
     var el=document.getElementById(elId);
-    if(prev==null||prev<=0){ el.textContent=''; el.className='delta up'; return; }
+    if(prev==null||prev<=0){ el.textContent='—'; el.className='delta up'; return; }
     var pct=Math.round((cur-prev)/prev*100);
     el.textContent=(pct>=0?'+':'')+pct+'%';
     el.className='delta '+(pct>=0?'up':'down');
@@ -276,7 +313,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
         toolPrev=n>=2?d.tools[n-2]:null;
     setDelta('kpiPvDelta',t.pv,pvPrev);
     setDelta('kpiUvDelta',t.uv,uvPrev);
-    setDelta('kpiToolDelta',t.tools,toolPrev);
+    setDelta('kpiToolDelta',t.tools,toolPrev||0);
   }
 
   function renderTrend(d){
@@ -304,15 +341,28 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
     },true);
   }
 
-  function renderRank(elId,items){
+  function renderRank(elId,items,type){
     var box=document.getElementById(elId);
     if(!items||!items.length){ box.innerHTML='<div class="rank-empty">暂无数据</div>'; return; }
     var max=items[0].count||1;
+    var isPage = type==='page';
     box.innerHTML=items.slice(0,10).map(function(it,idx){
       var pct=Math.max(6,Math.round(it.count/max*100));
-      var label = it.name.replace('/api/','').replace('.html','').replace('/','')||it.name;
+      var label, href, title;
+      if(isPage){
+        label = PAGE_NAMES[it.name] || it.name.replace('.html','').replace('/','') || it.name;
+        href = it.name === '/' ? '/' : it.name;
+        title = it.name;
+      }else{
+        label = TOOL_NAMES[it.name] || it.name.replace('/api/','') || it.name;
+        href = null;
+        title = it.name;
+      }
+      var nameHtml = isPage
+        ? '<a class="rank-name" href="'+href+'" title="'+title+'">'+label+'</a>'
+        : '<div class="rank-name" title="'+title+'">'+label+'</div>';
       return '<div class="rank-row"><div class="rank-no">'+(idx+1)+'</div>'+
-             '<div class="rank-name" title="'+it.name+'">'+label+'</div>'+
+             nameHtml+
              '<div class="rank-bar"><span style="width:'+pct+'%"></span></div>'+
              '<div class="rank-count">'+fmt(it.count)+'</div></div>';
     }).join('');
@@ -327,8 +377,8 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
       days:d.days.slice(slice), pv:d.pv.slice(slice), uv:d.uv.slice(slice),
       today:d.today, tools:d.tools
     });
-    renderRank('pageRank', d.pages);
-    renderRank('toolRank', currentToolTab==='today' ? d.todayTools : d.tools);
+    renderRank('pageRank', d.pages, 'page');
+    renderRank('toolRank', currentToolTab==='today' ? d.todayTools : d.topTools, 'tool');
   }
 
   function refresh(){
