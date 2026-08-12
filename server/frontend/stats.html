@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据看板 — 办公工具箱</title>
+<meta name="description" content="办公工具箱网站访问量与工具调用量统计。">
+<link rel="canonical" href="https://www.bangong02.com/stats.html">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#e94c88;--pink-bg:#fdf0f6;--near-white:#fbfbfb;--light-gray:#f4f4f4;--dark:#252525;--mid:#333;--ink3:#888;--ink4:#ccc;--border:#ebebeb;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);--shadow-up:0 12px 40px rgba(233,76,136,0.15),0 4px 12px rgba(0,0,0,0.08)}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--near-white);color:var(--dark);font-size:14px;-webkit-font-smoothing:antialiased}
+nav{position:sticky;top:0;z-index:99;height:68px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);text-decoration:none;letter-spacing:-.5px}
+.logo span{color:var(--pink)}
+.nav-links{display:flex;gap:2px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--ink3);font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;transition:all .15s}
+.nav-links a:hover{color:var(--dark);background:var(--light-gray)}
+.nav-links a.active{color:var(--pink);background:var(--pink-bg)}
+main{max-width:1040px;margin:0 auto;padding:56px 32px 100px}
+
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink4);margin-bottom:32px}
+.breadcrumb a{text-decoration:none;color:var(--ink4);transition:color .15s}
+.breadcrumb a:hover{color:var(--pink)}
+
+.page-header{margin-bottom:48px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.page-label{font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.page-label::before{content:'';width:20px;height:2px;background:var(--pink);border-radius:1px}
+.page-header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;letter-spacing:-1px;line-height:1.1}
+.page-header h1 em{font-style:italic;color:var(--pink)}
+.page-sub{font-size:14px;color:var(--ink3);line-height:1.85;margin-top:14px;max-width:560px}
+
+/* 刷新按钮（pill 风格） */
+.btn-pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--ink3);padding:9px 18px;border:1px solid var(--border);border-radius:24px;background:var(--card-bg);cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+.btn-pill:hover{color:var(--pink);border-color:var(--pink);background:var(--pink-bg)}
+.btn-pill i{font-size:15px}
+.btn-pill.loading i{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 大数卡片 */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:56px}
+.stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px 22px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s,border-color .2s,background .2s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-up);border-color:var(--pink)}
+.stat-icon{width:46px;height:46px;border-radius:12px;background:var(--pink-bg);display:flex;align-items:center;justify-content:center;color:var(--pink);font-size:22px;flex-shrink:0}
+.stat-meta{min-width:0}
+.stat-value{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;line-height:1;color:var(--dark);letter-spacing:-.5px}
+.stat-name{font-size:13px;color:var(--ink3);margin-top:8px;display:flex;align-items:center;gap:6px}
+.stat-name .delta{font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px}
+.delta.up{color:#16a34a;background:rgba(22,163,74,.12)}
+.delta.down{color:#dc2626;background:rgba(220,38,38,.12)}
+html[data-theme="dark"] .delta.up{color:#4ade80;background:rgba(74,222,128,.15)}
+html[data-theme="dark"] .delta.down{color:#f87171;background:rgba(248,113,113,.15)}
+
+section{margin-bottom:56px}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.section-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--dark)}
+.section-note{font-size:12px;color:var(--ink4)}
+
+/* 分段切换（pill group） */
+.range-toggle{display:inline-flex;gap:2px;background:var(--light-gray);border:1px solid var(--border);border-radius:24px;padding:3px}
+html[data-theme="dark"] .range-toggle{background:rgba(255,255,255,.04)}
+.range-toggle button{border:none;background:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--ink3);padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .15s}
+.range-toggle button.active{background:var(--pink);color:#fff}
+.range-toggle button:not(.active):hover{color:var(--dark)}
+
+.chart-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px 8px;box-shadow:var(--shadow)}
+#trendChart{width:100%;height:320px}
+
+/* 排行列表 */
+.rank-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.rank-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow);transition:border-color .2s,background .2s}
+.rank-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.rank-title i{color:var(--pink)}
+.rank-tabs{margin-left:auto;display:inline-flex;gap:2px;background:var(--light-gray);border:1px solid var(--border);border-radius:16px;padding:2px}
+html[data-theme="dark"] .rank-tabs{background:rgba(255,255,255,.04)}
+.rank-tabs button{border:none;background:none;font-family:inherit;font-size:11px;font-weight:500;color:var(--ink3);padding:4px 12px;border-radius:13px;cursor:pointer;transition:all .15s}
+.rank-tabs button.active{background:var(--pink);color:#fff}
+.rank-tabs button:not(.active):hover{color:var(--dark)}
+.rank-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
+.rank-row:last-child{border-bottom:none}
+.rank-no{width:22px;height:22px;border-radius:6px;background:var(--light-gray);color:var(--ink3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Playfair Display',serif}
+.rank-row:nth-child(1) .rank-no{background:var(--pink);color:#fff}
+.rank-row:nth-child(2) .rank-no,.rank-row:nth-child(3) .rank-no{background:var(--pink-bg);color:var(--pink)}
+.rank-name{flex:1;min-width:0;font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-bar{flex:0 0 80px;height:6px;border-radius:3px;background:var(--light-gray);overflow:hidden}
+html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
+.rank-bar span{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--pink),#ff85b3)}
+.rank-count{flex-shrink:0;width:54px;text-align:right;font-size:13px;font-weight:700;color:var(--dark);font-family:'Playfair Display',serif}
+.rank-empty{font-size:13px;color:var(--ink4);padding:14px 0;text-align:center}
+
+.page-footer{margin-top:56px;border-top:1px solid var(--border);padding-top:20px;text-align:right;font-size:12px;color:#666}
+
+@media (max-width:900px){
+  nav{padding:0 20px!important}
+  main{padding:40px 20px 80px!important}
+  .stat-grid{grid-template-columns:1fr}
+  .rank-grid{grid-template-columns:1fr}
+  .page-header h1{font-size:32px}
+}
+@media (max-width:600px){
+  .nav-links{display:none!important}
+}
+</style>
+<script src="/assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/">办公<span>工具箱</span></a>
+  <ul class="nav-links">
+    <li><a href="/">首页</a></li>
+    <li><a href="/about.html">关于</a></li>
+    <li><a href="/stats.html" class="active">数据</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>数据看板</span></div>
+
+  <div class="page-header">
+    <div>
+      <div class="page-label">数据看板</div>
+      <h1>网站访问与<em>工具使用</em></h1>
+      <p class="page-sub">记录每天的页面访问量（PV）、独立访客（UV）与工具调用情况。已自动过滤巡检脚本与外部扫描流量，只统计真实用户。</p>
+    </div>
+    <button class="btn-pill" id="refreshBtn"><i class="ti ti-refresh"></i>刷新数据</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="ti ti-eye"></i></div>
+      <div class="stat-meta">
+        <div class="stat-value" id="kpiPv">–</div>
+        <div class="stat-name">今日访问 PV <span class="delta up" id="kpiPvDelta"></span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="ti ti-users"></i></div>
+      <div class="stat-meta">
+        <div class="stat-value" id="kpiUv">–</div>
+        <div class="stat-name">独立访客 UV <span class="delta up" id="kpiUvDelta"></span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="ti ti-tool"></i></div>
+      <div class="stat-meta">
+        <div class="stat-value" id="kpiTool">–</div>
+        <div class="stat-name">工具调用次数 <span class="delta up" id="kpiToolDelta"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-header">
+      <div class="section-name">访问趋势</div>
+      <div class="range-toggle" id="rangeToggle">
+        <button data-range="7" class="active">近 7 天</button>
+        <button data-range="30">近 30 天</button>
+        <button data-range="0">全部</button>
+      </div>
+    </div>
+    <div class="chart-card"><div id="trendChart"></div></div>
+  </section>
+
+  <section>
+    <div class="section-header">
+      <div class="section-name">热门排行</div>
+      <div class="section-note">统计周期与上方趋势一致</div>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-card">
+        <div class="rank-title"><i class="ti ti-route"></i>热门页面 Top 10</div>
+        <div id="pageRank"></div>
+      </div>
+      <div class="rank-card">
+        <div class="rank-title"><i class="ti ti-tool"></i>热门工具
+          <span class="rank-tabs" id="toolTabs">
+            <button data-tab="today" class="active">今日</button>
+            <button data-tab="all">全周期</button>
+          </span>
+        </div>
+        <div id="toolRank"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="page-footer">
+    <span class="footer-version">当前网站版本 v0.12.32 · 版本日期 2026-07-03</span>
+  </div>
+</main>
+
+<script>
+(function(){
+  var PINK_LIGHT='#e94c88', PINK_DARK='#ff5d96';
+  var trendChart = null;
+  var currentRange = 7;
+  var currentToolTab = 'today';
+  var lastData = null;
+
+  // ---- 主题相关配色 ----
+  function themeColors(){
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    return {
+      dark: dark,
+      pink: dark?PINK_DARK:PINK_LIGHT,
+      line2: dark?'#3fd0bd':'#2bb3a3',
+      text: dark?'#cfcfd2':'#333333',
+      sub:  dark?'#9a9aa0':'#888888',
+      axis: dark?'rgba(255,255,255,0.10)':'#ebebeb',
+      split: dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',
+      tooltipBg: dark?'#26272d':'#ffffff',
+      tooltipBorder: dark?'rgba(255,255,255,0.12)':'#ebebeb'
+    };
+  }
+
+  // ---- 样例兜底数据（本地预览用，部署后会被 /api/toolbox-stats 覆盖）----
+  function buildSample(){
+    var days=[], pv=[], uv=[];
+    var base=new Date('2026-08-12T00:00:00');
+    for(var i=11;i>=0;i--){
+      var d=new Date(base); d.setDate(d.getDate()-i);
+      var key=d.toISOString().slice(0,10);
+      days.push(key.slice(5));
+      var v=40+Math.round(Math.random()*55);
+      pv.push(v); uv.push(Math.max(8,Math.round(v*(0.3+Math.random()*0.2))));
+    }
+    var pages=[
+      {name:'/',count:312},{name:'/pdf-compress.html',count:188},
+      {name:'/file-translate.html',count:154},{name:'/pdf-merge.html',count:131},
+      {name:'/scan-to-text.html',count:118},{name:'/image-compress.html',count:97},
+      {name:'/pdf-editor.html',count:84},{name:'/excel-to-pdf.html',count:73},
+      {name:'/pdf-to-word.html',count:61},{name:'/about.html',count:44}
+    ];
+    var tools=[
+      {name:'/api/ocr',count:142},{name:'/api/translate/file',count:96},
+      {name:'/api/pdf/compress',count:88},{name:'/api/convert',count:71},
+      {name:'/api/translate',count:54},{name:'/api/image/compress',count:42},
+      {name:'/api/pdf/merge',count:33},{name:'/api/pdf/watermark',count:27},
+      {name:'/api/pdf/to-images',count:19},{name:'/api/pdf/split',count:14}
+    ];
+    return {
+      days:days, pv:pv, uv:uv, pages:pages, tools:tools,
+      todayTools:tools.slice(0,10),
+      today:{pv:pv[pv.length-1], uv:uv[uv.length-1], tools:sum(tools)}
+    };
+  }
+  function sum(arr){return arr.reduce(function(s,x){return s+x.count;},0);}
+
+  // ---- 拉取数据 ----
+  function loadData(){
+    return fetch('/api/toolbox-stats').then(function(r){
+      if(!r.ok) throw new Error('no stats');
+      return r.json();
+    }).then(function(d){
+      if(!d || !d.days || !d.days.length) throw new Error('empty');
+      return d;
+    }).catch(function(){ return buildSample(); });
+  }
+
+  function fmt(n){ return (n||0).toLocaleString('en-US'); }
+
+  function setKpi(elId,val){ document.getElementById(elId).textContent=fmt(val); }
+  function setDelta(elId,cur,prev){
+    var el=document.getElementById(elId);
+    if(prev==null||prev<=0){ el.textContent=''; el.className='delta up'; return; }
+    var pct=Math.round((cur-prev)/prev*100);
+    el.textContent=(pct>=0?'+':'')+pct+'%';
+    el.className='delta '+(pct>=0?'up':'down');
+  }
+
+  function renderKpi(d){
+    var t=d.today||{};
+    setKpi('kpiPv',t.pv); setKpi('kpiUv',t.uv); setKpi('kpiTool',t.tools);
+    var n=d.days.length;
+    var pvPrev=n>=2?d.pv[n-2]:null, uvPrev=n>=2?d.uv[n-2]:null,
+        toolPrev=n>=2?d.tools[n-2]:null;
+    setDelta('kpiPvDelta',t.pv,pvPrev);
+    setDelta('kpiUvDelta',t.uv,uvPrev);
+    setDelta('kpiToolDelta',t.tools,toolPrev);
+  }
+
+  function renderTrend(d){
+    var c=themeColors();
+    var ds=d.days, pv=d.pv, uv=d.uv;
+    if(!trendChart) trendChart=echarts.init(document.getElementById('trendChart'));
+    trendChart.setOption({
+      color:[c.pink,c.line2],
+      grid:{left:8,right:18,top:30,bottom:8,containLabel:true},
+      tooltip:{trigger:'axis',backgroundColor:c.tooltipBg,borderColor:c.tooltipBorder,
+        textStyle:{color:c.text},valueFormatter:function(v){return fmt(v);}},
+      legend:{data:['访问 PV','独立访客 UV'],right:0,top:0,icon:'roundRect',
+        textStyle:{color:c.sub,fontSize:12},itemWidth:14,itemHeight:8},
+      xAxis:{type:'category',data:ds,boundaryGap:false,
+        axisLine:{lineStyle:{color:c.axis}},axisTick:{show:false},
+        axisLabel:{color:c.sub,fontSize:11}},
+      yAxis:{type:'value',axisLine:{show:false},axisTick:{show:false},
+        axisLabel:{color:c.sub,fontSize:11},splitLine:{lineStyle:{color:c.split}}},
+      series:[
+        {name:'访问 PV',type:'line',smooth:true,symbol:'circle',symbolSize:6,data:pv,
+          lineStyle:{width:2.5},areaStyle:{opacity:.08,color:c.pink}},
+        {name:'独立访客 UV',type:'line',smooth:true,symbol:'circle',symbolSize:6,data:uv,
+          lineStyle:{width:2.5},areaStyle:{opacity:.06,color:c.line2}}
+      ]
+    },true);
+  }
+
+  function renderRank(elId,items){
+    var box=document.getElementById(elId);
+    if(!items||!items.length){ box.innerHTML='<div class="rank-empty">暂无数据</div>'; return; }
+    var max=items[0].count||1;
+    box.innerHTML=items.slice(0,10).map(function(it,idx){
+      var pct=Math.max(6,Math.round(it.count/max*100));
+      var label = it.name.replace('/api/','').replace('.html','').replace('/','')||it.name;
+      return '<div class="rank-row"><div class="rank-no">'+(idx+1)+'</div>'+
+             '<div class="rank-name" title="'+it.name+'">'+label+'</div>'+
+             '<div class="rank-bar"><span style="width:'+pct+'%"></span></div>'+
+             '<div class="rank-count">'+fmt(it.count)+'</div></div>';
+    }).join('');
+  }
+
+  function renderAll(d){
+    lastData = d;
+    renderKpi(d);
+    var slice = currentRange>0 ? d.days.length-currentRange : 0;
+    if(slice<0) slice=0;
+    renderTrend({
+      days:d.days.slice(slice), pv:d.pv.slice(slice), uv:d.uv.slice(slice),
+      today:d.today, tools:d.tools
+    });
+    renderRank('pageRank', d.pages);
+    renderRank('toolRank', currentToolTab==='today' ? d.todayTools : d.tools);
+  }
+
+  function refresh(){
+    var btn=document.getElementById('refreshBtn');
+    btn.classList.add('loading');
+    loadData().then(function(d){ renderAll(d); })
+      .finally(function(){ setTimeout(function(){btn.classList.remove('loading');},400); });
+  }
+
+  // 范围切换
+  document.getElementById('rangeToggle').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    [].forEach.call(this.children,function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    currentRange=parseInt(b.getAttribute('data-range'),10);
+    refresh();
+  });
+  document.getElementById('refreshBtn').addEventListener('click',refresh);
+
+  // 工具榜：今日 / 全周期 切换（不重新拉取，直接切数据）
+  document.getElementById('toolTabs').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    [].forEach.call(this.children,function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    currentToolTab=b.getAttribute('data-tab');
+    if(lastData) renderRank('toolRank', currentToolTab==='today'?lastData.todayTools:lastData.tools);
+  });
+
+  // 主题切换时重绘图表
+  var mo=new MutationObserver(function(){
+    if(trendChart) trendChart.setOption({color:[themeColors().pink,themeColors().line2]},false);
+  });
+  mo.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  // 初始化
+  refresh();
+  window.addEventListener('resize',function(){ if(trendChart) trendChart.resize(); });
+})();
+</script>
+</body>
+</html>

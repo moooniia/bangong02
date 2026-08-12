@@ -28,6 +28,8 @@ from file_utils import (
 from ocr_utils import ocr_pdf_for_word
 from ocr_utils import ocr_image, ocr_pdf, clean_ocr_text
 import usage_stats
+from datetime import date, datetime
+import generate_stats as stats_mod
 
 app = Flask(__name__)
 
@@ -1337,6 +1339,82 @@ def download(filename):
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'})
+
+
+@app.route('/api/toolbox-stats', methods=['GET'])
+def stats():
+    """网站访问量 / 工具调用量统计接口（公开）。
+    数据来自 generate_stats.py 按天聚合写入的 stats_history.json，
+    并对「今天」做一次实时补全（重新解析当前 nginx 日志）。
+    """
+    try:
+        history_path = os.environ.get(
+            'STATS_HISTORY',
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stats_history.json'),
+        )
+        nginx_dir = os.environ.get('NGINX_LOG_DIR', '/var/log/nginx')
+
+        history = {}
+        if os.path.exists(history_path):
+            with open(history_path, encoding='utf-8') as f:
+                history = json.load(f)
+
+        # 实时补全「今天」：重新解析当前 nginx 日志，覆盖今天的数据
+        today_key = date.today().isoformat()
+        try:
+            parsed = stats_mod.aggregate(nginx_dir)
+            if today_key in parsed:
+                d = parsed[today_key]
+                history[today_key] = {
+                    'pv': d['pv'],
+                    'uv': len(d['uv']),
+                    'pages': dict(d['pages']),
+                    'tools': dict(d['tools']),
+                }
+        except Exception:
+            pass
+
+        dates = sorted(history.keys())
+        days = dates
+        pv = [history[dt].get('pv', 0) for dt in dates]
+        uv = [history[dt].get('uv', 0) for dt in dates]
+
+        # 汇总全期排行
+        pages_total = {}
+        tools_total = {}
+        for d in history.values():
+            for k, v in d.get('pages', {}).items():
+                pages_total[k] = pages_total.get(k, 0) + v
+            for k, v in d.get('tools', {}).items():
+                tools_total[k] = tools_total.get(k, 0) + v
+
+        top_pages = [{'name': k, 'count': v} for k, v in
+                     sorted(pages_total.items(), key=lambda x: -x[1])[:10]]
+        top_tools = [{'name': k, 'count': v} for k, v in
+                     sorted(tools_total.items(), key=lambda x: -x[1])[:10]]
+
+        # 今日工具明细 Top10（优先今天，今天无数据则取最近有数据的一天）
+        latest = history.get(today_key) or (history[dates[-1]] if dates else {})
+        today_tools = [{'name': k, 'count': v} for k, v in
+                       sorted(latest.get('tools', {}).items(), key=lambda x: -x[1])[:10]]
+
+        summary = history.get(today_key, {'pv': 0, 'uv': 0, 'tools': {}})
+        return jsonify({
+            'updated': datetime.now().isoformat(timespec='seconds'),
+            'days': days,
+            'pv': pv,
+            'uv': uv,
+            'today': {
+                'pv': summary.get('pv', 0),
+                'uv': summary.get('uv', 0),
+                'tools': sum(summary.get('tools', {}).values()),
+            },
+            'pages': top_pages,
+            'tools': top_tools,
+            'todayTools': today_tools,
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
