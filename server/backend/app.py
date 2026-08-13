@@ -1341,6 +1341,23 @@ def health():
     return jsonify({'status': 'ok'})
 
 
+# 工具接口扫描/探测垃圾 key 过滤（与 generate_stats.API_SCAN_RE 保持一致）
+TOOL_GARBAGE_RE = re.compile(
+    r"(\.\./|/etc/passwd|/proc/self|union\s+select|select\s+.+\s+from|"
+    r"/api/?$|/api/[A-Za-z0-9]{80,})",
+    re.I,
+)
+
+
+def _clean_tool_history(history):
+    """清洗 stats_history 中已写入的 /api 探测垃圾 key。"""
+    for d in history.values():
+        tools = d.get('tools') or {}
+        for bad in [k for k in tools if TOOL_GARBAGE_RE.search(k)]:
+            del tools[bad]
+    return history
+
+
 @app.route('/api/toolbox-stats', methods=['GET'])
 def stats():
     """网站访问量 / 工具调用量统计接口（公开）。
@@ -1358,6 +1375,7 @@ def stats():
         if os.path.exists(history_path):
             with open(history_path, encoding='utf-8') as f:
                 history = json.load(f)
+        history = _clean_tool_history(history)
 
         # 实时补全「今天」：重新解析当前 nginx 日志，覆盖今天的数据
         today_key = date.today().isoformat()

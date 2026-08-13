@@ -51,6 +51,13 @@ BOT_UA_RE = re.compile(
     re.I,
 )
 
+# 工具接口（/api/...）扫描 / 探测过滤：路径穿越、注入、空接口、超长 fuzzing 段
+API_SCAN_RE = re.compile(
+    r"(\.\./|/etc/passwd|/proc/self|union\s+select|select\s+.+\s+from|"
+    r"/api/?$|/api/[A-Za-z0-9]{80,})",
+    re.I,
+)
+
 PAGE_RE = re.compile(r"^/(?:index\.html)?$|^/[^/?#]+\.html$")
 API_RE = re.compile(r"^/api/")
 
@@ -122,8 +129,10 @@ def aggregate(log_dir):
             # 归一化首页
             norm = "/" if path in ("/", "/index.html") else path
             d["pages"][norm] += 1
-        # 真实工具接口调用
+        # 真实工具接口调用（先过滤 /api/ 探测）
         elif API_RE.match(path):
+            if API_SCAN_RE.search(path):
+                continue
             d["tools"][path] += 1
     return days
 
