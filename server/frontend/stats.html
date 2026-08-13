@@ -404,7 +404,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
     [].forEach.call(this.children,function(x){x.classList.remove('active');});
     b.classList.add('active');
     currentToolTab=b.getAttribute('data-tab');
-    if(lastData) renderRank('toolRank', currentToolTab==='today'?lastData.todayTools:lastData.tools);
+    if(lastData) renderRank('toolRank', currentToolTab==='today'?lastData.todayTools:lastData.topTools);
   });
 
   // 主题切换时重绘图表
