@@ -231,7 +231,8 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
     '/image-rotate.html':'图片旋转','/image-timestamp.html':'图片加时间戳',
     '/scan-to-text.html':'扫描识别','/ocr-pdf.html':'PDF OCR',
     '/file-translate.html':'文件翻译','/excel-to-pdf.html':'Excel 转 PDF',
-    '/about.html':'关于我们','/stats.html':'访问统计','/privacy.html':'隐私政策'
+    '/about.html':'关于我们','/stats.html':'访问统计','/privacy.html':'隐私政策',
+    '/invoice-toolbox.html':'发票工具箱'
   };
   var TOOL_NAMES={
     '/api/health':'健康检查','/api/toolbox-stats':'访问统计接口',
@@ -248,6 +249,7 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
     '/api/image/rotate':'图片旋转','/api/image/timestamp':'图片加时间戳',
     '/api/batch/images':'图片批量处理','/api/send':'发送通知','/api/mcp':'MCP 服务',
     '/api/pdf/editor/export':'PDF 编辑导出','/api/pdf/thumbnails':'PDF 缩略图',
+    '/api/pdf/editor/preview':'PDF 编辑预览',
     '/api/images':'图片转 PDF','/api/images/to-pdf/export':'图片转 PDF 导出',
     '/api/download':'文件下载'
   };
@@ -357,9 +359,12 @@ html[data-theme="dark"] .rank-bar{background:rgba(255,255,255,.06)}
         href = it.name === '/' ? '/' : it.name;
         title = it.name;
       }else{
-        var m = it.name.match(/^(\/api\/[a-z0-9_-]+)/i);
-        var mapKey = m ? m[1] : it.name;
-        label = TOOL_NAMES[it.name] || TOOL_NAMES[mapKey] || it.name.replace('/api/','');
+        var clean = it.name.split('?')[0];
+        var matched = '';
+        for(var k in TOOL_NAMES){
+          if(clean.indexOf(k)===0 && k.length>matched.length) matched=k;
+        }
+        label = TOOL_NAMES[it.name] || TOOL_NAMES[matched] || it.name.replace('/api/','');
         href = null;
         title = it.name;
       }
