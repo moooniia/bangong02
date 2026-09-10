@@ -1344,7 +1344,7 @@ def health():
 # 工具接口扫描/探测垃圾 key 过滤（与 generate_stats.API_SCAN_RE 保持一致）
 TOOL_GARBAGE_RE = re.compile(
     r"(\.\./|/etc/passwd|/proc/self|union\s+select|select\s+.+\s+from|"
-    r"/api/?$|/api/[A-Za-z0-9]{80,})",
+    r"/api/?$|/api/[A-Za-z0-9]{80,}|/api/mcp)",
     re.I,
 )
 

@@ -129,9 +129,13 @@ def aggregate(log_dir):
             # 归一化首页
             norm = "/" if path in ("/", "/index.html") else path
             d["pages"][norm] += 1
-        # 真实工具接口调用（先过滤 /api/ 探测）
+        # 真实工具接口调用（先过滤 /api/ 探测与扫描器 404 探测）
         elif API_RE.match(path):
             if API_SCAN_RE.search(path):
+                continue
+            # 扫描器常探测不存在的接口（如 /api/mcp），后端返回 404，
+            # 这些不是真实功能调用，不应计入工具榜
+            if status == "404":
                 continue
             d["tools"][path] += 1
     return days
