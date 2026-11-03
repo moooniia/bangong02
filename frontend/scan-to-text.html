@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片转文字 PDF转文字OCR在线识别 - bangong02办公工具箱</title>
+<meta name="description" content="免费OCR文字识别，照片、截图、扫描版PDF一键转成可复制的文字，不用注册，手机也能用。">
+<link rel="canonical" href="https://www.bangong02.com/scan-to-text.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="图片转文字 PDF转文字OCR在线识别 - bangong02办公工具箱">
+<meta property="og:description" content="免费OCR文字识别，照片、截图、扫描版PDF一键转成可复制的文字，不用注册，手机也能用。">
+<meta property="og:url" content="https://www.bangong02.com/scan-to-text.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root { --pink:#e94c88; --pink-bg:#fdf0f6; --near-white:#fbfbfb; --light-gray:#f4f4f4; --dark:#252525; --ink3:#888; --ink4:#ccc; --border:#ebebeb; --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06); }
+body { font-family:'Noto Sans SC',sans-serif; background:var(--near-white); color:var(--dark); font-size:14px; }
+nav { position:sticky; top:0; z-index:99; height:68px; padding:0 56px; display:flex; align-items:center; justify-content:space-between; background:var(--nav-bg); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+.logo { font-family:'Playfair Display',serif; font-size:20px; font-weight:900; color:var(--dark); text-decoration:none; }
+.logo span { color:var(--pink); }
+.nav-links { display:flex; gap:2px; list-style:none; }
+.nav-links a { text-decoration:none; color:var(--ink3); font-size:13px; font-weight:500; padding:6px 14px; border-radius:20px; }
+main { max-width:780px; margin:0 auto; padding:56px 32px 100px; }
+.breadcrumb { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink4); margin-bottom:32px; }
+.breadcrumb a { text-decoration:none; color:var(--ink4); }
+.tool-header { margin-bottom:40px; }
+.tool-title-row { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+.tool-icon-big { width:52px; height:52px; background:var(--pink-bg); border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.tool-icon-big i { font-size:28px; color:var(--pink); }
+.tool-header h1 { font-family:'Playfair Display',serif; font-size:32px; font-weight:900; }
+.tool-desc { font-size:14px; color:var(--ink3); line-height:1.75; margin-left:68px; }
+.upload-area { border:2px dashed var(--border); border-radius:16px; padding:56px 32px; text-align:center; cursor:pointer; background:var(--card-bg); margin-bottom:24px; }
+.upload-icon { font-size:48px; color:var(--ink4); margin-bottom:16px; display:block; }
+.upload-btn { display:inline-flex; align-items:center; gap:8px; background:var(--pink); color:white; font-size:13px; font-weight:700; padding:10px 24px; border-radius:24px; border:none; cursor:pointer; font-family:inherit; }
+.convert-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--pink); color:white; font-size:15px; font-weight:700; padding:16px; border-radius:var(--radius); border:none; cursor:pointer; font-family:inherit; }
+.convert-btn:disabled { background:var(--ink4); }
+.result-text { display:none; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:24px; box-shadow:var(--shadow); }
+.result-text pre { white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:13px; line-height:1.8; background:var(--light-gray); padding:16px; border-radius:8px; max-height:400px; overflow:auto; }
+.copy-btn { margin-top:12px; display:inline-flex; align-items:center; gap:6px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:12px; font-family:inherit; text-decoration:none; }
+.error-area, .progress-area { display:none; margin-top:24px; text-align:center; padding:24px; border-radius:var(--radius); }
+.error-area { background:var(--error-bg); border:1px solid var(--error-border); color:var(--error-text); }
+.progress-area { background:var(--card-bg); border:1px solid var(--border); }
+.progress-label { font-size:14px; font-weight:600; color:var(--dark); margin-bottom:16px; }
+.progress-bar-wrap { background:var(--light-gray); border-radius:8px; height:8px; overflow:hidden; margin-bottom:10px; }
+.progress-bar { height:100%; border-radius:8px; background:linear-gradient(90deg,var(--pink),#f5a8cc); width:0%; transition:width 0.3s ease; }
+.progress-pct { font-size:12px; color:var(--ink3); }
+</style>
+  <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/">办公<span>工具箱</span></a>
+
+</nav>
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><a href="/#ocr">文字识别</a><i class="ti ti-chevron-right"></i><span>图片/PDF转文字</span></div>
+  <div class="tool-header">
+    <div class="tool-title-row">
+      <div class="tool-icon-big"><i class="ti ti-file-search"></i></div>
+      <h1>图片/PDF转文字</h1>
+    </div>
+    <p class="tool-desc">支持照片、手机截图、扫描版 PDF，逐页 OCR 识别提取文字。</p>
+  </div>
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFile(this)">
+    <i class="ti ti-cloud-upload upload-icon"></i>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">上传图片或PDF</div>
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">支持 JPG、PNG、扫描版 PDF</div>
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()"><i class="ti ti-file"></i>选择文件</button>
+    <div id="fileNameDisplay" style="display:none;margin-top:14px;font-size:13px;color:var(--pink);font-weight:600;align-items:center;justify-content:center;gap:6px"><i class="ti ti-circle-check"></i><span></span></div>
+  </div>
+  <button class="convert-btn" id="convertBtn" onclick="startOcr()" disabled><i class="ti ti-scan"></i>开始识别</button>
+  <div class="progress-area" id="progressArea">
+    <div class="progress-label" id="progressLabel">正在识别，请稍候…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+  <div class="error-area" id="errorArea"></div>
+  <div class="result-text" id="resultArea">
+    <h3 style="margin-bottom:12px;font-size:14px">识别结果</h3>
+    <pre id="resultText"></pre>
+    <button class="copy-btn" onclick="copyText()"><i class="ti ti-copy"></i><span id="copyBtnLabel">复制文字</span></button>
+    <a href="#" class="copy-btn" id="downloadLink" style="margin-left:8px"><i class="ti ti-download"></i>下载 TXT</a>
+  </div>
+
+  <section class="seo-content" aria-labelledby="guide-title">
+    <div class="seo-intro"><h2 id="guide-title">图片/PDF 转文字使用说明</h2><p>识别图片或扫描 PDF 中的文字，适合录入纸质资料、截图、票据和扫描文档。</p></div>
+    <div class="seo-grid"><div class="seo-card"><h3>使用步骤</h3><ol><li>选择图片或 PDF 文件</li><li>确认识别语言</li><li>开始文字识别</li><li>复制或下载结果并校对</li></ol></div><div class="seo-card"><h3>使用建议</h3><ul><li>图片需清晰、端正、光线均匀</li><li>手写字识别准确率有限</li><li>数字和专有名词重点核对</li><li>复杂表格可能丢失结构</li></ul></div></div>
+    <div class="seo-faq"><h2>常见问题</h2><details><summary>为什么识别结果有错字？</summary><p>模糊、倾斜、低对比度、特殊字体和遮挡都会影响 OCR 识别。</p></details><details><summary>可以保留原来的排版吗？</summary><p>本工具重点提取文字；如需保留页面外观并可搜索，可使用扫描件转可搜索 PDF。</p></details><details><summary>上传的文件会长期保留吗？</summary><p>不会。文件仅用于本次处理，完成后会按网站规则自动删除。</p></details></div>
+    <h2>相关工具</h2><div class="related-tools"><a class="related-tool" href="/pdf-searchable.html"><i class="ti ti-tool"></i>扫描件转可搜索 PDF</a><a class="related-tool" href="/pdf-to-word.html"><i class="ti ti-tool"></i>PDF 转 Word</a><a class="related-tool" href="/text-translate.html"><i class="ti ti-tool"></i>文本翻译</a></div>
+  </section>
+</main>
+<script src="/assets/convert-progress.js"></script>
+<script>
+let selectedFile = null;
+function showSelectedFile(file) {
+  const disp = document.getElementById('fileNameDisplay');
+  if (!file) { disp.style.display = 'none'; return; }
+  disp.querySelector('span').textContent = '已选择：' + file.name;
+  disp.style.display = 'flex';
+}
+function handleFile(input) {
+  selectedFile = input.files[0];
+  showSelectedFile(selectedFile);
+  if (selectedFile) document.getElementById('convertBtn').disabled = false;
+}
+async function startOcr() {
+  if (!selectedFile) return;
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  fd.append('lang', 'auto');
+  fd.append('output', 'file');
+  document.getElementById('progressArea').style.display = 'block';
+  document.getElementById('errorArea').style.display = 'none';
+  document.getElementById('resultArea').style.display = 'none';
+  const barCtrl = ConvertProgress.showProgress(
+    document.getElementById('progressLabel'),
+    document.getElementById('progressBar'),
+    document.getElementById('progressPct'),
+    'ocr',
+    selectedFile
+  );
+  try {
+    const res = await fetch('/api/ocr', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      barCtrl.complete();
+      setTimeout(() => {
+        document.getElementById('progressArea').style.display = 'none';
+        document.getElementById('resultText').textContent = data.text;
+        document.getElementById('downloadLink').href = '/api/download/' + data.filename;
+        document.getElementById('resultArea').style.display = 'block';
+      }, 500);
+    } else throw new Error(data.error);
+  } catch (e) {
+    barCtrl.stop();
+    document.getElementById('progressArea').style.display = 'none';
+    document.getElementById('errorArea').textContent = e.message || '识别失败';
+    document.getElementById('errorArea').style.display = 'block';
+  }
+}
+function copyText() {
+  const text  = document.getElementById('resultText').textContent;
+  const label = document.getElementById('copyBtnLabel');
+  const flash = (msg) => { label.textContent = msg; setTimeout(() => { label.textContent = '复制文字'; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => flash('已复制 ✓')).catch(() => fallbackCopy(text, flash));
+  } else {
+    fallbackCopy(text, flash);
+  }
+}
+function fallbackCopy(text, flash) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); flash('已复制 ✓'); }
+  catch (e) { flash('复制失败'); }
+  document.body.removeChild(ta);
+}
+</script>
+
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body>
+</html>

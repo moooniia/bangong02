@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发票工具箱 发票批量识别整理导出Excel - bangong02办公工具箱</title>
+<meta name="description" content="免费发票整理软件，批量识别发票信息、人工核对、导出Excel报表并自动归档，适合财务和行政。">
+<link rel="canonical" href="https://www.bangong02.com/invoice-toolbox.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="发票工具箱 发票批量识别整理导出Excel - bangong02办公工具箱">
+<meta property="og:description" content="免费发票整理软件，批量识别发票信息、人工核对、导出Excel报表并自动归档，适合财务和行政。">
+<meta property="og:url" content="https://www.bangong02.com/invoice-toolbox.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="stylesheet" href="/assets/invoice-toolbox.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="/">办公<span>工具箱</span></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换主题">
+    <i class="ti ti-moon"></i>
+  </button>
+</nav>
+
+<main>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="hero-label"><span></span>Windows 桌面软件</div>
+      <h1>发票<em>工具箱</em></h1>
+      <p class="hero-sub">让每一张发票，都归到该去的地方。</p>
+      <div class="hero-actions">
+        <a class="primary-btn" href="/downloads/InvoiceToolboxInstaller-1.0.0.60.exe">
+          <svg class="win11-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 4.4 10.7 3.4v7.4H3.6V4.4Zm8.6-1.2 8.2-1.2v8.8h-8.2V3.2ZM3.6 12.2h7.1v7.4l-7.1-1v-6.4Zm8.6 0h8.2V22l-8.2-1.2v-8.6Z"/></svg>
+          下载发票工具箱 v1.0.0.60
+        </a>
+        <a class="ghost-btn" href="#showcase">查看功能 <i class="ti ti-arrow-down"></i></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- SHOWCASE -->
+  <section class="showcase" id="showcase">
+    <div class="section-head">
+      <h2 class="section-name">功能一览</h2>
+      <span class="section-count">真实界面 · 可交互预览</span>
+    </div>
+
+    <div class="gallery" id="gallery">
+      <div class="gallery-stage">
+        <div class="gallery-track" id="track">
+          <figure class="shot is-active">
+            <img src="/assets/showcase/1.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">01</span>
+              <span class="cap-text">
+                <strong data-title>批量识别</strong>
+                <em data-desc>递归扫描项目文件夹，自动标出重复与待核对发票，进度同步刷新。</em>
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/assets/showcase/2.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">02</span>
+              <span class="cap-text">
+                <strong data-title>人工核对</strong>
+                <em data-desc>缺失、可疑字段整行高亮，右侧原件实时预览，编辑与表格保持一致。</em>
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/assets/showcase/3.jpg" alt="发票工具箱界面展示" loading="lazy" onerror="this.classList.add('img-fail')">
+            <figcaption class="glass-caption">
+              <span class="cap-index">03</span>
+              <span class="cap-text">
+                <strong data-title>导出归档</strong>
+                <em data-desc>拖拽决定命名规则与导出列顺序，一键生成报表并归档。</em>
+              </span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <button class="nav-arrow prev" id="prev" type="button" aria-label="上一张"><i class="ti ti-chevron-left"></i></button>
+        <button class="nav-arrow next" id="next" type="button" aria-label="下一张"><i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <div class="gallery-foot">
+        <div class="dots" id="dots"></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-head">
+      <h2 class="section-name">核心能力</h2>
+      <span class="section-count">4 个工作环节</span>
+    </div>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <i class="ti ti-folder-search"></i>
+        <h3 class="feature-title">递归识别</h3>
+        <p class="feature-desc">读取项目文件夹下所有子文件夹，自动排除归档目录副本。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-zoom-check"></i>
+        <h3 class="feature-title">人工核对</h3>
+        <p class="feature-desc">缺失、可疑、补全字段都会高亮，避免漏看。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-table-export"></i>
+        <h3 class="feature-title">可控导出</h3>
+        <p class="feature-desc">命名字段和 Excel 列可勾选并拖拽排序。</p>
+      </article>
+      <article class="feature-card">
+        <i class="ti ti-refresh-dot"></i>
+        <h3 class="feature-title">轻提醒更新</h3>
+        <p class="feature-desc">有新版本时只显示更新入口，不强制、不打扰。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- VERSION -->
+  <section class="version">
+    <div class="section-head">
+      <h2 class="section-name">当前版本</h2>
+      <span class="section-count">用于软件自动检查更新</span>
+    </div>
+    <div class="release-card">
+      <div class="release-meta">
+        <div class="version-num">v1.0.0.60</div>
+        <div class="release-date">发布日期：2026-07-14</div>
+      </div>
+      <div class="notes">
+        <div class="note"><i class="ti ti-check"></i><span>修复批量扫描 PDF 时偶发 MuPDF 诊断文本混入输出导致的随机识别失败。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>补充紧凑版和低位汇总版 PDF 金额坐标识别，减少高品质 PDF 误进待确认。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>重复发票以相邻行显示，重复行使用红色文字和"重复"状态，与待确认背景区分。</span></div>
+        <div class="note"><i class="ti ti-check"></i><span>下载包同时提供固定版本文件和 latest 文件，软件自动更新读取同一版本信息。</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="seo-content" aria-labelledby="invoice-guide-title">
+    <div class="seo-intro">
+      <h2 id="invoice-guide-title">发票工具箱使用说明</h2>
+      <p>发票工具箱是一款 Windows 桌面软件，适合财务报销、项目归档和批量整理发票。它把扫描、核对、查重、导出和归档放进同一套流程，减少重复打开文件和手工登记的时间。</p>
+    </div>
+    <div class="seo-grid">
+      <article class="seo-card">
+        <h3>基本使用步骤</h3>
+        <ol>
+          <li>下载并安装发票工具箱，打开需要整理的项目文件夹。</li>
+          <li>批量扫描发票文件，查看自动识别出的号码、金额和日期等字段。</li>
+          <li>重点核对待确认项和重复项，必要时手动修正。</li>
+          <li>选择需要的字段和顺序，导出 Excel 或完成归档。</li>
+        </ol>
+      </article>
+      <article class="seo-card">
+        <h3>适用场景</h3>
+        <ul>
+          <li>月度报销发票集中登记与核对。</li>
+          <li>按项目批量整理、查重和归档发票。</li>
+          <li>将发票关键信息汇总为可编辑的 Excel 表格。</li>
+        </ul>
+      </article>
+    </div>
+    <div class="seo-faq">
+      <h2>常见问题</h2>
+      <details><summary>这款软件支持什么系统？</summary><p>当前提供 Windows 桌面版本，具体版本和发布日期可在本页“当前版本”中查看。</p></details>
+      <details><summary>识别后还需要人工检查吗？</summary><p>建议检查软件标出的待确认项和重复项，尤其是金额、发票号码及日期，确认无误后再导出或归档。</p></details>
+      <details><summary>可以直接导出 Excel 吗？</summary><p>可以。导出前还可以选择字段，并调整 Excel 列的排列顺序。</p></details>
+    </div>
+    <h2>相关工具</h2>
+    <div class="related-tools">
+      <a class="related-tool" href="/scan-to-text.html"><i class="ti ti-tool"></i><span>扫描件文字识别</span></a>
+      <a class="related-tool" href="/pdf-to-excel.html"><i class="ti ti-tool"></i><span>PDF 转 Excel</span></a>
+      <a class="related-tool" href="/file-rename.html"><i class="ti ti-tool"></i><span>文件批量改名</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">© 2026 办公工具箱 · 发票工具箱是办公工具箱的 Windows 桌面软件。</footer>
+
+<script src="/assets/invoice-toolbox.js" defer></script>
+
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body>
+</html>

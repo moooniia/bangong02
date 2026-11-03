@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件批量改名 - bangong02办公工具箱</title>
+<meta name="description" content="免费在线批量修改文件名，直接在浏览器中处理多个文件，操作简单快捷。">
+<link rel="canonical" href="https://www.bangong02.com/file-rename.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="文件批量改名 - bangong02办公工具箱">
+<meta property="og:description" content="免费在线批量修改文件名，直接在浏览器中处理多个文件，操作简单快捷。">
+<meta property="og:url" content="https://www.bangong02.com/file-rename.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<style>
+.preview{ background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0;font-size:13px;max-height:200px;overflow:auto}
+</style>  <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
+</head><body>
+<nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>
+<main>
+<div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>文件工具</span></div>
+<div class="tool-header"><div class="tool-title-row"><div class="tool-icon-big"><i class="ti ti-forms"></i></div><h1>文件批量改名</h1></div>
+<p class="tool-desc">在浏览器本地改名，文件不会上传到服务器。支持 {n} 序号、{name} 原文件名。</p></div>
+<div class="upload-area" onclick="document.getElementById('fileInput').click()">
+<input type="file" id="fileInput" multiple style="display:none" onchange="onPick(this)">
+<i class="ti ti-cloud-upload upload-icon"></i><div style="font-weight:700">选择多个文件</div></div>
+<div class="options">
+<div class="option-row"><span>命名规则</span><input class="option-select" id="pattern" value="{n}_{name}" style="width:200px" oninput="preview()"></div>
+<div class="option-row"><span>起始序号</span><input class="option-select" id="startN" type="number" value="1" style="width:80px" oninput="preview()"></div>
+</div>
+<div class="preview" id="preview">选择文件后预览新文件名</div>
+<button class="convert-btn" id="goBtn" onclick="downloadZip()" disabled><i class="ti ti-download"></i>下载改名后的 ZIP</button>
+<p class="tip"><i class="ti ti-shield-lock"></i> 全程在本地处理，不上传服务器</p>
+
+  <section class="seo-content" aria-labelledby="guide-title">
+    <div class="seo-intro"><h2 id="guide-title">文件批量改名使用说明</h2><p>按统一规则批量整理多个文件名，适合照片、扫描件、项目资料和归档文件编号。</p></div>
+    <div class="seo-grid"><div class="seo-card"><h3>使用步骤</h3><ol><li>选择需要改名的多个文件</li><li>填写前缀、编号或替换规则</li><li>预览新的文件名</li><li>下载改名后的 ZIP</li></ol></div><div class="seo-card"><h3>使用建议</h3><ul><li>先保留一份原文件备份</li><li>编号建议使用固定长度</li><li>避免使用系统不支持的符号</li><li>下载后抽查文件名和扩展名</li></ul></div></div>
+    <div class="seo-faq"><h2>常见问题</h2><details><summary>会修改原文件吗？</summary><p>不会。工具会生成新的文件副本并打包下载。</p></details><details><summary>文件扩展名会改变吗？</summary><p>批量改名只调整名称，通常会保留原来的文件扩展名。</p></details><details><summary>上传的文件会长期保留吗？</summary><p>不会。文件仅用于本次处理，完成后会按网站规则自动删除。</p></details></div>
+    <h2>相关工具</h2><div class="related-tools"><a class="related-tool" href="/image-timestamp.html"><i class="ti ti-tool"></i>图片加时间戳</a><a class="related-tool" href="/image-convert.html"><i class="ti ti-tool"></i>图片格式转换</a><a class="related-tool" href="/images-to-pdf.html"><i class="ti ti-tool"></i>图片转 PDF</a></div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
+<script>
+let files=[];
+function onPick(input){ files=Array.from(input.files); document.getElementById('goBtn').disabled=!files.length; preview(); }
+function preview(){
+  const p=document.getElementById('pattern').value||'{n}_{name}';
+  let n=parseInt(document.getElementById('startN').value)||1;
+  const el=document.getElementById('preview');
+  if(!files.length){el.textContent='选择文件后预览新文件名';return;}
+  el.innerHTML=files.map(f=>{const base=f.name.replace(/\.[^.]+$/,'');const ext=f.name.match(/\.[^.]+$/)?.[0]||'';
+    const nn=p.replace(/\{n\}/g,n++).replace(/\{name\}/g,base)+ext;
+    return f.name+' → <b>'+nn+'</b>';}).join('<br>');
+}
+async function downloadZip(){
+  const p=document.getElementById('pattern').value||'{n}_{name}';
+  let n=parseInt(document.getElementById('startN').value)||1;
+  const zip=new JSZip();
+  for(const f of files){const base=f.name.replace(/\.[^.]+$/,'');const ext=f.name.match(/\.[^.]+$/)?.[0]||'';
+    const nn=p.replace(/\{n\}/g,n++).replace(/\{name\}/g,base)+ext;
+    zip.file(nn,await f.arrayBuffer());}
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='重命名文件.zip';a.click();
+}
+</script>
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body></html>

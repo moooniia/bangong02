@@ -1,0 +1,17 @@
+[Unit]
+Description=Toolbox Flask Backend (bangong02)
+After=network.target nginx.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/bangong02/backend
+Environment=FLASK_DEBUG=0
+EnvironmentFile=-/home/ubuntu/bangong02/toolbox.env
+ExecStart=/home/ubuntu/bangong02/venv/bin/python /home/ubuntu/bangong02/backend/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

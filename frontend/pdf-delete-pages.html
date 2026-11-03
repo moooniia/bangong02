@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>删除 PDF 页面 - bangong02办公工具箱</title>
+<meta name="description" content="免费在线删除 PDF 页面，无需安装软件，打开网页即可处理PDF文件。">
+<link rel="canonical" href="https://www.bangong02.com/pdf-delete-pages.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="删除 PDF 页面 - bangong02办公工具箱">
+<meta property="og:description" content="免费在线删除 PDF 页面，无需安装软件，打开网页即可处理PDF文件。">
+<meta property="og:url" content="https://www.bangong02.com/pdf-delete-pages.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+  <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>PDF 处理</span><i class="ti ti-chevron-right"></i><span>删除 PDF 页面</span></div>
+  <div class="tool-header">
+    <div class="tool-title-row">
+      <div class="tool-icon-big"><i class="ti ti-trash"></i></div>
+      <h1>删除 PDF 页面</h1>
+    </div>
+    <p class="tool-desc">删除 PDF 中不需要的页，如空白页、广告页。</p>
+  </div>
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept=".pdf"  style="display:none">
+    <i class="ti ti-cloud-upload upload-icon"></i>
+    <div style="font-weight:700;margin-bottom:6px">点击或拖拽文件到这里</div>
+    <div style="font-size:13px;color:var(--ink3)">文件处理后自动删除</div>
+  </div>
+  <div class="file-list" id="fileList"></div>
+  <div class="options"><div class="option-row"><span>要删除的页码</span><input class="option-select" id="pagesInput" placeholder="如 1,3,5-7" style="width:180px"></div></div>
+  <button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-bolt"></i>删除并下载</button>
+  <p class="tip"><i class="ti ti-shield-lock"></i> 文件仅用于本次处理，完成后自动删除</p>
+  <div class="progress-area" id="progressArea">
+    <div class="progress-label" id="progressLabel">处理中，请稍候…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+  <div class="error-area" id="errorArea"><span id="errorText"></span></div>
+  <div class="result-area" id="resultArea">
+    <i class="ti ti-circle-check" style="font-size:48px;color:#22c55e"></i>
+    <p style="margin:12px 0 20px;font-weight:700">处理完成！</p>
+    <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a>
+  </div>
+
+  <section class="seo-content" aria-labelledby="guide-title">
+    <div class="seo-intro"><h2 id="guide-title">删除 PDF 页面使用说明</h2><p>从 PDF 中移除空白页、重复页或不需要的内容，适合整理扫描件、报告和提交材料。</p></div>
+    <div class="seo-grid"><div class="seo-card"><h3>使用步骤</h3><ol><li>选择需要整理的 PDF</li><li>填写或选择要删除的页码</li><li>执行删除</li><li>下载并检查剩余页面</li></ol></div><div class="seo-card"><h3>使用建议</h3><ul><li>页码通常从 1 开始</li><li>删除前确认总页数</li><li>不要误删目录或附件页</li><li>重要文档保留原文件</li></ul></div></div>
+    <div class="seo-faq"><h2>常见问题</h2><details><summary>删除的页面可以恢复吗？</summary><p>导出的新文件无法恢复已删除页面，但原始 PDF 不会被修改。</p></details><details><summary>可以一次删除多个页面吗？</summary><p>可以，按页面提示输入多个页码或页码范围。</p></details><details><summary>上传的文件会长期保留吗？</summary><p>不会。文件仅用于本次处理，完成后会按网站规则自动删除。</p></details></div>
+    <h2>相关工具</h2><div class="related-tools"><a class="related-tool" href="/pdf-split.html"><i class="ti ti-tool"></i>拆分 PDF</a><a class="related-tool" href="/pdf-merge.html"><i class="ti ti-tool"></i>合并 PDF</a><a class="related-tool" href="/pdf-rotate.html"><i class="ti ti-tool"></i>PDF 旋转</a></div>
+  </section>
+</main>
+<script src="/assets/convert-progress.js"></script>
+<script src="/assets/tool-page.js?v=0.12.6"></script>
+<script>
+initToolPage({
+  api: '/api/pdf/delete-pages',
+  accept: '.pdf',
+  multiple: false,
+  extraFields: [{id:'pagesInput',name:'pages'}],
+  progressTask: 'pdf-process',
+  downloadText: '下载结果'
+});
+</script>
+
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body>
+</html>

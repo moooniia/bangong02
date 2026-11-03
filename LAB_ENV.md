@@ -1,0 +1,11 @@
+# 109 Python 3.8 环境对齐（2026-10-20）
+- 旧机：线上和 lab 用的都是 /usr/bin/python3.8 (3.8.17)，freeze 存在 old-freeze.txt
+- 109 新建了两个 env，都是 uv cpython 3.8.20 + 旧机 freeze 全量（全部装上，没有失败）：
+  - /home/ubuntu/bangong02/lab-venv（给 lab 用）
+  - /home/ubuntu/bangong02/venv38（给线上用）
+  - 关键版本：numpy 1.24.4、opencv(-headless/contrib) 4.13.0.92、PyMuPDF 1.24.11、img2table 1.4.1、python-docx 1.1.2、pdf2docx 0.5.8
+- 线上 toolbox.service 的 ExecStart 改到 venv38；原 unit 备份在 /home/ubuntu/bangong02/toolbox.service.bak-py312
+- lab 样例 5：109 312482B，19 张图，2 个表，layout_restore 识别出 seals18/sig1；旧机 312990B，19 张图，3 个表（tables_added 1 vs 0）；两边 lab 代码 md5 一致
+- 强制扫描（skip_direct=True）：两台机器都报 InvalidSpanError，属于代码 bug，与环境无关
+- 线上样例 5（扫描件）：改之前 109 走 volc，42KB，0 张图；旧机走 volc-hybrid，909KB，3 张图；改之后 109 走 volc-hybrid，911KB，3 张图，下载 200
+- fixtures/2.pdf 是文字件：两边都是 39KB，0 张图，5 个表

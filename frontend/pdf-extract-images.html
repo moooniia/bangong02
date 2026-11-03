@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提取 PDF 图片 - bangong02办公工具箱</title>
+<meta name="description" content="免费在线提取 PDF 图片，无需安装软件，打开网页即可处理PDF文件。">
+<link rel="canonical" href="https://www.bangong02.com/pdf-extract-images.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="提取 PDF 图片 - bangong02办公工具箱">
+<meta property="og:description" content="免费在线提取 PDF 图片，无需安装软件，打开网页即可处理PDF文件。">
+<meta property="og:url" content="https://www.bangong02.com/pdf-extract-images.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+  <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>
+<main>
+  <div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>PDF 处理</span><i class="ti ti-chevron-right"></i><span>提取 PDF 图片</span></div>
+  <div class="tool-header">
+    <div class="tool-title-row">
+      <div class="tool-icon-big"><i class="ti ti-photo-search"></i></div>
+      <h1>提取 PDF 图片</h1>
+    </div>
+    <p class="tool-desc">把 PDF 里嵌入的图片全部提取出来，打包 ZIP 下载。</p>
+  </div>
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept=".pdf"  style="display:none">
+    <i class="ti ti-cloud-upload upload-icon"></i>
+    <div style="font-weight:700;margin-bottom:6px">点击或拖拽文件到这里</div>
+    <div style="font-size:13px;color:var(--ink3)">文件处理后自动删除</div>
+  </div>
+  <div class="file-list" id="fileList"></div>
+  
+  <button class="convert-btn" id="convertBtn" onclick="startProcess()" disabled><i class="ti ti-bolt"></i>提取图片</button>
+  <p class="tip"><i class="ti ti-shield-lock"></i> 文件仅用于本次处理，完成后自动删除</p>
+  <div class="progress-area" id="progressArea">
+    <div class="progress-label" id="progressLabel">处理中，请稍候…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+  <div class="error-area" id="errorArea"><span id="errorText"></span></div>
+  <div class="result-area" id="resultArea">
+    <i class="ti ti-circle-check" style="font-size:48px;color:#22c55e"></i>
+    <p style="margin:12px 0 20px;font-weight:700">处理完成！</p>
+    <a href="#" class="download-btn" id="downloadBtn"><i class="ti ti-download"></i>下载文件</a>
+  </div>
+
+  <section class="seo-content" aria-labelledby="guide-title">
+    <div class="seo-intro"><h2 id="guide-title">提取 PDF 图片使用说明</h2><p>提取 PDF 内嵌的图片并打包下载，适合整理报告配图、产品图和扫描资料中的图像资源。</p></div>
+    <div class="seo-grid"><div class="seo-card"><h3>使用步骤</h3><ol><li>选择包含图片的 PDF</li><li>开始提取</li><li>等待系统打包</li><li>下载 ZIP 并检查图片</li></ol></div><div class="seo-card"><h3>使用建议</h3><ul><li>提取的是 PDF 内嵌资源</li><li>部分页面可能是整页扫描图</li><li>矢量图可能无法单独提取</li><li>使用图片前确认版权</li></ul></div></div>
+    <div class="seo-faq"><h2>常见问题</h2><details><summary>为什么没有提取到所有画面？</summary><p>有些画面是矢量元素、背景或页面渲染结果，并不是独立嵌入的图片。</p></details><details><summary>图片清晰度由什么决定？</summary><p>取决于 PDF 内原始图片的分辨率，提取不会自动提高画质。</p></details><details><summary>上传的文件会长期保留吗？</summary><p>不会。文件仅用于本次处理，完成后会按网站规则自动删除。</p></details></div>
+    <h2>相关工具</h2><div class="related-tools"><a class="related-tool" href="/pdf-to-image.html"><i class="ti ti-tool"></i>PDF 转图片</a><a class="related-tool" href="/images-to-pdf.html"><i class="ti ti-tool"></i>图片转 PDF</a><a class="related-tool" href="/image-compress.html"><i class="ti ti-tool"></i>图片压缩</a></div>
+  </section>
+</main>
+<script src="/assets/convert-progress.js"></script>
+<script src="/assets/tool-page.js?v=0.12.6"></script>
+<script>
+initToolPage({
+  api: '/api/pdf/extract-images',
+  accept: '.pdf',
+  multiple: false,
+  extraFields: [],
+  progressTask: 'pdf-process',
+  downloadText: '下载结果'
+});
+</script>
+
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body>
+</html>

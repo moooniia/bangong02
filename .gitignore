@@ -1,0 +1,53 @@
+# secrets
+*.env
+*.env.*
+!*.env.example
+toolbox.env*
+monitor.env
+credentials.txt
+**/credentials*
+.github_token
+*token*
+*secret*
+*password*
+*.pem
+*.key
+.git-credentials
+# umami data
+umami/data/
+umami/db/
+umami/**/pgdata/
+*.sql
+*.sql.gz
+*.dump
+# envs / caches
+venv/
+venv38/
+lab-venv/
+**/venv/
+**/.venv/
+node_modules/
+__pycache__/
+*.pyc
+.cache/
+# outputs / logs / big
+outputs/
+uploads/
+**/outputs/
+**/uploads/
+*.log
+frontend/downloads/
+*.msix
+*.exe
+*.zip
+*.tar.gz
+*.tgz
+*.bak*
+*.stable_*
+# hardcoded secrets / data
+baidu_push.py
+umami/docker-compose.yml
+1212_detail_300dpi.json
+**/feedback_log.txt
+**/api_usage.json
+*.docx

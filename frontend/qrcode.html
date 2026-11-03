@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生成二维码 - bangong02办公工具箱</title>
+<meta name="description" content="免费在线生成二维码，输入文本或网址即可快速制作可下载的二维码图片。">
+<link rel="canonical" href="https://www.bangong02.com/qrcode.html">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="bangong02办公工具箱">
+<meta property="og:title" content="生成二维码 - bangong02办公工具箱">
+<meta property="og:description" content="免费在线生成二维码，输入文本或网址即可快速制作可下载的二维码图片。">
+<meta property="og:url" content="https://www.bangong02.com/qrcode.html">
+<meta property="og:image" content="https://www.bangong02.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="办公工具箱 - 每一个文件，都有去处">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/icons/tabler-icons.min.css">
+<link rel="stylesheet" href="/assets/common.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<style>
+textarea{width:100%;min-height:120px;border:1px solid var(--border);border-radius:12px;padding:16px;font-family:inherit;font-size:14px;resize:vertical}
+</style>  <script src="/assets/analytics.js" defer></script>
+<script src="/assets/theme-toggle.js" defer></script>
+</head><body>
+<nav><a class="logo" href="/">办公<span>工具箱</span></a></nav>
+<main>
+<div class="breadcrumb"><a href="/">首页</a><i class="ti ti-chevron-right"></i><span>图片处理</span></div>
+<div class="tool-header"><div class="tool-title-row"><div class="tool-icon-big"><i class="ti ti-qrcode"></i></div><h1>生成二维码</h1></div>
+<p class="tool-desc">输入网址或文字，一键生成二维码图片，可右键保存。</p></div>
+<textarea id="qrText" placeholder="输入网址、文字、WiFi 信息等..." oninput="document.getElementById('qrBtn').disabled=!this.value.trim()"></textarea>
+<button class="convert-btn" id="qrBtn" style="margin-top:16px" onclick="genQr()" disabled><i class="ti ti-qrcode"></i>生成二维码</button>
+<div class="result-area" id="resultArea" style="display:none"><canvas id="qrCanvas"></canvas>
+<p style="margin-top:12px;font-size:12px;color:var(--ink3)">右键图片 → 另存为</p></div>
+<section class="seo-content" aria-labelledby="guide-title">
+  <div class="seo-intro"><h2 id="guide-title">二维码生成器使用说明</h2><p>输入网址、文字、联系方式或其他文本，即可生成可保存的二维码图片。适合分享网页、活动说明、表单地址和简短信息。</p></div>
+  <div class="seo-grid"><div class="seo-card"><h3>使用步骤</h3><ol><li>输入需要写入二维码的内容。</li><li>点击生成二维码。</li><li>使用手机扫码检查内容。</li><li>右键二维码图片并另存为。</li></ol></div><div class="seo-card"><h3>使用建议</h3><ul><li>网址应包含完整的 https://</li><li>避免写入过长或频繁变化的内容</li><li>发布前务必使用手机实际扫码</li><li>打印时保留二维码四周的空白</li></ul></div></div>
+  <div class="seo-faq"><h2>常见问题</h2><details><summary>二维码会过期吗？</summary><p>普通文字或网址二维码本身不会过期，但如果写入的网址失效，扫码后将无法打开对应页面。</p></details><details><summary>生成内容会上传到服务器吗？</summary><p>二维码在当前浏览器页面中生成，不需要上传输入内容。</p></details><details><summary>为什么手机无法识别二维码？</summary><p>请检查内容是否过长、图片是否清晰，并确保二维码四周没有被裁切或遮挡。</p></details></div>
+  <h2>相关工具</h2><div class="related-tools"><a class="related-tool" href="/image-resize.html"><i class="ti ti-resize"></i>调整图片尺寸</a><a class="related-tool" href="/image-compress.html"><i class="ti ti-photo-down"></i>图片压缩</a><a class="related-tool" href="/scan-to-text.html"><i class="ti ti-text-recognition"></i>图片文字识别</a></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+<script>
+async function genQr(){
+  const t=document.getElementById('qrText').value.trim();
+  if(!t){alert('请输入内容');return;}
+  const c=document.getElementById('qrCanvas');
+  await QRCode.toCanvas(c,t,{width:280,margin:2});
+  document.getElementById('resultArea').style.display='block';
+}
+</script>
+<footer class="site-icp" style="text-align:center;padding:16px 12px 28px;font-size:12px;line-height:1.6;color:#888888;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:#888888;text-decoration:none;">赣ICP备2026013721号-1</a></footer>
+</body></html>
